@@ -20,7 +20,12 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
-SRC="${1:-$HERE/../../shared/sergas-brand/fonts/web}"
+# Where the FULL .woff2 files live before subsetting. Defaults to a folder
+# beside the repo because there is nowhere sensible to guess — download Barlow
+# Condensed and Caveat from Google Fonts, drop them in, or pass the path:
+#   ./scripts/vendor-fonts.sh ~/Downloads/fonts
+# The subset output is committed, so you never need to run this to use the kit.
+SRC="${1:-$HERE/../fonts-src}"
 OUT="$HERE/assets/fonts"
 mkdir -p "$OUT"
 
