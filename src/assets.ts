@@ -251,8 +251,10 @@ export class AssetStore {
     const kb = (report.totalBytes / 1024).toFixed(0)
     const dedup = report.deduped ? `, ${report.deduped} reused` : ''
     return report.mode === 'inline'
-      ? `${report.count} pictures packed inside the file (${kb} KB${dedup})`
-      : `${report.count} pictures written to ./assets/ (${kb} KB${dedup})`
+      // A book with one picture reported "1 pictures". Small, and it is the
+      // last line the author reads after every single build.
+      ? `${report.count} ${report.count === 1 ? 'picture' : 'pictures'} packed inside the file (${kb} KB${dedup})`
+      : `${report.count} ${report.count === 1 ? 'picture' : 'pictures'} written to ./assets/ (${kb} KB${dedup})`
   }
 }
 

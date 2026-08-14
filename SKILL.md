@@ -186,7 +186,7 @@ skill, not an application — nothing here is a user-facing program.
 | Path | What lives there |
 |---|---|
 | `src/` | The build. `build.ts` (CLI) · `book.ts` (pages, sections, boards) · `markdown.ts` (blocks) · `theme.ts` (palette, contrast) · `assets.ts` (the inline/folder switch) · `fonts.ts` (embedding) · `svg.ts` (build-time SVG) · `capabilities.ts` (the manifest) |
-| `src/runtime/` | What ships **inside** the HTML: `book.ts`/`book.css` (flipbook) and `curtain.ts`/`curtain.css` (WebGL stage curtain). Bundled and inlined by `Bun.build()`. |
+| `src/runtime/` | What ships **inside** the HTML: `book.ts`/`book.css` (flipbook) and `curtain.ts`/`curtain.css` (WebGL stage curtain). Bundled by esbuild into the committed `assets/runtime.bundle.js`, then inlined. |
 | `src/types/` | Hand-written ambient declarations for curtainsjs, page-flip and markdown-it-container. **Not dead files** — the compiler consumes them without any import, so grepping for their names finds nothing. |
 | `scripts/` | Dev tooling. Never shipped inside a book. |
 | `assets/fonts/` | The embedded woff2 faces, already subset. |

@@ -2,7 +2,7 @@
  * book.ts — the flipbook runtime, shipped inside every book.
  *
  * page-flip and GSAP are imported as real npm packages here and bundled in by
- * `Bun.build()`. The old Python build hand-downloaded them into
+ * esbuild, once, into a committed file. The old Python build hand-downloaded them into
  * `assets/vendor/` and pasted them in with string replacement, which is how
  * the vendored animation library quietly fell a version behind.
  *

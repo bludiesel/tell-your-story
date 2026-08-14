@@ -106,13 +106,12 @@ async function pageFlipCss(): Promise<string> {
  * The runtime JavaScript that gets inlined into the book.
  *
  * OFF THE SHELF FIRST. `assets/runtime.bundle.js` is committed, so the common
- * case — someone running this skill to make a book — needs neither Bun nor the
- * three animation libraries on disk. It reads a file.
+ * case — someone running this skill to make a book — does not need the three
+ * animation libraries on disk at all. It reads a file.
  *
  * Bundling live is the DEVELOPMENT path, taken only when the shelf copy is
- * absent. It needs `Bun.build()`, which does not exist in Node, and it needs
- * node_modules. Both are fine here and neither is fine in a colleague's sandbox,
- * which is the entire reason for the split.
+ * absent. It needs esbuild and `node_modules`, which are fine here and are not
+ * fine in a colleague's sandbox — the entire reason for the split.
  *
  * If the shelf copy is stale, `node scripts/check.ts` says so. It deliberately does not
  * rebuild silently: a build that quietly regenerates the bundle would need the

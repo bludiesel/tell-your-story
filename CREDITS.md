@@ -30,8 +30,8 @@ applies here.
 ### Deliberately not taken
 
 - **Their Vite + `vite-plugin-singlefile` build.** Right for an app that is
-  itself the file; wrong for a generator that emits a deck per run. We use
-  `Bun.build()`.
+  itself the file; wrong for a generator that emits a book per run. We use
+  esbuild, once, into a committed bundle.
 - **Self-update, encryption, IndexedDB autosave, i18n.** Real engineering for
   problems a presentation generator does not have.
 - **Their deflate-payload compression.** Measured on our output it saves ~17%,
