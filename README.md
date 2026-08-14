@@ -33,6 +33,127 @@ That's it. `output/book.html` is the deliverable.
 
 ---
 
+## Install
+
+### As a Claude Code skill
+
+Drop it where Claude Code looks for skills and it becomes available by name.
+
+```bash
+git clone https://github.com/bludiesel/tell-your-story.git ~/.claude/skills/tell-your-story
+cd ~/.claude/skills/tell-your-story && npm install
+```
+
+For one project only, clone into `<project>/.claude/skills/` instead — the skill
+is then available in that repo and nowhere else.
+
+Restart Claude Code, or start a new session, and ask for what you want:
+
+> *"Build me a training flipbook on confined-space entry."*
+
+The skill announces itself through the `description` in its `SKILL.md`, so it
+triggers on **workbook, handbook, induction, briefing, training material,
+interactive lesson** — you do not have to name it. If you want to be explicit,
+`/tell-your-story` invokes it directly.
+
+### Anywhere else
+
+It is a plain Node project. Clone it, `npm install`, and run the scripts. Nothing
+about it depends on Claude Code — the skill wrapper is a convenience, not a
+requirement.
+
+### First run — prove it works before you write anything
+
+```bash
+node src/build.ts content/sample-book.md output/sample.html
+open output/sample.html
+```
+
+You should get a stage curtain that parts when you click it, a book that opens,
+and pages that turn. **If that works, everything works** — the sample exercises
+the curtain, the flip engine, the fonts and the reveals in one go.
+
+Then check the machinery honestly reports itself:
+
+```bash
+node scripts/check.ts     # the full suite — 143 checks
+npx tsc --noEmit          # types
+```
+
+Both should be silent-or-green on a fresh clone. If `check` complains that the
+runtime bundle is stale, run `node scripts/prebundle.ts` — that only happens if
+you have edited `src/runtime/`.
+
+### What you need
+
+| | |
+|---|---|
+| **Node 22 or newer** | It runs the TypeScript directly. `node --version` |
+| npm | Ships with Node |
+| A browser | Only to *look* at a book. Building needs none |
+
+No Bun, no Python, no Playwright, no build step.
+
+---
+
+## If you are a coding agent
+
+Read this part; it is the difference between a good book and a wall of text with
+a page-turn effect.
+
+**Read these two files before authoring anything.** They are short and they are
+the whole job:
+
+| Read | Why |
+|---|---|
+| [`templates/CHOOSING.md`](templates/CHOOSING.md) | **Which layout for which content shape.** The decision most likely to go wrong. Work down the table; the first row that genuinely fits wins |
+| [`templates/LAYOUTS.md`](templates/LAYOUTS.md) | Copyable syntax for every layout |
+
+**Then follow this order, and do not skip step 1.**
+
+```bash
+node scripts/prep.ts content/lesson.md    # 1. it tells you how to chunk
+node src/build.ts    content/lesson.md output/book.html
+node scripts/motion.ts output/book.html   # 3. what moves, and whether it obeys the rules
+```
+
+`prep` measures what cannot be judged by reading — page fill against real
+capacity, headless pages, a facing pair that has been split across a spread,
+which blocks should arrive in which order. It **reports; it never rewrites your
+words.** Apply its advice, re-run it, and keep going until it says the book is
+well chunked. It is the single highest-leverage thing in the repo.
+
+**Five rules that will bite you:**
+
+1. **Prose is the correct answer most of the time.** In a good book most pages
+   are prose and the specific layouts are punctuation. A book where every page
+   is a different layout reads as a demo of the tool.
+2. **One layout per page.** They are never combined. A page with a table *and* a
+   chart is two pages.
+3. **`:::compare` and `:::timeline` need FACING pages.** A comparison whose other
+   half is overleaf is half an argument. `prep` reports the spread each page
+   lands on so you do not have to count.
+4. **Never invent numbers.** If you do not know a pressure limit, an emergency
+   number or a statistic, leave a `[BRACKETED BLANK]` for a human — the build
+   refuses to ship the templates' own placeholders, but it keeps yours.
+5. **A sticky note attaches to the block above it.** Write it directly after the
+   thing it annotates.
+
+**If the brief does not say what the training is about**, do not ship the starter
+with its placeholders — the build will refuse it, and rightly. Write real content
+on the subject you can infer, put a `:::warning` on the first page and a line in
+the `:::colophon` saying it is a draft pending review by whoever owns the
+material.
+
+**A prompt that works**, if you want to hand this to an agent verbatim:
+
+> Use the tell-your-story skill to build a training flipbook on **[SUBJECT]** for
+> **[AUDIENCE]**, about **[N]** pages. Read `templates/CHOOSING.md` first and pick
+> layouts from the content shape, not for variety. Run `prep` before building and
+> apply what it says. Leave any figure you cannot verify as a bracketed blank.
+
+---
+
 ## What it looks like
 
 <table>
