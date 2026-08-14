@@ -78,8 +78,10 @@ const result = await evaluate(String.raw`(async () => {
 
   // ── 1. fitStage() ─────────────────────────────────────────────────────
   const fit0 = getComputedStyle(document.documentElement).getPropertyValue('--fit').trim()
-  ok('fitStage', 'Stage scaled to the window', parseFloat(fit0) > 0.05 && parseFloat(fit0) <= 1,
-      '--fit = ' + fit0 + ' (CSS cannot compute this; it must come from JS)')
+  // Above 1 is correct on a large display — the book grows rather than sitting
+  // small in the middle of the screen. Only a collapsed or absent scale is a bug.
+  ok('fitStage', 'Stage scaled to the window', parseFloat(fit0) >= 0.05 && parseFloat(fit0) < 4,
+      '--fit = ' + (+fit0).toFixed(3) + ' — CSS cannot divide a length by a length, so this must come from JS')
 
   // ── 2. grade() ────────────────────────────────────────────────────────
   let waited = 0
@@ -181,7 +183,7 @@ const result = await evaluate(String.raw`(async () => {
   const contentsRow = document.querySelector('.contents-row')
   ok('contents (clickable?)', 'Contents rows jump when clicked',
      !!contentsRow && !!document.querySelector('.contents a, .contents-row[role="button"], .contents button'),
-     contentsRow ? 'contents rows exist but carry no link or handler — printed index only' : 'no contents page in this book')
+     contentsRow ? (document.querySelector('.contents-row[data-goto]') ? 'rows carry data-goto and role=button — clicking one jumps to its section' : 'rows exist but carry no link or handler — printed index only') : 'no contents page in this book')
 
   // ── 11. updateTabs() — fore-edge tabs track the section ───────────────
   const tabs = [...document.querySelectorAll('.tab, [data-slot="tab-label"]')]

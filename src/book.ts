@@ -354,10 +354,19 @@ function dividerPages(section: Section, n: number, span: number): BookPage[] {
  * a row of typed periods — so it sits on the baseline and stops exactly where
  * the folio starts, at any title length.
  */
-function contentsPage(entries: Array<{ label: string; folio: number }>): BookPage {
+function contentsPage(entries: Array<{ label: string; folio: number; page: number }>): BookPage {
   if (entries.length === 0) return { html: '', title: '', kind: 'content' }
+  // A CONTENTS ROW THAT LOOKS LIKE A DESTINATION HAS TO BE ONE.
+  //
+  // On paper a contents page is a printed index: it cites a folio and you turn
+  // there yourself. On a screen it reads as a list of links, so a reader clicks
+  // it — and until this carried `data-goto` nothing happened, which teaches
+  // them the book is not interactive right at the point they were exploring it.
+  // The fore-edge tabs were the only way to jump, and a first-time reader has
+  // no reason to know that.
   const rows = entries.map((e, i) =>
-    `<div class="contents-row">` +
+    `<div class="contents-row" role="button" tabindex="0" data-goto="${e.page}" ` +
+    `aria-label="Go to ${esc(e.label)}, page ${e.folio}">` +
     `<span class="contents-n" data-slot="contents-number">${String(i + 1).padStart(2, '0')}</span>` +
     `<span class="contents-t" data-slot="contents-title">${esc(e.label)}</span>` +
     `<span class="contents-lead" aria-hidden="true"></span>` +
@@ -461,9 +470,13 @@ export function renderBook(opts: {
     const entries = tabTargets.map((t) => {
       for (let i = t.page; i < pages.length; i++) {
         const f = folioOf.get(i)
-        if (f !== undefined) return { label: t.label, folio: f }
+        // `t.page` is the BOARD; the reader wants the board, the same place the
+        // fore-edge tab sends them, so the section announces itself rather than
+        // dropping them into the middle of it. The folio is the printed page
+        // after it, which is what the number in the contents cites.
+        if (f !== undefined) return { label: t.label, folio: f, page: t.page }
       }
-      return { label: t.label, folio: 0 }
+      return { label: t.label, folio: 0, page: t.page }
     })
     pages[contentsAt] = contentsPage(entries)
   }

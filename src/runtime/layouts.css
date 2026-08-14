@@ -144,6 +144,15 @@
 .below .has-sticky > .sticky[data-at="left"]   { --tilt: -6.5deg; top: -1.6rem;    left: -2.6rem; }
 .below .has-sticky > .sticky[data-at="br"]     { --tilt: 5.5deg;  bottom: -2.4rem; right: -2.2rem; }
 .below .has-sticky > .sticky[data-at="bl"]     { --tilt: -7.5deg; bottom: -2.2rem; left: -2.4rem; }
+/* THE ESCAPE HATCH, for a page whose text fills the column.
+   The four corners all overlap the block by design, which is right when there
+   is white space to overlap into and wrong when there is not — on a full page
+   every corner buries a paragraph. These two clear the host entirely except for
+   a couple of centimetres of its last line, so the note still reads as pressed
+   onto the page rather than laid out in a slot of its own. Chosen at runtime by
+   measurement, never authored. */
+.below .has-sticky > .sticky[data-at="under"]  { --tilt: 6deg;    top: calc(100% - 1.6rem); right: -2.4rem; }
+.below .has-sticky > .sticky[data-at="under-l"]{ --tilt: -5.5deg; top: calc(100% - 1.4rem); left: -2.2rem; }
 /* Notes overhang their host into the page margin. The paper still clips them at
    its own edge — `.page` keeps its overflow — so a note can hang off a block
    without hanging off the sheet. */
@@ -385,13 +394,21 @@
   color: var(--accent-ink);
 }
 .opener-body { font-size: var(--t-body); line-height: var(--lh-body); }
+/* THE CAP SHARES A BASELINE WITH THE RUN-IN, OR IT IS NOT A DROP CAP.
+   `margin-top: .1em` of a 7.4rem letter is ~12px of dead space above it, which
+   pushed the cap a full line below the small-caps opening line. The eye then
+   met "EARLY EVERY INJURY…" before the "N" that starts the word, so the first
+   sentence of a chapter read in the wrong order — measured on a real book: the
+   cap's line box was 190px tall and 59px wide, sitting alone.
+   The cap now hangs from the first line with no top margin, and the negative
+   value pulls its cap-height up to meet the small caps beside it. */
 .opener-body::first-letter {
   float: left;
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 7.4rem;
-  line-height: .74;
-  margin: .1em .14em 0 0;
+  line-height: .72;
+  margin: -.19em .16em 0 0;
   color: var(--accent-ink);
 }
 .opener-body::first-line {

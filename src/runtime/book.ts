@@ -41,9 +41,19 @@ function boot(): void {
   //
   // 40px is held back horizontally for the fore-edge tabs, which overhang 18px
   // each side and would otherwise be clipped at the window edge.
+  //
+  // THE SCALE IS ALLOWED ABOVE 1. On a large display the book grows past its
+  // 1560x1040 design size rather than sitting small in the middle of the screen
+  // — measured at 1.34 on a 2400px window. Text stays sharp because a CSS
+  // transform scales the vector outlines, not a rasterised bitmap; embedded
+  // pictures are the only thing that softens, and a full-bleed photograph is
+  // supplied well above page size for exactly that reason. Only the lower bound
+  // is clamped, and only to stop a freak viewport collapsing the book to zero.
   const fitStage = () => {
     const fit = Math.min((window.innerWidth * 0.97 - 40) / 1560, (window.innerHeight * 0.92) / 1040)
     document.documentElement.style.setProperty('--fit', String(Math.max(fit, 0.05)))
+    // The stage just changed size, so which corner is clear may have too.
+    placeStickies()
   }
   fitStage()
   window.addEventListener('resize', fitStage, { passive: true })
@@ -660,8 +670,85 @@ function boot(): void {
     }
     updateStacks()
     updateTabs()
+    // Notes are re-placed on every arrival, not once at boot: which corner is
+    // clear depends on what is on the spread, and a page reached by a tab jump
+    // has never been measured before.
+    placeStickies()
     if (index() > furthest) furthest = index()
     if (reveal) scheduleReveal()
+  }
+
+  // ── A STICKY MUST NOT BURY THE WORDS IT ANNOTATES ───────────────────────
+  //
+  // Notes overhang their host on purpose — that is what a note pressed onto a
+  // page does, and DESIGN.md §10 is explicit that a sticky which sits neatly in
+  // its own slot reads as a designed panel instead. So overlap is the feature.
+  //
+  // What was NOT intended: the corner was chosen by a counter at build time
+  // (`right`, `bl`, `left`, `br`, in order), which knows nothing about where
+  // the text on that page actually is. On a full-width paragraph the note
+  // landed squarely on the column and covered six lines of body copy —
+  // measured on a real book at 100% of one paragraph's width. A note that hides
+  // the sentence it is commenting on is worse than no note at all.
+  //
+  // Geometry only exists once a browser has laid the page out, so the choice is
+  // made HERE rather than in the builder: try every corner, score each by how
+  // much readable text it swallows, and keep the best. The note still overhangs,
+  // still tilts, still reads as paper stuck on paper — it just stops landing on
+  // the words. Runs once per page arrival, and only for notes that have a host.
+  function placeStickies(): void {
+    // Declared INSIDE, not above. As a module-level `const` this sat in the
+    // temporal dead zone when fitStage() — which runs first thing in boot() and
+    // calls this — reached it, so boot() threw before the flipbook was ever
+    // constructed and the book rendered as 26 stacked pages with no engine at
+    // all. Nothing logged it: the throw happened before any error listener.
+    //
+    // Corners first — overlapping the block is the intended look. `under` and
+    // `under-l` are the fallback for a page with no white space to overlap
+    // into, and win only when every corner is measurably worse.
+    const CORNERS = ['right', 'br', 'left', 'bl', 'under', 'under-l'] as const
+    for (const note of document.querySelectorAll<HTMLElement>('.has-sticky > .sticky')) {
+      const host = note.parentElement
+      if (!host || getComputedStyle(note).display === 'none') continue
+      // Every line of text on this page that is NOT part of the note itself.
+      const page = note.closest('.page')
+      if (!page) continue
+      const lines = [...page.querySelectorAll<HTMLElement>('p, li, td, th, .opener-body, h1, h2, h3')]
+        .filter((el) => !note.contains(el))
+        .flatMap((el) => {
+          const r = document.createRange()
+          r.selectNodeContents(el)
+          return [...r.getClientRects()]
+        })
+        .filter((r) => r.width > 4 && r.height > 4)
+
+      const cost = (): number => {
+        const n = note.getBoundingClientRect()
+        const buried = lines.reduce((sum, line) => {
+          const w = Math.max(0, Math.min(n.right, line.right) - Math.max(n.left, line.left))
+          const h = Math.max(0, Math.min(n.bottom, line.bottom) - Math.max(n.top, line.top))
+          return sum + w * h
+        }, 0)
+        // A note pushed off the sheet is worse than one sitting on a sentence:
+        // `.page` clips its own overflow, so the part that leaves is simply
+        // gone and the reader never learns there was a note. Weighted above
+        // buried text so it can never be the cheaper option. The sides are
+        // exempt — overhanging into the margin is the whole point.
+        const p = page.getBoundingClientRect()
+        const spilled = Math.max(0, n.bottom - p.bottom) + Math.max(0, p.top - n.top)
+        return buried + spilled * n.width * 4
+      }
+
+      let best = note.dataset.at ?? 'right'
+      let bestCost = cost()
+      for (const corner of CORNERS) {
+        if (corner === best) continue
+        note.dataset.at = corner
+        const c = cost()
+        if (c < bestCost) { bestCost = c; best = corner }
+      }
+      note.dataset.at = best
+    }
   }
 
   // ── fore-edge tabs ──────────────────────────────────────────────────────
@@ -670,6 +757,21 @@ function boot(): void {
   tabs.forEach((tab) => {
     const target = Number(tab.dataset.page ?? 0) + 2
     tab.addEventListener('click', () => { open(); turnTo(target) })
+  })
+
+  // ── the contents page is a destination list, not a printed one ──────────
+  // Same +2 and the same turnTo as the tabs, deliberately: a reader who clicks
+  // "03 · Storing and connecting" and a reader who reaches for the third tab
+  // should land in exactly the same place, or the book has two different ideas
+  // of where a section begins. Keyboard too — the rows are real buttons, so
+  // Enter and Space have to work or the affordance is a lie to a screen reader.
+  document.querySelectorAll<HTMLElement>('.contents-row[data-goto]').forEach((row) => {
+    const target = Number(row.dataset.goto ?? 0) + 2
+    const go = () => { open(); turnTo(target) }
+    row.addEventListener('click', go)
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); go() }
+    })
   })
   /**
    * A tab you have passed hops to the left edge — the fore-edge IS the progress

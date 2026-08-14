@@ -287,9 +287,15 @@ function analyse(body: string): { pages: PageStat[]; findings: Finding[] } {
       where: 'the document',
       severity: 'fix',
       what: `${sections.length} sections across only ${pages.length} pages`,
-      do: 'Too many. Every `>>` inserts a physical divider board, so the reader turns past more ' +
-          'dividers than content. Three to six sections suits a workbook; use `>` for a page ' +
-          'eyebrow where you do not mean a new section.',
+      // The test is a RATIO, so the advice has to be phrased as one. It used to
+      // end "three to six sections suits a workbook", which is an absolute
+      // range — and flagging five sections while recommending three to six
+      // leaves an author with no idea what they are supposed to change.
+      do: `Too many for the length. Every \`>>\` inserts a physical divider board — two faces of ` +
+          `hard stock — so at this rate the reader turns past nearly as many boards as pages of ` +
+          `content. Aim for a section every four pages or more: at ${pages.length} pages that is ` +
+          `about ${Math.max(1, Math.floor(pages.length / 4))}. Either merge two sections, or use ` +
+          '`>` for a page eyebrow where you do not mean a new section.',
     })
   }
 
