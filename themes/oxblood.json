@@ -1,0 +1,28 @@
+{
+  "_comment": "The Oxblood pairing, from the design specification. Only the colours it genuinely fixed are pinned; everything else derives, including the WCAG contrast correction. Use with: --theme themes/oxblood.json",
+  "name": "Oxblood",
+  "brand": {
+    "name": "Your Brand",
+    "footer": "Your Brand"
+  },
+  "colors": {
+    "surface_deep": "#04060A",
+    "surface": "#1C2833",
+    "surface_alt": "#243342",
+    "accent": "#E0A33E",
+    "accent_bright": "#E3AC51",
+    "accent_ink": "#8C6627",
+    "secondary": "#4A7FB5",
+    "secondary_bright": "#729BC5",
+    "curtain": "#52101A",
+    "curtain_lit": "#7A2530",
+    "curtain_deep": "#170305",
+    "curtain_rim": "#C89F5C",
+    "paper": "#F9F3E5",
+    "paper_alt": "#EDE7DA",
+    "ink": "#19232D",
+    "sticky": "#F9EBAF",
+    "sticky_alt": "#D6E5BE",
+    "sticky_third": "#F9D2C4"
+  }
+}

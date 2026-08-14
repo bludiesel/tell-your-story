@@ -1,0 +1,204 @@
+/* curtain.css — the stage curtain.
+   Every colour is a theme token. The panels are real DOM elements, styled here,
+   so the whole sequence works with WebGL switched off — curtains.js only paints
+   a shader over the top of what CSS has already drawn. */
+
+.curtain {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center;
+  cursor: pointer; overflow: hidden;
+  /* TRANSPARENT, deliberately. This carried `background: var(--deep)` — an
+     OPAQUE backing — so where the shader `discard`s the parted pixels the
+     reveal showed the curtain's own black background rather than the stage
+     behind it. The book was hidden until `curtain-done` later dropped the
+     z-index, at which point it simply materialised out of nothing.
+     With this transparent, the book is genuinely BEHIND the cloth and is
+     uncovered progressively as the two halves draw apart. `.stage-void`
+     supplies the backdrop, so nothing is lost by removing the fill. */
+  background: transparent;
+}
+
+/* ── the void behind the cloth ───────────────────────────────────────────
+   ATMOSPHERE, and it has to live HERE rather than in the shader. Where the
+   curtain parts, the fragment shader `discard`s those pixels outright — there
+   is nothing left to fog. So the haze is a layer sitting behind the WebGL
+   canvas, revealed exactly as the cloth pulls away from it.
+
+   Two gradients, doing different jobs: a cool wash pooling toward the floor so
+   the void has a bottom, and a soft dome of light where the book stands. Real
+   depth comes from the space being unevenly lit, not from adding grey. */
+.stage-void {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    /* the pool of light the book stands in */
+    radial-gradient(58% 42% at 50% 62%,
+      rgba(var(--rgb-pool), .85) 0%,
+      rgba(var(--rgb-pool), .28) 45%,
+      transparent 78%),
+    /* haze gathering low, so the void reads as deep rather than flat */
+    linear-gradient(180deg,
+      transparent 0%,
+      var(--stage-haze) 118%),
+    var(--deep);
+}
+body.curtain-open .curtain { cursor: default; }
+/* Once drawn, the curtain stops intercepting clicks but stays as the backdrop.
+   z-index 0, NOT -1: a negative index would drop it behind the body's own
+   background and the swagged cloth would vanish rather than frame the book. */
+body.curtain-done .curtain { pointer-events: none; z-index: 0; }
+/* The book always sits in front of the cloth.
+   `fixed`, NOT `relative`. This rule exists only to raise the stacking order,
+   but `position: relative` also un-pinned the wrapper from the viewport: it
+   collapsed to the height of its own content, so `place-items: center` had no
+   spare height to centre INTO and the book sat jammed against the top of the
+   window with a third of the screen dead beneath it. The one property this rule
+   actually wants is z-index; the positioning has to stay as book.css set it. */
+.wrap { position: fixed; inset: 0; z-index: 1; }
+
+/* the WebGL canvas curtains.js mounts into — sits exactly over the panels */
+#curtain-gl { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+/* With WebGL live the cloth AND its printing are drawn by the shader, so the
+   DOM panels and the DOM copy step back — they are the no-WebGL fallback. They
+   must stay laid out rather than be display:none'd: printCopy() reads their
+   computed styles and bounding boxes to rasterise the ink onto the cloth. */
+.curtain.gl .curtain-panel,
+.curtain.gl .curtain-copy { opacity: 0; }
+
+/* The element the shader plane is built from. Its canvas is the printed copy —
+   the texture source only, never shown directly. */
+.curtain-plane { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.curtain-plane canvas { width: 100%; height: 100%; opacity: 0; }
+.curtain.no-gl #curtain-gl { display: none; }
+
+/* ── the panels ─────────────────────────────────────────────────────────── */
+.curtain-panel {
+  position: absolute; top: 0; bottom: 0; width: 51%;
+  will-change: transform;
+  background:
+    /* the pleats: repeating light and shade, tightening toward the outer edge */
+    repeating-linear-gradient(90deg,
+      rgba(0,0,0,.34) 0px,
+      rgba(0,0,0,.06) 14px,
+      rgba(255,255,255,.07) 26px,
+      rgba(0,0,0,.06) 38px,
+      rgba(0,0,0,.34) 52px),
+    linear-gradient(180deg, var(--curtain-cloth-lit), var(--curtain-cloth) 45%, var(--curtain-cloth-deep));
+  box-shadow: inset 0 30px 60px -20px rgba(0,0,0,.55);
+}
+.curtain-panel.left  { left: 0;  transform-origin: left center; }
+.curtain-panel.right { right: 0; transform-origin: right center; }
+/* the inner hanging edge catches light and throws a shadow inward */
+.curtain-panel.left::after,
+.curtain-panel.right::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 60px;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,.45));
+}
+.curtain-panel.left::after  { right: 0; }
+.curtain-panel.right::after { left: 0; transform: scaleX(-1); }
+
+/* the pelmet: a valance across the top, so the cloth is clearly hung */
+.curtain-rail {
+  position: absolute; top: 0; left: 0; right: 0; height: clamp(38px, 6vh, 76px);
+  z-index: 4; pointer-events: none;
+  background: linear-gradient(180deg, var(--curtain-cloth-lit), var(--curtain-cloth-deep));
+  box-shadow: 0 10px 26px -8px rgba(0,0,0,.7);
+}
+.curtain-rail::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: var(--accent); opacity: .85;
+}
+
+/* ── what the curtain carries: a title and a picture ─────────────────────
+   ONE BLOCK PER PANEL, and nothing crosses the middle.
+
+   This used to be a single centred column. On a curtain that parts down the
+   centre that is the one place copy cannot go: the draw tore the title in half
+   and dragged the two halves off opposite sides of the screen. Wherever the
+   cloth splits, the printing has to have been laid out to respect the split —
+   which is exactly what a real painted stage cloth does.
+
+   So: title and eyebrow are printed on the LEFT panel, picture and standfirst
+   on the RIGHT. Each block is held clear of the join, so when the curtain draws,
+   each half carries its own complete message away with it.
+
+   The layout lives here and nowhere else. `printCopy()` rasterises whatever the
+   DOM has laid out, reading positions and computed styles straight back off
+   these elements, so this stylesheet stays the single source of truth for the
+   printing and a theme change re-prints the cloth with no second layout to keep
+   in step. */
+.curtain-copy {
+  position: absolute; inset: 0; z-index: 5;
+  display: grid; grid-template-columns: 1fr 1fr;
+  align-items: center;
+}
+.curtain-side {
+  display: flex; flex-direction: column; gap: 1.1rem;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  /* CLEAR OF THE JOIN. The panels meet at 50%, so each block is pulled back
+     from it — the gap is where the cloth opens, and print there would be the
+     first thing destroyed. */
+  max-width: 46ch;
+}
+.curtain-side.left {
+  align-items: flex-end; text-align: right;
+  padding-right: clamp(2rem, 6vw, 5rem); justify-self: end;
+}
+.curtain-side.right {
+  align-items: flex-start; text-align: left;
+  padding-left: clamp(2rem, 6vw, 5rem); justify-self: start;
+}
+.curtain-photo {
+  width: min(38vw, 400px); aspect-ratio: 16 / 10; overflow: hidden;
+  border-radius: 10px; box-shadow: 0 40px 80px -28px rgba(0,0,0,.85);
+  border: 1px solid rgba(255,255,255,.14);
+}
+.curtain-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* No photo supplied? A themed plate rather than an empty hole. */
+.curtain-photo:empty {
+  background:
+    radial-gradient(120% 100% at 30% 20%, var(--surface-alt), var(--deep)),
+    var(--accent);
+}
+.curtain-eyebrow {
+  font-family: var(--font-hand); font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+  color: var(--accent-bright);
+}
+.curtain-title {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+  /* Half the stage per panel now, so the display size follows the panel rather
+     than the window — at 5.5vw the title overran its own half and ran into the
+     join it was moved away from. */
+  font-size: clamp(1.8rem, 4vw, 3.2rem); line-height: .96; color: var(--white);
+  text-wrap: balance; text-shadow: 0 12px 40px rgba(0,0,0,.6);
+}
+.curtain-title em { color: var(--accent-bright); font-style: normal; }
+.curtain-sub {
+  font-family: var(--font-ui); font-size: clamp(.95rem, 1.6vw, 1.1rem);
+  color: var(--ink-on-dark); max-width: 46ch; line-height: 1.6;
+}
+.curtain-hint {
+  position: absolute; bottom: clamp(1.5rem, 5vh, 3.5rem); z-index: 5;
+  font-family: var(--font-hand); font-size: 1.15rem;
+  color: rgba(255,255,255,.55);
+  animation: curtain-pulse 2.6s ease-in-out infinite;
+}
+@keyframes curtain-pulse { 0%,100% { opacity:.45 } 50% { opacity:.95 } }
+
+/* The book waits behind the curtain and must not be clickable through it. */
+body:not(.curtain-open) .closed-stage,
+body:not(.curtain-open) .book-3d { pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .curtain-hint { animation: none; }
+  .curtain-panel { transition: none !important; }
+}
+
+@media print { .curtain, #curtain-gl { display: none !important; } }
+
+/* AN EMPTY PICTURE FRAME READS AS A BROKEN ONE.
+   The cover-art plate is a drop target, and when a book supplies no
+   `curtain_photo` it sat there as an outlined rectangle with a picture glyph in
+   it — which on the first screen anyone sees looks exactly like an image that
+   failed to load. A slot nobody filled should be absent, not apologetic. The
+   frame returns the moment there is something to put in it. */
+.curtain-photo:not(:has(img)) { display: none; }

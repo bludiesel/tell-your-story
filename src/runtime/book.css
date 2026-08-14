@@ -1,0 +1,1032 @@
+/* book.css — the flipbook.
+   Ported from learn-kit's hand-built book-workbook design. Every colour that
+   used to be a hardcoded navy or orange is now a theme token, so the book
+   rebrands entirely from theme.json. */
+
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-ui);
+  overflow: hidden;
+  color: var(--ink-on-dark);
+  -webkit-font-smoothing: antialiased;
+  background: radial-gradient(130% 100% at 50% 6%, var(--surface-alt), var(--surface) 55%, var(--deep));
+}
+
+.wrap { position: fixed; inset: 0; display: grid; place-items: center; perspective: 1700px; }
+.wrap > * { grid-area: 1 / 1; }
+
+/* THE FIT FACTOR — how much of its 1560 x 1040 the stage is drawn at.
+   WRITTEN BY THE RUNTIME, not computed here, and that is not a preference.
+   `min(calc((97vw - 40px) / 1560), calc(92vh / 1040))` reads like the obvious
+   answer and is silently invalid: dividing a length by a number yields a
+   LENGTH, and `scale()` takes a unitless number, so the whole transform is
+   discarded. CSS has no way to divide a length by a length, so there is no
+   pure-CSS spelling of this. The failure is quiet in the worst way — the book
+   renders perfectly at its full 1560px inside a 1000px window, clipped by
+   `overflow: hidden`, which looks like a layout bug rather than a dropped
+   declaration.
+
+   The fallback below is what a reader sees for the one frame before the
+   runtime's first measurement, and on the print path where there is no window
+   to fit. Declared on :root because the CLOSED book uses it too: its cover is
+   sized to land exactly on the left half of the open spread, and two different
+   formulas make that handoff a visible jump at the one moment everything is
+   watching. One number, two users. */
+:root { --fit: .62; }
+
+/* ── the closed book: a chunky 3D volume, floating. Tap to open. ───────── */
+.closed-stage {
+  /* Exactly one page of the fitted stage — the same 780px, scaled by the same
+     factor. It used to be its own viewport-unit formula that happened to land
+     close; "close" is a visible jump at the moment the cover hands over to the
+     spread, which is the one moment the whole opening depends on. */
+  --closed-page-w: calc(780px * var(--fit));
+  position: relative; display: grid; place-items: center; z-index: 5;
+}
+.book-closed {
+  /* This is the final PAGE size, not merely a nice closed-book thumbnail. The
+     cover can therefore land exactly on the left half of the open spread. */
+  --bw: var(--closed-page-w);
+  --bh: calc(var(--bw) * 1.3333); --bt: clamp(32px, 4vmin, 54px);
+  position: relative; width: var(--bw); height: var(--bh);
+  transform-style: preserve-3d; cursor: pointer; outline: none;
+  animation: bc-float 7s ease-in-out infinite;
+  transition: transform .8s cubic-bezier(.45,0,.2,1), opacity .4s ease .35s;
+  /* The float animates a surface that carries the cover TITLE. Promoting it to
+     its own compositor layer means the text is rasterised once and the layer
+     is then moved as a texture — instead of every glyph being re-drawn at new
+     sub-pixel positions each frame, which reads as shimmering type. */
+  will-change: transform;
+  backface-visibility: hidden;
+}
+.book-closed:focus-visible { outline: 3px solid var(--accent); outline-offset: 14px; border-radius: 8px; }
+.bc-face { position: absolute; left: 50%; top: 50%; backface-visibility: hidden; }
+.bc-front {
+  width: var(--bw); height: var(--bh);
+  transform: translate(-50%,-50%) translateZ(calc(var(--bt) / 2));
+  border-radius: 6px 16px 16px 6px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .7rem; text-align: center; padding: 8%;
+  background: radial-gradient(130% 90% at 72% 14%, var(--surface-alt), var(--surface) 52%, var(--deep));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), inset -10px 0 24px rgba(0,0,0,.3);
+}
+/* hinge groove */
+.bc-front::before {
+  content: ""; position: absolute; left: 7%; top: 0; bottom: 0; width: 3px; border-radius: 2px;
+  background: linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,.15), rgba(0,0,0,.4));
+}
+.bc-back {
+  width: var(--bw); height: var(--bh);
+  transform: translate(-50%,-50%) rotateY(180deg) translateZ(calc(var(--bt) / 2));
+  border-radius: 16px 6px 6px 16px;
+  background: linear-gradient(245deg, var(--surface-alt), var(--deep));
+}
+.bc-spine {
+  width: var(--bt); height: var(--bh);
+  transform: translate(-50%,-50%) rotateY(-90deg) translateZ(calc(var(--bw) / 2));
+  background: linear-gradient(180deg, var(--surface-alt), var(--deep));
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.bc-spine span {
+  writing-mode: vertical-rl; font-family: var(--font-display); font-weight: 700;
+  text-transform: uppercase; letter-spacing: .14em;
+  font-size: clamp(.8rem, 1.6vmin, 1.05rem); color: var(--white); opacity: .85;
+}
+.bc-fore {
+  width: var(--bt); height: calc(var(--bh) - 10px);
+  transform: translate(-50%,-50%) rotateY(90deg) translateZ(calc(var(--bw) / 2));
+  background: repeating-linear-gradient(90deg, var(--paper) 0 2px, var(--paper-edge) 2px 3.4px);
+  box-shadow: inset 3px 0 0 var(--deep), inset -3px 0 0 var(--surface-alt);
+}
+.bc-top {
+  width: calc(var(--bw) - 8px); height: var(--bt);
+  transform: translate(-50%,-50%) rotateX(90deg) translateZ(calc(var(--bh) / 2));
+  background: repeating-linear-gradient(180deg, var(--paper) 0 2px, var(--paper-edge) 2px 3.4px);
+  box-shadow: inset 0 3px 0 var(--surface-alt), inset 0 -3px 0 var(--deep);
+}
+.bc-bottom {
+  width: calc(var(--bw) - 8px); height: var(--bt);
+  transform: translate(-50%,-50%) rotateX(-90deg) translateZ(calc(var(--bh) / 2));
+  background: repeating-linear-gradient(0deg, var(--paper-2) 0 2px, var(--paper-edge) 2px 3.4px);
+  box-shadow: inset 0 3px 0 var(--deep), inset 0 -3px 0 var(--surface-alt);
+}
+.bc-logo { width: 52%; aspect-ratio: 1; filter: drop-shadow(0 14px 30px rgba(0,0,0,.5)); }
+.bc-logo img, .bc-logo svg { width: 100%; height: 100%; object-fit: contain; display: block; }
+.bc-t {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+  color: var(--white); font-size: clamp(1.7rem, 4.6vmin, 2.7rem); line-height: .94;
+}
+.bc-s { font-family: var(--font-hand); font-size: clamp(1.1rem, 2.6vmin, 1.5rem); color: var(--accent-bright); }
+.bc-hint {
+  position: absolute; bottom: 7%; font-family: var(--font-hand); font-size: 1.15rem;
+  color: rgba(255,255,255,.55); animation: bc-pulse 2.6s ease-in-out infinite;
+}
+/* ── the book stands somewhere ───────────────────────────────────────────
+   TWO shadows, not one. A single soft blur is what makes a floating object read
+   as a sticker: real contact needs a tight, dark, nearly-sharp core directly
+   under the object PLUS a wide diffuse ambient pool. The core is what the eye
+   uses to judge how far above the floor something is; without it, the object
+   has no height and therefore no presence. */
+.bc-shadow {
+  position: absolute; width: calc(var(--closed-page-w) * .9); height: calc(var(--closed-page-w) * .3);
+  left: 50%; top: 64%; transform: translate(-50%,0); border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0,0,0,.62), transparent 68%);
+  filter: blur(20px); animation: bc-shadow 7s ease-in-out infinite;
+}
+/* the tight contact core */
+.bc-shadow::after {
+  content: ""; position: absolute; left: 50%; top: 46%;
+  width: 52%; height: 34%; transform: translate(-50%,-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0,0,0,.8), transparent 70%);
+  filter: blur(7px);
+}
+/* The floor the light pools on. Warm, because the pool in .stage-void is warm —
+   a cold floor under a warm light is the tell that they were designed apart. */
+.closed-stage::after {
+  content: ""; position: absolute; left: 50%; top: 66%;
+  width: min(120vmin, 1100px); height: min(46vmin, 380px);
+  transform: translate(-50%,0); border-radius: 50%;
+  background: radial-gradient(ellipse,
+    rgba(var(--rgb-pool), .55) 0%,
+    rgba(var(--rgb-pool), .18) 42%,
+    transparent 72%);
+  filter: blur(26px); pointer-events: none; z-index: -1;
+}
+body.open .closed-stage::after { opacity: 0; transition: opacity .5s ease .2s; }
+@keyframes bc-float {
+  0%,100% { transform: rotateX(56deg) rotateZ(-14deg) scale(.58) translateZ(0) }
+  50%     { transform: rotateX(52deg) rotateZ(-11deg) scale(.58) translateZ(36px) }
+}
+@keyframes bc-shadow {
+  0%,100% { transform: translate(-50%,0) scale(1); opacity: .85 }
+  50%     { transform: translate(-50%,0) scale(.88); opacity: .55 }
+}
+@keyframes bc-pulse { 0%,100% { opacity: .45 } 50% { opacity: .95 } }
+
+/* ── opening: the cover actually swings ────────────────────────────────────
+   The old version faded the closed book out and faded the open one in, which
+   is a dissolve, not an opening. Now it happens in three beats:
+
+     1. the book lies flat and comes forward   (it stops being a 3D object
+                                                on a table and squares up to you)
+     2. the FRONT COVER swings on its hinge    (this is the actual "opening")
+     3. the spread is revealed underneath
+
+   The hinge is the left edge, which is why transform-origin moves there and
+   the whole volume shifts right by half its own thickness — a real cover
+   pivots about the spine, not about its middle. */
+/* TIMING IS THE WHOLE TRICK HERE, so the beats are written out once and the
+   numbers below are read off this table rather than invented per rule:
+
+     0.00 - 0.58   the volume expands to the final page geometry
+     0.28 - 1.08   the cover swings on its spine
+     0.62 - 0.92   the side faces (spine, fore-edge, top) go
+     0.74 - 1.04   the closed volume retires
+     0.80 - 1.22   the open spread settles in behind it
+
+   A measured trace of the previous version showed the closed book AND the open
+   spread BOTH at full opacity for 900ms, then the closed book vanishing a
+   second after everything else had finished. That reads as the spread
+   dissolving THROUGH the cover, followed by a long dead beat — the opposite of
+   a cover being lifted off. The overlap is now 240ms, which is a hand-off
+   rather than a cross-fade. */
+body.open .book-closed {
+  animation: none;
+  /* Shift the volume right by one half-page: its spine lands on the open
+     book's gutter, so the rotating front cover becomes the left-hand page. */
+  transform: translateX(50%) rotateX(0deg) rotateZ(0deg) scale(1);
+  /* The retirement is part of the OPENING, not a separate late step keyed off
+     `opened-done`. That was the 900ms stall. */
+  opacity: 0;
+  transition: transform .58s cubic-bezier(.22,.86,.3,1),
+              opacity .22s ease 1.04s;
+}
+body.open .bc-front {
+  transform-origin: left center;
+  /* -180deg leaves the cover flat over the left leaf before it hands off. */
+  transform: translate(-50%,-50%) translateZ(calc(var(--bt) / 2)) rotateY(-180deg);
+  transition: transform .80s cubic-bezier(.22,.82,.28,1) .28s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 24px 0 60px -14px rgba(0,0,0,.75);
+}
+/* The side faces go BEFORE the cover finishes: once the volume is edge-on they
+   are geometrically wrong anyway, and keeping them makes the swing look like a
+   flat card rotating rather than a board coming off a block of pages. */
+body.open .bc-back, body.open .bc-spine, body.open .bc-fore,
+body.open .bc-top, body.open .bc-bottom, body.open .bc-hint {
+  opacity: 0; transition: opacity .24s ease .62s;
+}
+body.opened-done .book-closed { pointer-events: none; }
+
+/* ── closing: the sequence genuinely reversed ────────────────────────────
+   Reversing an animation is NOT "remove the class". Every opening transition
+   above lives inside a `body.open` rule, so dropping that class drops the
+   transitions with it. Measured, that produced: the cover never rotated at all
+   (0° the whole way), the closed volume faded IN while the open spread was
+   still fully opaque — both at opacity 1 together at 800ms — and the curtain
+   began descending at ~700ms while the book was still dissolving. The book did
+   not close; it cross-faded, and the curtain arrived on top of it.
+
+   So closing gets its own state and its own timing table, mirroring the opening
+   one rather than trying to run it backwards:
+
+     0.00 - 0.40   the open spread goes
+     0.30 - 0.66   the closed volume becomes present, cover still swung open
+     0.40 - 1.10   the COVER SWINGS SHUT  ← the actual closing
+     0.75 - 1.05   the side faces return
+     1.10 - 1.55   the volume settles back into its float
+
+   Only then does the curtain start down, which is the order a stage works in. */
+body.closing .book-3d {
+  opacity: 0; transform: translate(-50%, -50%) scale(calc(var(--fit) * .98)) translateY(14px); pointer-events: none;
+  transition: opacity .4s ease, transform .5s ease;
+}
+body.closing .book-closed {
+  animation: none; opacity: 1;
+  transform: rotateX(56deg) rotateZ(-14deg) scale(.58);
+  transition: opacity .22s ease .30s,
+              transform .58s cubic-bezier(.22,.86,.3,1) 1.02s;
+}
+body.closing .bc-front {
+  transform-origin: left center;
+  transform: translate(-50%,-50%) translateZ(calc(var(--bt) / 2)) rotateY(0deg);
+  transition: transform .80s cubic-bezier(.22,.82,.28,1) .30s;
+}
+body.closing .bc-back, body.closing .bc-spine, body.closing .bc-fore,
+body.closing .bc-top, body.closing .bc-bottom, body.closing .bc-hint {
+  opacity: 1; transition: opacity .3s ease .75s;
+}
+body.closing .bc-shadow,
+body.closing .closed-stage::after { opacity: 1; transition: opacity .5s ease 1.0s; }
+body.closing .chrome { opacity: 0; transition: opacity .25s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  body.closing .book-closed, body.closing .bc-front, body.closing .book-3d {
+    transition: none !important;
+  }
+}
+body.open .bc-shadow { animation: none; opacity: 0; transition: opacity .5s ease .2s; }
+body.open .closed-stage { pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  body.open .bc-front, body.open .book-closed { transition: none !important; }
+}
+
+/* ── the open book ─────────────────────────────────────────────────────── */
+/* This is training and presentation material: the book OWNS the screen.
+   An earlier version reserved a strip at the bottom for the controls, which
+   both shrank the book and pushed it off-centre — it sat in the upper middle
+   with dead space beneath. The controls float over the book instead, so the
+   only limits here are the viewport and the 1.65 page ratio. */
+.book-3d {
+  /* ── A FIXED STAGE, SCALED ONCE ─────────────────────────────────────────
+     1560 x 1040 — two 780 x 1040 pages — fitted to the window by a single
+     transform. DESIGN.md §1: "that is what lets every measurement in the book
+     be absolute."
+
+     It used to size itself in viewport units at the same 1.5 ratio. The ratio
+     was right and the consequence was still wrong: the PAGE changed size with
+     the window while every `rem` in the stylesheet did not, so the type drifted
+     relative to the paper it is printed on. On a 1060-wide window a page came
+     out 494px against the design's 780, which puts the whole ported catalogue
+     about 1.6x oversized — the header band could no longer hold an eyebrow and
+     a title, and the chapter opener's drop cap sat a full line below its own
+     small-caps run-in. Both looked like layout bugs and neither was: the
+     layouts were correct and the canvas was the wrong size.
+
+     Fixed here, so a rem is a fixed number of stage pixels and the type scales
+     with the paper exactly as ink does.
+
+     Taken out of the grid flow deliberately. A 1560px box inside `.wrap`'s
+     centring grid sets a 1560px track whatever the window is, which pushes the
+     closed book off-centre on any smaller screen — a transform does not shrink
+     the space an element reserves. Absolute + translate centres the box itself.
+
+     40px of the width is reserved so the fore-edge tabs are not clipped; they
+     overhang 18px each side. */
+  position: absolute; left: 50%; top: 50%;
+  width: 1560px; height: 1040px;
+  opacity: 0; pointer-events: none;
+  transform: translate(-50%, -50%) scale(calc(var(--fit) * .965)) translateY(20px);
+  /* The spread arrives as the cover reaches its flat, page-sized geometry.
+     They now share a spine and dimensions, so this is a handoff, not a swap. */
+  transition: opacity .42s ease .62s, transform .58s cubic-bezier(.16,1,.3,1) .62s;
+}
+/* `transform: none` here would drop the fit scale and slam the book to its full
+   1560px the instant it opened. Every state carries the fit. */
+body.open .book-3d {
+  opacity: 1; pointer-events: auto;
+  transform: translate(-50%, -50%) scale(var(--fit));
+}
+
+#book {
+  position: relative; z-index: 2; width: 100%; height: 100%; background: transparent;
+  box-shadow: 0 2px 0 var(--paper-edge), 0 4px 0 var(--paper-edge-2),
+              0 6px 0 var(--paper-edge-3), 0 8px 0 var(--paper-edge-4);
+}
+/* cover boards around the page block; carries the book's drop shadow */
+.boards {
+  position: absolute; z-index: 0; inset: -12px -30px -20px -30px;
+  border-radius: 12px 18px 18px 12px;
+  background: linear-gradient(115deg, var(--surface-alt), var(--surface) 45%, var(--deep));
+  box-shadow: 0 46px 95px -24px rgba(0,0,0,.8), 0 20px 40px -16px rgba(0,0,0,.55),
+              inset 0 1px 0 rgba(255,255,255,.07);
+}
+/* remaining closed pages under the spread — widths follow reading progress */
+.stack {
+  position: absolute; z-index: 1; top: 3px; bottom: 9px;
+  background: repeating-linear-gradient(90deg, var(--paper) 0 2px, var(--paper-edge-2) 2px 3.4px);
+  transition: width .5s ease, left .5s ease, right .5s ease, filter .35s ease;
+  filter: drop-shadow(0 2px 1px rgba(0,0,0,.18));
+}
+.stack::after {
+  content: ""; position: absolute; top: 6px; bottom: 5px; width: 3px;
+  background: linear-gradient(rgba(255,255,255,.58), rgba(0,0,0,.2));
+  opacity: .72;
+}
+.stack-l { width: var(--swl, 5px); left: calc(-1 * var(--swl, 5px)); border-radius: 5px 0 0 5px; box-shadow: inset 2px 0 3px rgba(0,0,0,.18); }
+.stack-l::after { right: 1px; }
+.stack-r { width: var(--swr, 21px); right: calc(-1 * var(--swr, 21px)); border-radius: 0 5px 5px 0; box-shadow: inset -2px 0 3px rgba(0,0,0,.18); }
+.stack-r::after { left: 1px; }
+.book-3d.is-turning .stack { transition: none; filter: drop-shadow(0 3px 2px rgba(0,0,0,.26)); }
+
+/* ── the spine: a bound edge, not a painted line ───────────────────────────
+   A real open book does three things at the gutter that a flat gradient does
+   not: the paper CURVES down into the binding, the binding itself sits in
+   deep shadow, and a sliver of the cover board shows between the leaves.
+   Three stacked layers, cheap, and they sell the whole object. */
+
+/* 1. the well — a narrow trough of shadow where the leaves meet */
+.gutterline {
+  position: absolute; z-index: 4; top: 0; bottom: 0; left: 50%; width: 120px;
+  transform: translateX(-50%); pointer-events: none;
+  background:
+    /* the dark seam itself, tight and asymmetric like real binding glue */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(var(--rgb-deep),.05) 30%,
+      rgba(var(--rgb-deep),.16) 44%,
+      rgba(var(--rgb-deep),.42) 49.4%,
+      rgba(var(--rgb-deep),.46) 50%,
+      rgba(var(--rgb-deep),.42) 50.6%,
+      rgba(var(--rgb-deep),.16) 56%,
+      rgba(var(--rgb-deep),.05) 70%,
+      transparent 100%);
+}
+/* 2. the binding board, glimpsed through the gap */
+.gutterline::before {
+  content: ""; position: absolute; top: -1px; bottom: -1px; left: 50%;
+  width: 7px; transform: translateX(-50%);
+  background: linear-gradient(90deg,
+    var(--deep), color-mix(in srgb, var(--surface-alt) 70%, black) 50%, var(--deep));
+  box-shadow: 0 0 10px 2px rgba(0,0,0,.5);
+}
+/* 3. the head and tail of the spine catch a little light */
+.gutterline::after {
+  content: ""; position: absolute; left: 50%; width: 30px; height: 100%;
+  transform: translateX(-50%); pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,.10), transparent 12%, transparent 88%, rgba(255,255,255,.07));
+}
+
+/* ── page curvature ────────────────────────────────────────────────────────
+   Paper does not lie flat next to a binding: it lifts, curves and falls into
+   the gutter. Each leaf gets a gradient that darkens sharply toward its INNER
+   edge with a thin highlight just before it — that highlight is the crest of
+   the curve catching light, and it is what stops the shadow reading as a
+   painted-on smudge.
+
+   Side is baked into `pl` / `pr` at build time. PageFlip reorders its items
+   while a leaf turns, so :nth-child would make a highlight reverse direction
+   halfway through the motion. */
+.stf__item { position: relative; }
+.stf__item::before {
+  content: ""; position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  border-radius: inherit;
+}
+/* Stops, from the outer edge inward. Tuned live in a browser, not guessed:
+     0-4%    a whisper of shadow at the fore-edge, where the leaf lifts
+     72-84%  flat paper
+     84%     THE CREST — a bright band. This is the single most important
+             stop: it is the top of the curve catching light, and without it
+             the shadow below reads as a painted smudge rather than a bend.
+     94-100% the fall into the binding, accelerating */
+/* NO GLARE. The white crest band at 84% is gone from every page, by request —
+   not just from the boards, where it was removed first. What remains is the
+   fall into the binding: a shadow, which is a real thing paper does in a gutter,
+   with no highlight painted on top of it. The bend now reads from the darkening
+   alone, which is quieter than the crest version and is the intended trade. */
+/* left leaf — inner edge is on the RIGHT */
+.stf__item.page.pl::before {
+  background: linear-gradient(to right,
+    rgba(0,0,0,.06) 0%,
+    transparent 4%,
+    transparent 86%,
+    rgba(var(--rgb-deep),.16) 94%,
+    rgba(var(--rgb-deep),.42) 99%,
+    rgba(var(--rgb-deep),.55) 100%);
+}
+/* right leaf — inner edge is on the LEFT */
+.stf__item.page.pr::before {
+  background: linear-gradient(to left,
+    rgba(0,0,0,.06) 0%,
+    transparent 4%,
+    transparent 86%,
+    rgba(var(--rgb-deep),.16) 94%,
+    rgba(var(--rgb-deep),.42) 99%,
+    rgba(var(--rgb-deep),.55) 100%);
+}
+/* PageFlip's moving shadows are separate elements, not classes on the leaf.
+   During a turn our static curvature yields to its dynamic light instead of
+   doubling the dark band at the fold. */
+.book-3d.is-turning .stf__item::before { opacity: .32; }
+
+/* ── the book sits in the world ────────────────────────────────────────────
+   Two shadows, not one: a tight contact shadow directly under the spine where
+   the book actually touches, and a broad soft one for the volume above it.
+   A single blurred ellipse is what makes CG objects look pasted on. */
+.floor {
+  position: absolute; z-index: 0; left: 3%; right: 3%; bottom: -46px; height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0,0,0,.55), transparent 70%);
+  filter: blur(16px);
+  transform: translateX(var(--stack-bias, 0px));
+  transition: transform .5s ease;
+}
+.floor::after {
+  content: ""; position: absolute; left: 28%; right: 28%; top: 34%; height: 34%;
+  border-radius: 50%; background: radial-gradient(ellipse, rgba(0,0,0,.7), transparent 72%);
+  filter: blur(7px);
+}
+
+/* NO idle animation on the open book. It is tempting — a book that breathes
+   feels alive — but the open book CONTAINS ALL THE TEXT, and animating a
+   rotateX on it forces the browser to re-rasterise every glyph at fractional
+   pixel positions, continuously. The result is text that visibly shimmers.
+   Motion belongs on the closed cover (no body text) and on page turns
+   (brief, and the payoff is worth it), never on a surface someone is
+   trying to READ. */
+
+/* page-flip paints its own area: make it paper so a turn never shows a void */
+.stf__block, .stf__wrapper { background: linear-gradient(var(--paper), var(--paper-2)); }
+
+/* ── a page ────────────────────────────────────────────────────────────── */
+.page {
+  overflow: hidden; color: var(--ink);
+  background: var(--grain),
+    repeating-linear-gradient(transparent 0 33px, var(--rule) 33px 34px),
+    linear-gradient(var(--paper), var(--paper-2));
+}
+.page.hard {
+  background: radial-gradient(120% 85% at 75% 12%, var(--surface-alt), var(--surface) 55%, var(--deep));
+  color: var(--white);
+}
+.half { height: 100%; display: flex; flex-direction: column; position: relative; }
+
+/* the brand mark, printed into the page footer */
+/* A PRINTED MARK, NOT A BADGE.
+   DESIGN.md §10 puts the brand mark on the outer corner, away from the spine,
+   and says nothing about its weight — so this file guessed, at 110px and .85
+   opacity. Rendered, that is a logo stamped on every page: it competed with the
+   folio for the same corner, and a sticky note hanging into the bottom margin
+   landed on top of it. Ink printed into a page footer is quiet. The same
+   artwork still carries the cover and the closed book's front board at full
+   strength, which is where a boxed monogram belongs. */
+.page::after {
+  content: ""; position: absolute;
+  left: clamp(1.3rem, 2.4vw, 2.2rem); bottom: clamp(.9rem, 1.8vw, 1.6rem);
+  width: clamp(58px, 4.6vw, 76px); aspect-ratio: 3/2;
+  background: var(--page-mark) center/contain no-repeat; opacity: .16; pointer-events: none;
+}
+/* Right-hand pages put the mark on the outer corner, away from the spine.
+   KEYED OFF THE BAKED-IN `pr` CLASS, not :nth-child. page-flip reorders items in
+   the DOM during a turn, so an :nth-child selector re-evaluates mid-flip and the
+   mark JUMPS from one corner to the other — which reads as the mark detaching
+   from the page it is printed on. Same trap that hit the page curvature. */
+.page.pr::after { left: auto; right: clamp(1.3rem, 2.4vw, 2.2rem); }
+/* Boards are not printed pages: no folio, no running mark. */
+.page.hard::after, .page.cover::after, .page.divider::after,
+.page[data-stock="hard"]::after { display: none; }
+
+.pageno {
+  position: absolute; left: 50%; bottom: clamp(.7rem, 1.4vw, 1.2rem);
+  transform: translateX(-50%); font-family: var(--font-hand);
+  font-size: 1.25rem; color: var(--ink-soft);
+}
+
+/* header band spanning the spread */
+.band {
+  height: 18%; min-height: 96px;
+  background: linear-gradient(135deg, var(--surface-alt), var(--deep));
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: clamp(.7rem,1.6vw,1.2rem) clamp(1.4rem,3vw,2.6rem); color: var(--white);
+}
+.band .bk { font-family: var(--font-hand); font-size: 1.3rem; color: var(--accent-bright); line-height: 1; }
+.band .bt {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+  letter-spacing: .01em; font-size: clamp(1.5rem,3vw,2.3rem); line-height: .92;
+}
+.band.r { align-items: flex-end; }
+.band.r .ix { font-family: var(--font-hand); font-size: 1.3rem; color: rgba(255,255,255,.6); }
+
+.below {
+  flex: 1; padding: clamp(1.2rem,2.8vw,2.4rem) clamp(1.4rem,3vw,2.6rem) clamp(2.6rem,4.5vw,4rem);
+  display: flex; flex-direction: column; justify-content: center; overflow: hidden;
+}
+
+/* ── page type ─────────────────────────────────────────────────────────── */
+.below h1, .below h2, .below h3 {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+  color: var(--surface); line-height: .98; margin: .1rem 0 .6rem; text-wrap: balance;
+}
+.below h1 { font-size: clamp(1.9rem, 4vw, 2.8rem); }
+.below h2 { font-size: clamp(1.6rem, 3.2vw, 2.2rem); }
+.below h3 { font-size: clamp(1.2rem, 2.2vw, 1.5rem); text-transform: none; }
+.below p, .below li {
+  font-family: var(--font-body); font-size: clamp(.95rem, 1.35vw, 1.12rem);
+  line-height: 1.62; color: var(--ink);
+}
+.below p { margin: 0 0 .85rem; }
+.below ul, .below ol { margin: 0 0 .9rem; padding-left: 1.3em; }
+.below li { margin: .3em 0; }
+.below strong { color: var(--surface); }
+.below em { font-style: italic; }
+.below a { color: var(--link-on-paper); }
+.below img { max-width: 100%; height: auto; display: block; border-radius: 4px;
+  box-shadow: 0 10px 26px -12px rgba(0,0,0,.5); margin: .4rem 0; }
+.below table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: .95rem; }
+.below th, .below td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--rule-strong); }
+.below th { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .06em; color: var(--surface); }
+
+/* handwritten eyebrow */
+.kick { font-family: var(--font-hand); font-size: 1.45rem; color: var(--accent-ink); line-height: 1; }
+
+/* ── blocks, on paper ──────────────────────────────────────────────────── */
+.below .callout {
+  border-left: 3px solid var(--accent-ink); background: rgba(var(--rgb-accent), .10);
+  padding: .8rem 1.1rem; border-radius: 0 6px 6px 0; margin: .8rem 0;
+}
+.below .callout p:last-child { margin-bottom: 0; }
+.below .block-title {
+  font-family: var(--font-hand); font-size: 1.3rem; color: var(--accent-ink);
+  text-transform: none; margin-bottom: .2rem;
+}
+.below .takeaway {
+  background: linear-gradient(135deg, var(--surface-alt), var(--deep));
+  color: var(--ink-on-dark); border-radius: 10px; padding: 1rem 1.3rem; margin: .9rem 0;
+  box-shadow: 0 14px 30px -14px rgba(0,0,0,.6);
+}
+.below .takeaway p, .below .takeaway li { color: var(--ink-on-dark); }
+.below .takeaway .block-title { color: var(--accent-bright); }
+.below .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+.below .pullquote {
+  font-family: var(--font-hand); font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  line-height: 1.25; color: var(--accent-ink); border: 0; padding: 0; margin: .8rem 0;
+}
+.below .pullquote p { font-family: inherit; font-size: inherit; color: inherit; }
+.below .statement {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+  font-size: clamp(2rem, 4.4vw, 3.4rem); line-height: 1.02; color: var(--surface);
+}
+.below .statement p { font-family: inherit; font-size: inherit; color: inherit; margin: 0; }
+
+/* hand-drawn marks, for checklists and worksheets */
+.mark-check::before { content: ""; display: inline-block; width: 1.5em; height: 1.5em;
+  background: var(--mark-check) center/contain no-repeat; vertical-align: -.4em; }
+
+/* ── cover spread ──────────────────────────────────────────────────────────
+   The book opens onto its own inside cover, so the first thing you see is the
+   binding, not a content page. Two halves gradient toward the gutter so the
+   spread reads as one wrapped board. */
+.page.cover { color: var(--white); }
+.page.cover.cl { background: linear-gradient(90deg, var(--surface-alt), var(--deep)); }
+.page.cover.cr { background: linear-gradient(90deg, var(--deep), var(--surface-alt)); }
+.page.cover .half {
+  align-items: center; justify-content: center; text-align: center;
+  padding: clamp(1.5rem, 4vw, 3rem);
+}
+.page.cover .cover-mark { width: min(42%, 220px); margin-bottom: 1.1rem; }
+.page.cover .cover-mark img { width: 100%; height: auto; display: block; }
+.page.cover .cover-title {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+  font-size: clamp(1.8rem, 4vw, 3rem); line-height: .95; color: var(--white);
+}
+.page.cover .cover-title em { color: var(--accent-bright); font-style: normal; }
+.page.cover .cover-sub {
+  font-family: var(--font-hand); font-size: clamp(1.05rem, 2vw, 1.4rem);
+  color: var(--accent-bright); margin-top: .5rem;
+}
+.page.cover .cover-foot {
+  position: absolute; bottom: clamp(1rem, 2.4vw, 2rem); left: 0; right: 0;
+  font-family: var(--font-hand); font-size: .95rem; color: rgba(255,255,255,.45);
+}
+
+/* ── fore-edge chapter tabs ────────────────────────────────────────────────
+   They stick out of the page block like real index tabs, and a tab you have
+   already passed hops to the LEFT edge — so the fore-edge itself shows you how
+   far through you are, without a progress bar. */
+.tabs { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
+.tab {
+  position: absolute; pointer-events: auto; cursor: pointer; border: none;
+  width: 30px; padding: .5rem .28rem; right: -18px;
+  font-family: var(--font-display); font-weight: 600; font-size: .74rem;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--white);
+  text-align: center; writing-mode: vertical-rl;
+  background: var(--surface-alt); border-radius: 0 9px 9px 0;
+  box-shadow: 4px 3px 9px -4px rgba(0,0,0,.45);
+  transition: transform .18s cubic-bezier(.22,1,.36,1), background .18s;
+}
+.tab:nth-child(2n) { background: var(--accent); color: var(--surface); }
+.tab:hover { transform: translateX(4px); }
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tab.read {
+  left: -18px; right: auto; border-radius: 9px 0 0 9px;
+  box-shadow: -4px 3px 9px -4px rgba(0,0,0,.45);
+}
+.tab.read:hover { transform: translateX(-4px); }
+
+/* ── the tab that is actually glued to the board ──────────────────────────
+   The rail above is an overlay on `.book-3d`, a sibling of `#book`. It can
+   never rotate, so turning past a section looked wrong in the one way a tab
+   cannot survive: it stood perfectly still through the whole arc, then jumped
+   to the opposite edge the instant the page landed. Nothing physical does
+   that.
+
+   `.leaf-tab` is a CHILD of the right-hand section board, so page-flip's own
+   transform carries it round the turn. Two things make that safe, and both are
+   specific to boards:
+     · `drawHard` sets `clip-path: none`, while `drawSoft` clips every page to
+       the bend polygon — a tab hanging off a soft page would be sliced off.
+     · `.page` clips its contents so paper edges stay crisp; a board carries no
+       bleeding content, so it can afford `overflow: visible` and let the tab
+       hang past the fore-edge.
+   The rail hides itself whenever a board is on screen (`.onboard`) or a turn is
+   under way (`.turning`), so the reader only ever sees one tab per section. */
+.page.divider { overflow: visible; }
+.leaf-tab {
+  position: absolute; z-index: 4; pointer-events: none;
+  top: 8%; right: -18px; width: 30px; padding: .5rem .28rem;
+  font-family: var(--font-display); font-weight: 600; font-size: .74rem;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--white);
+  text-align: center; writing-mode: vertical-rl;
+  background: var(--surface-alt); border-radius: 0 9px 9px 0;
+  box-shadow: 4px 3px 9px -4px rgba(0,0,0,.45);
+}
+.leaf-tab.alt { background: var(--accent); color: var(--surface); }
+.tabs.turning { opacity: 0; }
+.tabs { transition: opacity .14s ease; }
+.tab.onboard { opacity: 0; pointer-events: none; }
+
+/* ── ribbon bookmark ───────────────────────────────────────────────────────
+   Hangs over the top edge and jumps you back to the furthest spread you
+   reached. Grows a little on hover, like tugging a real ribbon. */
+/* ── the bookmark ribbon ─────────────────────────────────────────────────
+   ON THE SPINE, which is where a bound-in ribbon actually lives: it is sewn
+   into the head of the binding and hangs down the gutter, not tucked against
+   the fore-edge. Sitting it at the top-right made it read as a sticky tab
+   applied to the cover rather than part of the book's construction.
+
+   So it is centred on the gutter and runs the length of the spine, tucking
+   BEHIND the leaves (z-index below the pages) with only the tail showing past
+   the bottom edge — exactly how you find one in a real hardback. */
+.ribbon {
+  /* z-index 1, BELOW `#book` (2). At 2 it tied with the page block and won on
+     document order, so it painted OVER the leaves — including over a page in
+     mid-turn, which is impossible: a ribbon is sewn into the binding and the
+     leaves sit on top of it. Above `.boards` (0) so the tail still shows. */
+  position: absolute; z-index: 1; top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 26px; height: calc(100% + 62px);
+  cursor: pointer; border: none; padding: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--accent) 78%, black) 0%,
+    var(--accent) 34%,
+    var(--accent-bright) 52%,
+    var(--accent) 68%,
+    color-mix(in srgb, var(--accent) 72%, black) 100%);
+  /* the swallow-tail cut at the hanging end */
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), 50% 100%, 0 calc(100% - 22px));
+  box-shadow: 0 10px 22px -10px rgba(0,0,0,.8);
+  transition: height .22s cubic-bezier(.22,1,.36,1);
+  display: grid; align-items: end; justify-items: center;
+}
+/* The ribbon lies IN the gutter, so the leaves cast onto it. */
+.ribbon::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,.42), transparent 22%,
+              transparent 78%, rgba(0,0,0,.42));
+}
+.ribbon:hover { height: calc(100% + 78px); }
+.ribbon:focus-visible { outline: 2px solid var(--white); outline-offset: 2px; }
+.ribbon span {
+  writing-mode: vertical-rl; font-family: var(--font-hand);
+  font-size: .92rem; color: var(--surface);
+  /* Sits on the visible tail below the block, not up in the gutter where the
+     pages would cover it. */
+  position: relative; z-index: 1; padding-bottom: 26px; opacity: .9;
+}
+
+/* ── chrome ────────────────────────────────────────────────────────────── */
+/* Floats OVER the book on a soft scrim, and fades out while you read.
+   Move the mouse, or focus a control, and it comes back. */
+.chrome {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: center; gap: .8rem;
+  padding: 1.6rem 1.4rem .9rem; opacity: 0;
+  transition: opacity .4s ease .5s;
+  pointer-events: none;
+  background: linear-gradient(transparent, rgba(var(--rgb-deep),.55));
+}
+body.open .chrome { opacity: 1; pointer-events: auto; }
+body.open.idle .chrome { opacity: 0; transition-delay: 0s; }
+body.open.idle { cursor: none; }
+.chrome:hover, .chrome:focus-within { opacity: 1 !important; }
+.chrome button {
+  font: inherit; color: var(--ink-on-dark); cursor: pointer;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px; width: 2.4rem; height: 2.4rem; display: grid; place-items: center;
+  transition: border-color .15s, transform .15s, background .15s;
+}
+.chrome button:hover { border-color: var(--accent); background: rgba(255,255,255,.12); }
+.chrome button:active { transform: scale(.93); }
+.chrome button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.chrome .spread {
+  font-family: var(--font-hand); font-size: 1.2rem; color: var(--ink-on-dark-muted);
+  min-width: 6ch; text-align: center;
+}
+
+/* Close and riffle sit in the bottom chrome with the page controls, but are
+   separated by a hairline: they are not page turns, and a presenter reaching for
+   "next" must never hit "close" by feel. */
+.chrome [data-action="close"],
+.chrome [data-action="riffle"] {
+  color: var(--ink-on-dark-muted); font-size: .9rem;
+}
+.chrome [data-action="close"]:hover { color: var(--accent-bright); }
+.chrome [data-action="riffle"]:hover { color: var(--accent-bright); }
+.chrome [data-action="close"] { margin-left: .9rem; position: relative; }
+.chrome [data-action="close"]::before {
+  content: ""; position: absolute; left: -.55rem; top: 15%; bottom: 15%;
+  width: 1px; background: rgba(255,255,255,.16);
+}
+.chrome [data-action="riffle"] { margin-right: .9rem; position: relative; }
+.chrome [data-action="riffle"]::after {
+  content: ""; position: absolute; right: -.55rem; top: 15%; bottom: 15%;
+  width: 1px; background: rgba(255,255,255,.16);
+}
+
+/* While riffling the book tips very slightly into the flick and the fore-edge
+   catches light — the pages are already flashing past, this just adds the
+   physicality of a thumb being dragged down the block. */
+body.riffling .book-3d {
+  transform: translate(-50%, -50%) perspective(2200px) rotateY(1.4deg) scale(calc(var(--fit) * .995));
+  transition: transform .18s ease-out;
+}
+body.riffling .stack { filter: brightness(1.35); }
+@media (prefers-reduced-motion: reduce) {
+  body.riffling .book-3d { transform: translate(-50%, -50%) scale(var(--fit)); }
+}
+
+/* ── blackout ────────────────────────────────────────────────────────────
+   The `b` / `.` key every presenter reaches for when they want the room's
+   attention back on them. Opaque black, above everything including the
+   curtain, and dismissed by any key. */
+.blackout-layer {
+  position: fixed; inset: 0; z-index: 999; background: #000;
+  opacity: 0; pointer-events: none; transition: opacity .18s ease;
+}
+body.blackout .blackout-layer { opacity: 1; pointer-events: auto; }
+body.blackout { cursor: none; }
+
+/* Spread entrance: content lifts in once the page settles.
+   FAILS VISIBLE ON PURPOSE. The hidden state is applied by JS (`.js-anim` on
+   <html>), so if the script never runs — blocked, errored, an old browser —
+   the reader still gets the words. Hiding content in CSS and revealing it in
+   JS is how a page ends up permanently blank. */
+.js-anim .reveal { opacity: 0; transform: translateY(14px); }
+.js-anim .reveal.in { opacity: 1; transform: none;
+  transition: opacity .5s ease, transform .6s cubic-bezier(.16,1,.3,1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .book-closed, .bc-shadow, .bc-hint { animation: none !important; }
+  .book-3d, .reveal, .chrome, .stack { transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+}
+
+/* ── print: each page becomes a clean sheet ────────────────────────────── */
+@media print {
+  html, body { height: auto; overflow: visible; background: #fff; }
+  .closed-stage, .chrome, .boards, .stack, .gutterline, .floor { display: none !important; }
+  .wrap { position: static; display: block; }
+  /* PRINT ONLY. The fit scale is geometry, not motion — stripping it in a
+     reduced-motion rule would leave a 1560px book overflowing the window. */
+  .book-3d { opacity: 1 !important; transform: none !important; position: static;
+             width: auto; height: auto; aspect-ratio: auto; }
+  .page { page-break-after: always; height: 100vh; box-shadow: none; }
+  .reveal { opacity: 1 !important; transform: none !important; }
+}
+
+/* ── sticky notes ────────────────────────────────────────────────────────
+   AUTHORED CONTENT, not a user annotation — `:::sticky` in the Markdown. It is
+   deliberately not a callout: a callout is typeset INTO the document, whereas
+   this is something a person stuck on afterwards, so it sits at an angle, casts
+   a real shadow and interrupts the column rather than flowing with it.
+
+   The tilt and colour rotate by position so a page with several notes does not
+   look like a printed grid of identical boxes. Deterministic (nth-of-type), not
+   random — the same source must always produce the same page. */
+.sticky {
+  position: relative;
+  margin: 1.5rem auto 1.9rem;
+  width: min(84%, 30rem);
+  padding: 1.1rem 1.25rem 1.25rem;
+  background: var(--sticky-1);
+  color: var(--sticky-ink);
+  font-family: var(--font-hand);
+  font-size: clamp(1.05rem, 1.5vw, 1.28rem);
+  line-height: 1.45;
+  transform: rotate(-1.6deg);
+  box-shadow:
+    /* the note lifts off the page at its free corner, so the shadow is not even */
+    0 1px 2px rgba(0,0,0,.18),
+    6px 14px 22px -10px rgba(0,0,0,.42);
+}
+.sticky:nth-of-type(2n)   { background: var(--sticky-2); transform: rotate(1.3deg); }
+.sticky:nth-of-type(3n)   { background: var(--sticky-3); transform: rotate(-.7deg); }
+.sticky > :last-child     { margin-bottom: 0; }
+.sticky p                 { margin: .35rem 0; }
+.sticky .block-title {
+  font-family: var(--font-hand); font-weight: 700;
+  font-size: 1.06em; margin: 0 0 .3rem; color: var(--sticky-ink);
+  text-transform: none; letter-spacing: 0;
+}
+/* the peeling corner — a triangle of shade where the paper lifts away */
+.sticky::after {
+  content: ""; position: absolute; right: 0; bottom: 0;
+  width: 1.6rem; height: 1.6rem;
+  background: linear-gradient(135deg, transparent 48%, rgba(0,0,0,.16) 50%, rgba(0,0,0,.05) 62%, transparent 64%);
+}
+
+/* ── ink that sits IN the paper ──────────────────────────────────────────
+   Handwritten elements were rendering as flat vector type sitting ON the page.
+   Real ink soaks: it varies in weight, bleeds a hair at the edges and lets the
+   paper show through. `text-shadow` at very low alpha is the cheap, reliable
+   way to fake absorption — a blur filter would cost a compositor layer per
+   element and, on a surface that page-flip is transforming, that is expensive. */
+.sticky,
+.band .bk,
+.pageno,
+.cover-sub,
+.bc-s {
+  text-shadow:
+    0 0 .35px currentColor,          /* the slight spread of a wet nib */
+    .4px .45px .6px rgba(0,0,0,.14); /* where it pools on the down-stroke */
+}
+
+/* ── paper you can feel ──────────────────────────────────────────────────
+   Three separate cues, because paper is not one texture:
+     1. fibre grain      — the generated noise tile, already themed
+     2. a deckled edge   — the outer edge of a page is never a ruler-straight line
+     3. show-through     — the ghost of the next page, which is what makes a
+                           sheet read as THIN rather than as a printed panel */
+.page .half::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: var(--grain);
+  opacity: .5; mix-blend-mode: multiply;
+}
+/* show-through: strongest at the fore-edge, where a real sheet is least
+   supported and light passes most easily */
+.page .half::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent 62%, rgba(var(--rgb-ink,0,0,0),.035) 100%);
+}
+.page.pr .half::after {
+  background: linear-gradient(270deg, transparent 62%, rgba(var(--rgb-ink,0,0,0),.035) 100%);
+}
+
+/* ── page curvature: see the crest gradient above ────────────────────────
+   A `rotateY` on each leaf was tried here and REMOVED. It never took effect —
+   computed transform stayed `none` on every page — and dead CSS that claims to
+   bend the paper is worse than none, because the next person tunes an angle
+   that does nothing.
+
+   The curvature is done entirely by the crest gradient on `.stf__item::before`
+   further up. That gradient is also what was actually broken: it consumes
+   `rgba(var(--rgb-deep), …)`, and `--rgb-deep` was never emitted by the
+   TypeScript theme (the Python original did emit it). An undefined custom
+   property inside rgba() invalidates the ENTIRE declaration, so the whole
+   gradient was discarded and the bend vanished — silently, with no error. */
+
+/* ── section dividers ────────────────────────────────────────────────────
+   A hard board between sections, styled from the cover so the book has an
+   internal architecture rather than being an undifferentiated run of leaves.
+   This is what the fore-edge tabs point at. */
+.page.divider .half {
+  background: radial-gradient(130% 90% at 72% 14%, var(--surface-alt), var(--surface) 52%, var(--deep));
+  color: var(--ink-on-dark);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .9rem; text-align: center; padding: 12%;
+}
+.page.divider .half::before, .page.divider .half::after { display: none; }
+.divider-kicker {
+  font-family: var(--font-hand); font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+  color: var(--accent-bright);
+}
+.divider-title {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+  font-size: clamp(1.8rem, 4.4vw, 3.2rem); line-height: .98; color: var(--white);
+  text-wrap: balance;
+}
+.divider-rule {
+  width: 38%; height: 3px; background: var(--accent); opacity: .9; border-radius: 2px;
+}
+.divider-n {
+  font-family: var(--font-display); font-size: clamp(3rem, 9vw, 6rem);
+  line-height: 1; color: var(--white); opacity: .10; margin-bottom: -.4rem;
+}
+
+/* The board's content lives inside the same .below/.reveal wrappers as ordinary
+   page content, so centring the .half alone leaves it block-aligned left. */
+.page.divider .below,
+.page.divider .reveal {
+  width: 100%; height: 100%; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .7rem;
+}
+/* A board is not a numbered page and carries no running brand mark. */
+.page.divider .pageno { display: none; }
+.page.divider .half { --page-mark: none; }
+.page.divider .half::before,
+.page.divider .half::after { content: none; }
+
+/* ── diagrams ────────────────────────────────────────────────────────────
+   Generated by svg.js at build time and emitted INLINE, so GSAP can animate
+   the individual shapes on page reveal. The SVG inherits the page's font, so
+   a rebrand restyles the diagram type along with everything else. */
+.diagram {
+  margin: 1.4rem auto; text-align: center;
+  max-width: 100%;
+}
+.diagram svg {
+  max-width: 100%; height: auto; overflow: visible;
+  font-family: var(--font-ui);
+}
+.diagram text { font-family: var(--font-ui); }
+.diagram-cycle svg { max-width: min(74%, 340px); }
+
+/* ── boards get no gutter shading at all ─────────────────────────────────
+   The gradient above is PAPER BENDING near the spine. A hard cover or a section
+   board does not bend; it is a rigid board, so it gets a flat, honest surface.
+   (The white crest that used to sit at 84% has been removed from every page, so
+   this rule is now only about the fold, not about glare.) */
+.stf__item[data-stock="hard"]::before,
+.stf__item.cover::before,
+.stf__item.divider::before { background: none; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DEVICE TIERS — what the book gives up when the machine cannot keep up.
+
+   The runtime watches its own frame intervals for the first second, against
+   the DISPLAY'S OWN rhythm rather than a fixed 60Hz, and puts one of
+   `perf-full` / `perf-lite` / `perf-min` on <html>. Everything below is scoped
+   to those, so one measurement reaches every expensive effect at once.
+
+   THE BOOK IS NEVER WHAT GETS CUT. Paper, type, page turns, the reveal model
+   and every layout are identical at all three tiers. What goes is scenery:
+   depth of field, the second floor shadow, the cloth simulation. Nobody opened
+   the file to look at a blur radius.
+
+   Scoped by CLASS rather than by a media query on purpose — `prefers-reduced-
+   motion` is a stated preference about motion, and this is a measurement about
+   capability. A fast machine whose owner dislikes animation should keep its
+   shadows; a struggling one whose owner loves animation still cannot afford
+   them. Conflating the two gets both wrong.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── LITE: keep every layer, make the expensive ones cheap ──────────────────
+   Blur cost scales with the RADIUS as well as the area, so halving a 26px
+   blur is not a 50% saving — it is closer to a quarter of the work. The
+   shadows stay, so the book keeps its depth; they are simply less diffuse. */
+.perf-lite .bc-shadow { filter: blur(9px); }
+.perf-lite .bc-shadow::after { filter: blur(4px); }
+.perf-lite .closed-stage::after { filter: blur(12px); }
+.perf-lite .stage-void { filter: none; }
+.perf-lite .floor { filter: blur(8px); }
+
+/* ── MIN: drop the layers whose only job is atmosphere ─────────────────────
+   A blur that exists to suggest depth is the first thing to go on a machine
+   that cannot afford it: its absence reads as a flatter picture, where a
+   dropped frame during a page turn reads as broken. The contact shadow under
+   the spine survives, because without SOME shadow the book looks pasted on. */
+.perf-min .bc-shadow::after,
+.perf-min .closed-stage::after,
+.perf-min .stage-void { display: none; }
+.perf-min .bc-shadow { filter: blur(6px); opacity: .7; }
+.perf-min .floor { filter: none; opacity: .5; }
+.perf-min .book-3d { will-change: auto; }
+/* The gutter's third layer and the page-curvature gradient are the two most
+   expensive things painted per page, and both are depth cues rather than
+   content. */
+.perf-min .pl::before, .perf-min .pr::before { background: none; }

@@ -1,0 +1,90 @@
+{
+  "_comment": "The one file that brands every deck. Only `surface` and `accent` are required; everything else derives, and any colour used as text on light stock is darkened automatically until it clears WCAG AA. The values pinned below come from the design specification — see design/DESIGN.md §2. Pin a value here when the design fixed it; delete a key to hand it back to derivation.",
+  "name": "Teal Arc",
+  "brand": {
+    "name": "Your Brand",
+    "footer": "Your Brand"
+  },
+  "colors": {
+    "_comment": "Blue and teal as a SINGLE ARC, not two colours put next to each other: hue drifts one way only (215° → 176°) and chroma rises as things lighten, so any two of these agree. Breaking that — a warm metal on the braid, a cream paper — is what makes it read as two palettes.",
+
+    "surface_deep": "#03080E",
+    "surface": "#0F2733",
+    "surface_alt": "#16333F",
+
+    "accent": "#35C0B6",
+    "accent_bright": "#5FD4CB",
+    "accent_ink": "#0F6B65",
+
+    "secondary": "#3E7FB8",
+    "secondary_bright": "#6BA3D2",
+
+    "curtain": "#0B3A42",
+    "curtain_lit": "#1C6B72",
+    "curtain_deep": "#041519",
+    "curtain_rim": "#79C3BD",
+
+    "paper": "#F2F7F6",
+    "paper_alt": "#E3EDEC",
+    "ink": "#0E2029",
+    "link_on_paper": "#2C6796",
+
+    "_stage_pool_comment": "The pool of light the book stands in. Pinned because the reference theme pinned --rgb-pool (6,28,34) while leaving --stage-pool derived, so the fill and its own rgb triple disagreed by a visible amount. Pinning the colour makes both agree.",
+    "stage_pool": "#061C22",
+
+    "sticky": "#BCE4DA",
+    "sticky_alt": "#C7DAF1",
+    "sticky_third": "#D3E7C9",
+
+    "white": "#FFFFFF",
+    "text_on_dark": "#EEF3F9",
+    "text_on_light": "#0E2029"
+  },
+  "fonts": {
+    "display": "'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif",
+    "body": "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    "mono": "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
+    "book_body": "Georgia, 'Iowan Old Style', 'Times New Roman', serif",
+    "handwriting": "'Caveat', 'Bradley Hand', cursive"
+  },
+  "space": {
+    "_comment": "One scale, used everywhere. The page margins are the same four numbers on every page in the book.",
+    "1": ".5rem",
+    "2": ".75rem",
+    "3": "1rem",
+    "4": "1.5rem",
+    "5": "2rem",
+    "6": "3rem",
+    "page_x": "4.5rem",
+    "page_top": "3rem",
+    "page_bottom": "4rem"
+  },
+  "type": {
+    "_comment": "ABSOLUTE, not viewport-derived — the stage is a fixed 1560x1040 scaled by one transform, so a rem here is a fixed number of stage pixels and the type never resizes independently of the paper it sits on. Body lands at ~25px on the stage, legible from the back of a room.",
+    "band": "3rem",
+    "h1": "3.2rem",
+    "h2": "2.4rem",
+    "h3": "1.75rem",
+    "body": "1.55rem",
+    "hand": "2.1rem",
+    "statement": "4.6rem",
+    "line_height": "1.55"
+  },
+  "motion": {
+    "_comment": "Every duration collapses to ~0 under prefers-reduced-motion. `flip` is the leaf turn; the faces swap at 90 degrees, which this easing reaches at 33.2% of it, NOT half — see design/DESIGN.md §7a.",
+    "ease_paper": "cubic-bezier(.16, 1, .3, 1)",
+    "ease_cloth": "cubic-bezier(.5, 0, .2, 1)",
+    "curtain": "2200ms",
+    "float": "900ms",
+    "open": "1100ms",
+    "flip": "720ms",
+    "riffle_page": "150ms",
+    "reveal": "520ms",
+    "reveal_stagger": "140ms",
+    "write_speed_ms_per_char": 34
+  },
+  "a11y": {
+    "enforce": true,
+    "min_contrast": 4.5
+  }
+}

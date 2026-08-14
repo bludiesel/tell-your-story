@@ -1,0 +1,902 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE REVEAL SWITCH — keep this first.
+
+   The book's inline block hides `.book-live` because the linked stylesheets are
+   asynchronous, and until they land the browser lays the template out as plain
+   flowing HTML (which is what put a "TITLE OF THE BOOK" rectangle above the book
+   on every refresh). This rule is the other half: by the time it applies, this
+   file and the design system's sheet have both arrived and the design is dressed.
+
+   Consequence to know: if theme.css fails to load, the stage stays invisible.
+   That is deliberate — without this file the book has no palette, no type scale
+   and no layouts, so showing it undressed is worse than showing the empty void.
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* Specificity, not order: the hiding rule is an inline block that comes AFTER
+   this file's link tag, so an equal-weight selector here would lose to it. */
+html body .book-live { visibility: visible; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE ONE PLACE TO CHANGE THE LOOK
+   ---------------------------------------------------------------------------
+   Loaded AFTER the design system's styles.css, in every page. Three jobs:
+
+     1. THE DIALS      — the ~16 tokens that carry the identity. Change these
+                         and the curtain, cover, paper, ink, stickies, tabs,
+                         chrome and diagrams all follow. Nothing else in
+                         the project may hard-code a colour or a font.
+     2. THE PAIRINGS   — four named token sets, scoped to [data-pairing].
+                         Put the attribute on any wrapper; everything inside
+                         re-themes. That is how the pairing lab shows four
+                         books at once, and how a future rebrand ships.
+     3. THE UNIFIERS   — the rules that make spacing and type consistent
+                         page to page. See design.md for the reasoning.
+
+   Rules of engagement: add a dial, never a one-off value.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. THE DIALS ─────────────────────────────────────────────────────────
+   BLUE AND TEAL, AS ONE ARC.
+
+   Two colours named separately is how a palette ends up looking assembled
+   rather than designed. Every colour below is instead a stop on ONE path
+   through hue and lightness — navy at the bottom, petrol in the boards, teal
+   in the cloth, aqua at the top where the light is:
+
+     hue     215° ──────── 203° ──── 190° ── 186° ── 177° ── 176°
+     token   deep          surface   cloth   lit     rim     accent
+     light   3%            15%       22%     40%     78%     70%
+
+   Hue drifts one way only, and chroma rises as things get lighter, so any two
+   colours in the book are neighbours on that road — which is what makes the
+   curtain, the boards and the paper read as one room rather than three
+   decisions. The mid blue is the same road at mid lightness (207°), which is
+   why blue and teal sit together here instead of competing. */
+:root {
+  /* the world the book stands in — navy, almost black, never neutral grey */
+  --deep: #03080E;
+  --surface: #0F2733;
+  --surface-alt: #16333F;
+
+  /* the identity colour: the brightest, most saturated stop on the arc, so it
+     carries against the dark petrol of the boards */
+  --accent: #35C0B6;
+  --accent-bright: #5FD4CB;
+  --accent-ink: #0F6B65;          /* the same accent, legible ON paper */
+
+  /* the supporting colour — the blue in blue-and-teal, and it does real work:
+     alternating bars in the chart, the timeline rail, the "before" side of the
+     comparison spread, and any link the reader adds later */
+  --secondary: #3E7FB8;
+  --secondary-bright: #6BA3D2;
+
+  /* the stage — deep teal cloth, pale aqua braid. Two stops down from the
+     accent so the cloth sits BEHIND the book rather than shouting over it:
+     the paper is supposed to be the lit thing in the room. The braid is a cool
+     metal here, not gold — a warm metal on teal cloth is the one thing that
+     would break the arc. */
+  --curtain-cloth: #0B3A42;
+  --curtain-cloth-lit: #1C6B72;      /* where the light catches a pleat crest */
+  --curtain-cloth-deep: #041519;     /* deep in the folds */
+  --curtain-rim: #79C3BD;            /* rim light, braid, pelmet edge */
+
+  /* the paper stock — cool, because a warm cream against teal cloth reads as
+     two palettes. A whisper of green-blue in it, and it is still the
+     lightest thing in the frame by a distance. */
+  --paper: #F2F7F6;
+  --paper-2: #E3EDEC;
+  --ink: #0E2029;                    /* blue-black, not black */
+
+  /* the three sticky stocks — never more than three, all inside the family.
+     Saturated well clear of the paper: against a cool stock, a pale cool note
+     disappears into the page and stops reading as something stuck on. */
+  --sticky-1: #BCE4DA;
+  --sticky-2: #C7DAF1;
+  --sticky-3: #D3E7C9;
+
+  /* the three voices */
+  --font-display: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --font-body: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  --font-hand: 'Caveat', 'Bradley Hand', cursive;
+
+  /* derived — do not set these by hand anywhere else */
+  --rgb-accent: 53, 192, 182;
+  --rgb-rim: 121, 195, 189;
+  --rgb-deep: 3, 8, 14;
+  --rgb-ink: 14, 32, 41;
+  --rgb-pool: 6, 28, 34;
+  --accent-soft: rgba(var(--rgb-accent), .16);
+  --link-on-paper: #2C6796;          /* the blue, darkened for AA on paper */
+}
+
+/* ── 2. THE PAIRINGS ────────────────────────────────────────────────────── */
+
+/* OXBLOOD — the palette this book shipped with before the teal arc. Kept whole
+   so the decision is reversible in one word. */
+[data-pairing="oxblood"] {
+  --deep: #04060A;
+  --surface: #1C2833;
+  --surface-alt: #243342;
+  --accent: #E0A33E;
+  --accent-bright: #E3AC51;
+  --accent-ink: #8C6627;
+  --secondary: #4A7FB5;
+  --secondary-bright: #729BC5;
+  --curtain-cloth: #52101A;
+  --curtain-cloth-lit: #7A2530;
+  --curtain-cloth-deep: #170305;
+  --curtain-rim: #C89F5C;
+  --paper: #F9F3E5;
+  --paper-2: #EDE7DA;
+  --ink: #19232D;
+  --sticky-1: #F9EBAF;
+  --sticky-2: #D6E5BE;
+  --sticky-3: #F9D2C4;
+  --rgb-accent: 224, 163, 62;
+  --rgb-rim: 200, 159, 92;
+  --rgb-deep: 4, 6, 10;
+  --rgb-ink: 25, 35, 45;
+  --rgb-pool: 39, 31, 18;
+  --link-on-paper: var(--secondary);
+}
+
+/* BLUE LEADS — the curtain cloth becomes the brand. Gold demotes to emphasis
+   only: the rim light, a circled word. */
+[data-pairing="blue"] {
+  --accent: #4A7FB5;
+  --accent-bright: #729BC5;
+  --accent-ink: #2F5F8E;
+  --secondary: #E0A33E;
+  --secondary-bright: #E3AC51;
+  --surface: #1B2A3A;
+  --surface-alt: #223A50;
+  --curtain-cloth: #2C4E71;
+  --curtain-cloth-lit: #5A7894;
+  --curtain-rim: #9DBCD8;
+  --paper: #F6F4EF;
+  --paper-2: #E9E7E0;
+  --sticky-1: #DCE9F4;
+  --sticky-2: #E7EDDF;
+  --sticky-3: #F2E5D2;
+  --rgb-accent: 74, 127, 181;
+  --rgb-rim: 157, 188, 216;
+}
+
+/* INK FIRST — near monochrome. The book reads as a printed object; one accent,
+   used once or twice a spread and never for decoration. */
+[data-pairing="ink"] {
+  --deep: #0B0B0C;
+  --surface: #26262A;
+  --surface-alt: #33333A;
+  --accent: #B4622F;
+  --accent-bright: #C0743F;
+  --accent-ink: #8A4A21;
+  --secondary: #6C6C74;
+  --secondary-bright: #8A8A93;
+  --curtain-cloth: #3A3A3E;
+  --curtain-cloth-lit: #62625F;
+  --curtain-cloth-deep: #131315;
+  --curtain-rim: #C7BBA6;
+  --paper: #FBFAF6;
+  --paper-2: #EFEDE7;
+  --ink: #1A1A1C;
+  --sticky-1: #EFE9D8;
+  --sticky-2: #E4E4DC;
+  --sticky-3: #EEDFD3;
+  --rgb-accent: 180, 98, 47;
+  --rgb-rim: 199, 187, 166;
+}
+
+/* DEEPER CONTRAST — same hues, more theatre. The void goes darker, the rim
+   light goes brighter, the paper is the only lit thing in the room. */
+[data-pairing="deep"] {
+  --deep: #010204;
+  --surface: #131E29;
+  --surface-alt: #1B2C3C;
+  --accent: #F0B24A;
+  --accent-bright: #FFC96B;
+  --accent-ink: #7E5A1E;
+  --curtain-cloth: #234563;
+  --curtain-cloth-lit: #7E96AC;
+  --curtain-cloth-deep: #060C13;
+  --curtain-rim: #FFD48A;
+  --paper: #FDF8EC;
+  --paper-2: #F0E9D8;
+  --rgb-accent: 240, 178, 74;
+  --rgb-rim: 255, 212, 138;
+  --stage-haze: #0B1723;
+}
+
+/* BOTTLE GREEN — a reading room rather than a theatre. The cloth is nearly
+   black in the folds, brass instead of gold, and the paper warms slightly to
+   keep the green from reading cold. The quietest of the four. */
+[data-pairing="green"] {
+  --deep: #05100C;
+  --surface: #14241D;
+  --surface-alt: #1C3228;
+  --accent: #C8A24A;
+  --accent-bright: #DCB861;
+  --accent-ink: #7A6222;
+  --secondary: #6E8F7C;
+  --secondary-bright: #8AA896;
+  --curtain-cloth: #1C3B2E;
+  --curtain-cloth-lit: #35604C;
+  --curtain-cloth-deep: #060F0B;
+  --curtain-rim: #C8A24A;
+  --paper: #FBF7EC;
+  --paper-2: #EFE9DA;
+  --sticky-1: #E7EFE2;
+  --sticky-2: #F1EAD7;
+  --sticky-3: #E3E8E4;
+  --rgb-accent: 200, 162, 74;
+  --rgb-rim: 200, 162, 74;
+  --stage-haze: #0A1A13;
+}
+
+/* AUBERGINE — the unusual one, and the softest. Plum has red's richness without
+   its glare, and antique brass over it reads older than gold over red. */
+[data-pairing="plum"] {
+  --deep: #0A0710;
+  --surface: #1E1727;
+  --surface-alt: #2A2036;
+  --accent: #C79A5E;
+  --accent-bright: #DBB077;
+  --accent-ink: #7C5A2C;
+  --secondary: #8A7396;
+  --secondary-bright: #A48FAE;
+  --curtain-cloth: #331F3E;
+  --curtain-cloth-lit: #553962;
+  --curtain-cloth-deep: #120A17;
+  --curtain-rim: #C79A5E;
+  --paper: #FAF7F2;
+  --paper-2: #EDE8E2;
+  --sticky-1: #EDE6F1;
+  --sticky-2: #F2EBDD;
+  --sticky-3: #E8E4EC;
+  --rgb-accent: 199, 154, 94;
+  --rgb-rim: 199, 154, 94;
+  --stage-haze: #140D1B;
+}
+
+/* TOBACCO — cloth, paper and boards from one warm family, so the book and the
+   room are the same object. No colour anywhere fights the ink. */
+[data-pairing="tobacco"] {
+  --deep: #100B07;
+  --surface: #251B13;
+  --surface-alt: #33261B;
+  --accent: #B8823C;
+  --accent-bright: #CE9A52;
+  --accent-ink: #7E5722;
+  --secondary: #8A7358;
+  --secondary-bright: #A48D71;
+  --curtain-cloth: #3A2A1C;
+  --curtain-cloth-lit: #5E452E;
+  --curtain-cloth-deep: #140D07;
+  --curtain-rim: #D2AE72;
+  --paper: #FCF7EA;
+  --paper-2: #F1E9D6;
+  --sticky-1: #F2E7CF;
+  --sticky-2: #E9E4D3;
+  --sticky-3: #F0DFC8;
+  --rgb-accent: 184, 130, 60;
+  --rgb-rim: 210, 174, 114;
+  --stage-haze: #1A120B;
+}
+
+/* ── 3. THE UNIFIERS ────────────────────────────────────────────────────── */
+
+/* THE SPACING SCALE. One scale, 8px-based. Every gap in the book is a step on
+   it. The design system shipped per-component clamp() padding, which is why
+   two pages side by side never quite agreed; these are absolute, so a page is
+   spaced identically no matter the window. Scale happens once, on the stage
+   transform, so absolute units stay honest. */
+:root {
+  --sp-1: .5rem;
+  --sp-2: .75rem;
+  --sp-3: 1rem;
+  --sp-4: 1.5rem;
+  --sp-5: 2rem;
+  --sp-6: 3rem;
+
+  /* page margins — the same four numbers on every page in the book */
+  --pg-x: 4.5rem;    /* left and right */
+  --pg-top: 3rem;    /* under the band */
+  --pg-bottom: 4rem; /* clear of the folio and the brand mark */
+
+  /* THE TYPE SCALE. Absolute, not viewport-derived — see above. Sized for the
+     1560 × 1040 stage: body lands at ~25px there, which is ~24px on a 1920
+     screen once the stage is fitted, and legible from the back of a room. */
+  --t-band: 3rem;
+  --t-h1: 3.2rem;
+  --t-h2: 2.4rem;
+  --t-h3: 1.75rem;
+  --t-body: 1.55rem;
+  --t-hand: 2.1rem;
+  --t-statement: 4.6rem;
+  --lh-body: 1.55;
+}
+
+/* Page margins, from the scale, on every page without exception. */
+.below {
+  padding: var(--pg-top) var(--pg-x) var(--pg-bottom);
+  gap: 0;
+}
+
+/* VERTICAL RHYTHM IS OWNED BY THE GAP, NOT BY MARGINS.
+   Blocks used to each carry their own top and bottom margin, so the space
+   between two of them depended on which two they were. Now the page is a
+   flex column with one gap, and every direct child's outer margin is zeroed:
+   the space between any two blocks is identical and adjustable in one place. */
+.below > .reveal {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-4);
+  height: 100%;
+}
+.below > .reveal > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+
+/* Inside a block, paragraphs keep a tighter rhythm of their own. */
+.below p { margin: 0 0 var(--sp-2); font-size: var(--t-body); line-height: var(--lh-body); text-wrap: pretty; max-width: 62ch; }
+.below p:last-child { margin-bottom: 0; }
+.below ul, .below ol { margin: 0; padding-left: 1.25em; }
+.below li { margin: 0 0 var(--sp-1); font-size: var(--t-body); line-height: var(--lh-body); }
+.below li:last-child { margin-bottom: 0; }
+
+/* TYPE, from the scale. One size per role, everywhere. */
+.below h1 { font-size: var(--t-h1); line-height: .98; margin: 0 0 var(--sp-1); }
+.below h2 { font-size: var(--t-h2); line-height: 1; margin: 0 0 var(--sp-1); }
+.below h3 { font-size: var(--t-h3); line-height: 1.15; margin: 0 0 var(--sp-1); }
+/* The band is a header, not a title page: it takes the least height that still
+   reads as a printed band across the spread. */
+.band { height: 12%; min-height: 0; padding: var(--sp-2) var(--pg-x); }
+.band .bt { font-size: var(--t-band); }
+.band .bk, .kick, .pageno, .cover-sub, .curtain-eyebrow { font-size: var(--t-hand); }
+.below .block-title { font-size: 1.9rem; }
+/* Boards and covers are dark stock: body text on them takes the light ink, or it
+   inherits the on-paper colour and disappears. */
+.page.divider .below p, .page.divider .below li,
+.page.cover .below p, .page.cover .below li {
+  color: var(--ink-on-dark);
+  max-width: 46ch;
+}
+.page.divider .below h1, .page.divider .below h2, .page.divider .below h3 { color: var(--white); }
+
+.below .statement { font-size: var(--t-statement); line-height: 1.02; }
+/* Boards and covers live inside the fitted stage too, so they take absolute
+   sizes as well. The CURTAIN is the one exception in the whole design: it is
+   outside the stage, hung on the window itself, so its type stays viewport-
+   derived — as the design system ships it. */
+.page.divider .divider-title { font-size: 3.8rem; }
+.page.divider .divider-n { font-size: 8rem; }
+.page.divider .divider-kicker { font-size: var(--t-hand); }
+.page.cover .cover-title { font-size: 3.4rem; }
+.page.cover .cover-sub { font-size: var(--t-hand); }
+.below .pullquote { font-size: 2.9rem; line-height: 1.2; }
+
+/* ONE HANDWRITING. Every hand-set element in the book uses the same face at
+   the same weight — the eyebrow, the folio, the block titles, the pull quote,
+   the stickies, the cover subtitle, the curtain hint. */
+.sticky, .sticky *, .below .block-title, .kick, .pageno, .divider-kicker,
+.band .bk, .cover-sub, .cover-foot, .bc-s, .bc-hint,
+.curtain-eyebrow, .curtain-hint, .below .pullquote, .chrome .spread {
+  font-family: var(--font-hand);
+}
+
+/* STICKIES: ONE SHAPE, THREE STOCKS, THREE TILTS.
+   The shape is fixed so a page of notes reads as a set. Colour and tilt rotate
+   deterministically by position, so two notes never look identical and the
+   same page always renders the same way. */
+/* STICKIES ARE STUCK ONTO SOMETHING.
+   A note is an annotation, not a section: it belongs to a paragraph or a block,
+   overlapping its edge at an angle, the way a person marks up a page they are
+   reading. It never gets a page, a column slot, or a centred position of its
+   own — that reads as a designed panel, which is the opposite of a note.
+   Put `has-sticky` on the host block and `data-at` on the note. */
+.below .has-sticky { position: relative; }
+.below .has-sticky > .sticky {
+  position: absolute; z-index: 7;
+  width: 15.5rem; min-height: 9.5rem;
+  margin: 0; padding: var(--sp-3);
+  font-size: 1.4rem; line-height: 1.3;
+}
+.below .has-sticky > .sticky .block-title { font-size: 1.55rem; }
+/* the angles are deliberately steep — a note pressed on by hand is never square */
+.below .has-sticky > .sticky[data-at="right"]  { --tilt: 7deg;   top: -1.8rem;    right: -2.8rem; }
+.below .has-sticky > .sticky[data-at="left"]   { --tilt: -6.5deg; top: -1.6rem;    left: -2.6rem; }
+.below .has-sticky > .sticky[data-at="br"]     { --tilt: 5.5deg;  bottom: -2.4rem; right: -2.2rem; }
+.below .has-sticky > .sticky[data-at="bl"]     { --tilt: -7.5deg; bottom: -2.2rem; left: -2.4rem; }
+/* Notes overhang their host into the page margin. The paper still clips them at
+   its own edge — `.page` keeps its overflow — so a note can hang off a block
+   without hanging off the sheet. */
+.below { overflow: visible; }
+
+/* A standalone note, for when it truly is the only thing on the page. */
+.below > .reveal > .sticky,
+.below .sticky-pair .sticky {
+  width: 19rem;
+  min-height: 12rem;
+  font-size: 1.6rem;
+}
+
+.below .sticky {
+  --tilt: -1.6deg;
+  width: 24rem;
+  min-height: 15rem;
+  margin: 0 auto;
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-size: 1.8rem;
+  line-height: 1.35;
+  transform: rotate(var(--tilt));
+}
+/* The tilt is a variable rather than a transform so the press animation below
+   can land ON it — a keyframe that set its own rotate would flatten every note
+   to zero degrees at the end of the landing. */
+.below .sticky:nth-of-type(2n) { --tilt: 1.4deg; }
+.below .sticky:nth-of-type(3n) { --tilt: -.7deg; }
+.below .sticky .block-title { font-size: 2rem; margin: 0; }
+/* Two notes on a page sit side by side rather than stacking into a column. */
+.below .sticky-pair { display: flex; gap: var(--sp-5); justify-content: center; }
+.below .sticky-pair .sticky { margin: 0; }
+
+/* Callouts, takeaways and diagrams lose their own margins to the page gap. */
+.below .callout, .below .takeaway, .below .diagram, .below .columns { margin: 0; }
+.below .callout { padding: var(--sp-2) var(--sp-3); }
+.below .takeaway { padding: var(--sp-3) var(--sp-4); }
+.below .columns { gap: var(--sp-5); }
+
+/* ── 4. MOTION ──────────────────────────────────────────────────────────── */
+:root {
+  --ease-paper: cubic-bezier(.16, 1, .3, 1);   /* everything that settles */
+  --ease-cloth: cubic-bezier(.5, 0, .2, 1);    /* the curtain, heavy fabric */
+  --t-curtain: 2200ms;
+  --t-float: 900ms;
+  --t-open: 1100ms;
+  --t-flip: 720ms;
+  --t-riffle-page: 150ms;
+  --t-reveal: 520ms;
+  --t-reveal-stagger: 140ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-curtain: 1ms; --t-float: 1ms; --t-open: 1ms;
+    --t-flip: 1ms; --t-riffle-page: 1ms;
+    --t-reveal: 1ms; --t-reveal-stagger: 0ms;
+  }
+}
+
+/* Reveal: each element on a page arrives on its own beat. The step index is
+   set inline as --i by the runtime, so the delay is one rule, not N rules. */
+.js-anim .step { opacity: 0; transform: translateY(10px); }
+.js-anim .step.in {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--t-reveal) ease calc(var(--i, 0) * var(--t-reveal-stagger)),
+              transform var(--t-reveal) var(--ease-paper) calc(var(--i, 0) * var(--t-reveal-stagger));
+}
+
+/* WRITING ON. Type is masked from the left and the mask retreats, so the words
+   appear as if being laid down — no per-character DOM, so it costs one layer
+   and works on any length of copy. The nib is the moving edge. */
+.writing {
+  --pen: 0%;
+  background: linear-gradient(90deg, currentColor 0 var(--pen), transparent var(--pen));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.writing.done {
+  background: none;
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+}
+
+/* Handwritten elements are DRAWN rather than typed: the stroke is revealed
+   along its own baseline with the ink pooling in behind the nib. */
+.drawing { clip-path: inset(0 var(--undrawn, 100%) 0 0); }
+
+/* STICKING A STICKY NOTE. It comes in from above at the wrong angle, lands, and
+   gets pressed — the squash at 68% is a thumb going down on the middle of it,
+   and the shadow tightening from a wide soft cast to a close one is the note
+   arriving at the paper. Nothing settles by fading. */
+@keyframes sticky-press {
+  0% {
+    opacity: 0;
+    transform: translateY(-52px) rotate(calc(var(--tilt) - 8deg)) scale(1.16);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, .1), 26px 54px 60px -22px rgba(0, 0, 0, .5);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(3px) rotate(calc(var(--tilt) + 1.2deg)) scale(1.03);
+  }
+  68% {
+    transform: translateY(0) rotate(var(--tilt)) scale(.977);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .22), 2px 5px 10px -6px rgba(0, 0, 0, .38);
+  }
+  84% { transform: translateY(0) rotate(var(--tilt)) scale(1.006); }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(var(--tilt)) scale(1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .18), 6px 14px 22px -10px rgba(0, 0, 0, .42);
+  }
+}
+.js-anim .step.in .sticky,
+.js-anim .step.in.sticky { animation: sticky-press 720ms cubic-bezier(.24, .86, .3, 1) both; }
+/* a pair goes up one after the other, the way a person would stick them */
+.js-anim .step.in .sticky:nth-of-type(2n) { animation-delay: 190ms; }
+@media (prefers-reduced-motion: reduce) {
+  .js-anim .step.in .sticky, .js-anim .step.in.sticky { animation: none; }
+}
+
+@keyframes book-float-in {
+  from { opacity: 0; transform: translateY(38px) scale(.965) rotateX(9deg); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes riffle-edge { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.5); } }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LAYOUT CATALOGUE
+   Every layout below is a named page type. A page picks ONE and fills it in;
+   nothing here is combined with anything else on the same page. The reveal
+   behaviour of each is part of the layout, not a decision made per page.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Anything that bleeds must escape the page margins. `.below` allows overflow
+   (stickies need it); the paper itself still clips at its own edge. */
+/* A bleed cannot be built from margins: the page-rhythm rule above zeroes the
+   block margins of every direct child of `.reveal` with `!important`, so the
+   vertical pull was being cancelled and a hairline of paper survived at the head
+   — the exact failure this layout exists to prevent. Absolute to the page
+   instead, which owes nothing to the flow. */
+.below .bleed-out {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+/* and the containing block is the PAGE, not the half or the reveal: those are
+   inset from the paper by a few pixels of their own, which is where the last
+   hairline at the head was coming from. */
+/* and it does not ride the reveal's slide — a transform on an element that is
+   pinned to the paper edges puts it back off the edge. A photograph fades.
+   Neither half is a step: a spread-crossing picture arriving one half at a time
+   reads as broken rather than as pacing, so the picture is simply there when the
+   spread lands and the caption is the only thing a click brings. */
+.below .bleed-out { transform: none !important; }
+.page.full-bleed .band { display: none; }
+.page.full-bleed .below { padding: 0; }
+.page.full-bleed .pageno { z-index: 4; color: var(--paper); mix-blend-mode: difference; }
+
+/* ── full-bleed image spread ─────────────────────────────────────────────────
+   The picture crosses the gutter. Two slots, one per page, holding the LEFT and
+   RIGHT halves of the same photograph — a single element cannot span two leaves,
+   because the two halves live on different sheets of paper. */
+.page.full-bleed .below > .reveal { gap: 0; }
+.page.full-bleed .bleed-out { flex: 1; }
+.bleed-caption {
+  position: absolute; left: var(--pg-x); right: var(--pg-x); bottom: var(--sp-5);
+  z-index: 3;
+  font-family: var(--font-hand);
+  font-size: var(--t-hand);
+  color: var(--paper);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, .85);
+}
+/* the picture is darkened at the gutter so the fold does not fight the image */
+.page.pl.full-bleed .bleed-out::after,
+.page.pr.full-bleed .bleed-out::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+}
+.page.pl.full-bleed .bleed-out::after { background: linear-gradient(90deg, transparent 70%, rgba(0, 0, 0, .45)); }
+.page.pr.full-bleed .bleed-out::after { background: linear-gradient(270deg, transparent 70%, rgba(0, 0, 0, .45)); }
+
+/* ── half-bleed: picture off the outer edge, text in the inner column ────────
+   The image runs off the fore-edge, never off the gutter: paper is bound at the
+   spine, so nothing can bleed there. */
+.half-bleed { display: grid; height: 100%; gap: var(--sp-4); }
+.page.pr .half-bleed { grid-template-columns: 1fr 1.15fr; }
+.page.pl .half-bleed { grid-template-columns: 1.15fr 1fr; }
+.half-bleed-art {
+  position: relative; overflow: hidden;
+  margin-top: calc(var(--pg-top) * -1);
+  margin-bottom: calc(var(--pg-bottom) * -1);
+}
+.page.pr .half-bleed-art { grid-column: 2; margin-right: calc(var(--pg-x) * -1); }
+.page.pl .half-bleed-art { grid-column: 1; margin-left: calc(var(--pg-x) * -1); }
+.page.pl .half-bleed-copy { grid-column: 2; }
+.half-bleed-copy { display: flex; flex-direction: column; gap: var(--sp-3); justify-content: center; }
+
+/* ── chapter opener with a drop cap ──────────────────────────────────────────
+   The only place in the book where a paragraph is decorated. The cap is set in
+   the display face at four lines deep, and the opening line goes to small caps
+   so the eye has a run-in rather than a cliff. */
+.opener { display: flex; flex-direction: column; gap: var(--sp-4); justify-content: center; height: 100%; }
+.opener-n {
+  font-family: var(--font-hand);
+  font-size: var(--t-hand);
+  color: var(--accent-ink);
+}
+.opener-body { font-size: var(--t-body); line-height: var(--lh-body); }
+.opener-body::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 7.4rem;
+  line-height: .74;
+  margin: .1em .14em 0 0;
+  color: var(--accent-ink);
+}
+.opener-body::first-line {
+  font-variant-caps: all-small-caps;
+  letter-spacing: .06em;
+}
+
+/* ── contents, with dot leaders ──────────────────────────────────────────────
+   Leaders are a border, not a row of typed periods: they stay on the baseline
+   and they end exactly where the folio starts. */
+.contents { display: flex; flex-direction: column; gap: var(--sp-3); }
+/* four cells: number, title, leader, folio. The leader takes the slack, which is
+   what makes it end exactly where the folio starts. */
+.contents-row {
+  display: grid;
+  grid-template-columns: 2.6rem auto 1fr auto;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--t-body);
+}
+.contents-n { font-family: var(--font-display); font-weight: 600; color: var(--accent-ink); }
+.contents-t { font-family: var(--font-display); font-size: 1.9rem; letter-spacing: .01em; text-transform: uppercase; }
+.contents-lead {
+  border-bottom: 1px dotted color-mix(in srgb, var(--ink) 38%, transparent);
+  transform: translateY(-.3em);
+}
+.contents-f { font-family: var(--font-body); font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--ink) 70%, transparent); }
+/* `.contents-sub` — a second line under a contents entry — was declared here and
+   used by nothing. Removed rather than left: a rule with no user is a rule the
+   next person has to decide about. If a contents entry ever needs a subtitle,
+   write it then, against the real content. */
+
+/* ── data page: a PRINTED table ──────────────────────────────────────────────
+   Rules, not boxes. Three horizontal rules in the whole table — above the head,
+   under the head, under the last row — and nothing vertical. Figures are
+   tabular and right-aligned; that is what makes a column of numbers readable. */
+.ptable { width: 100%; border-collapse: collapse; font-size: 1.4rem; }
+.ptable caption {
+  text-align: left;
+  font-family: var(--font-hand);
+  font-size: var(--t-hand);
+  color: var(--accent-ink);
+  padding-bottom: var(--sp-2);
+}
+.ptable thead th {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.2rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+.ptable td { padding: var(--sp-2); border-bottom: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); }
+.ptable tbody tr:last-child td { border-bottom: 2px solid var(--ink); }
+.ptable td.num, .ptable th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ptable tbody tr.total td { font-weight: 700; }
+
+/* horizontal bars, because a book page is wider than it is tall in the space a
+   chart gets, and a label reads better beside its bar than under it */
+.barchart { display: flex; flex-direction: column; gap: var(--sp-2); }
+.bar-row { display: grid; grid-template-columns: 8.5rem 1fr 4rem; align-items: center; gap: var(--sp-2); font-size: 1.3rem; }
+.bar-label { font-family: var(--font-display); letter-spacing: .04em; text-transform: uppercase; font-size: 1.15rem; }
+.bar-track { position: relative; height: 1.5rem; background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.bar-fill {
+  position: absolute; inset: 0 auto 0 0;
+  width: calc(var(--v, 0) * 1%);
+  background: var(--accent-ink);
+  transition: width 620ms cubic-bezier(.2, .8, .25, 1);
+}
+/* THE SECOND SERIES IS THE BLUE. A single-hue chart makes the accent do two
+   jobs at once — "this is the identity colour" and "this bar is different from
+   that one" — and it can only do one. Alternating rows take the mid blue, which
+   is the same road as the teal at the same lightness, so the two read as a pair
+   rather than as a clash. */
+.bar-row:nth-child(2n) .bar-fill { background: color-mix(in srgb, var(--secondary) 82%, var(--ink)); }
+.bar-v { text-align: right; font-variant-numeric: tabular-nums; }
+/* bars have no width until the block is revealed, then they grow in order */
+.step:not(.in) .bar-fill { width: 0; }
+.step.in .bar-row:nth-child(1) .bar-fill { transition-delay: 60ms; }
+.step.in .bar-row:nth-child(2) .bar-fill { transition-delay: 150ms; }
+.step.in .bar-row:nth-child(3) .bar-fill { transition-delay: 240ms; }
+.step.in .bar-row:nth-child(4) .bar-fill { transition-delay: 330ms; }
+.step.in .bar-row:nth-child(5) .bar-fill { transition-delay: 420ms; }
+
+/* ── timeline across the gutter ──────────────────────────────────────────────
+   One rail, two pages. The rail is drawn from the gutter outward on each side,
+   so the two halves appear to be one line crossing the fold. */
+.timeline { position: relative; display: flex; align-items: center; height: 100%; }
+.tl-rail {
+  position: absolute; left: calc(var(--pg-x) * -1); right: calc(var(--pg-x) * -1); top: 50%;
+/* the rail is structure, not emphasis: the blue carries it, and the teal dots
+   sit on top of it as the things you are meant to read */
+  height: 2px; background: color-mix(in srgb, var(--secondary) 72%, var(--ink));
+  transform: scaleX(var(--drawn, 1));
+  transition: transform 700ms cubic-bezier(.16, .84, .3, 1);
+}
+.page.pl .tl-rail { transform-origin: right center; }
+.page.pr .tl-rail { transform-origin: left center; }
+.step:not(.in) .tl-rail { --drawn: 0; }
+.tl-stops { position: relative; z-index: 2; display: flex; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
+/* THE DOT IS ON THE RAIL; THE CAPTION IS CLEAR OF IT.
+   `when` above the dot and `what` below it put one part of every stop on each
+   side of the rule, so the rail struck through the text — and a caption centred
+   as a band gets worse, not better, the more lines it wraps to. The dot is now
+   pinned to the rail and the caption is anchored 20px clear of it, growing away:
+   it cannot reach the rule at any measure. */
+.tl-stop { position: relative; width: 11rem; height: 100%; text-align: center; }
+.tl-dot {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 1rem; height: 1rem; border-radius: 50%;
+  background: var(--accent-ink); box-shadow: 0 0 0 5px var(--paper);
+}
+.tl-cap { position: absolute; left: 0; right: 0; display: flex; flex-direction: column; gap: .3rem; }
+.tl-stop:nth-child(odd) .tl-cap { bottom: calc(50% + 20px); justify-content: flex-end; }
+.tl-stop:nth-child(2n) .tl-cap { top: calc(50% + 20px); }
+.tl-when { font-family: var(--font-display); font-weight: 600; font-size: 1.3rem; letter-spacing: .08em; text-transform: uppercase; }
+.tl-what { font-size: 1.25rem; line-height: 1.35; color: color-mix(in srgb, var(--ink) 78%, transparent); }
+
+/* ── before / after ──────────────────────────────────────────────────────────
+   Both pages carry the SAME structure. The comparison is only honest if the
+   only difference between the two pages is the content being compared. */
+.compare { display: flex; flex-direction: column; gap: var(--sp-4); height: 100%; }
+.compare-tag {
+  align-self: flex-start;
+  font-family: var(--font-display);
+  font-weight: 600; font-size: 1.2rem; letter-spacing: .16em; text-transform: uppercase;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+}
+/* BEFORE IS BLUE, AFTER IS TEAL. The layout's whole argument is "same structure,
+   one difference" — so the one difference has to be visible at a glance, and a
+   pair of neighbouring hues says "these two are comparable" in a way that one
+   hue at two opacities cannot. */
+.compare.before .compare-tag { border-color: var(--link-on-paper); color: var(--link-on-paper); }
+.compare.after .compare-tag { border-color: var(--accent-ink); color: var(--accent-ink); }
+.compare-body { display: flex; flex-direction: column; gap: var(--sp-3); }
+.compare-body li { font-size: var(--t-body); line-height: 1.4; }
+.compare-list { display: flex; flex-direction: column; gap: var(--sp-2); list-style: none; padding: 0; }
+.compare-list li { display: grid; grid-template-columns: 1.6rem 1fr; gap: var(--sp-2); }
+.compare-list li::before { content: "—"; color: color-mix(in srgb, var(--ink) 45%, transparent); }
+.compare.after .compare-list li::before { content: "→"; color: var(--accent-ink); }
+
+/* ── a page given to one quote ───────────────────────────────────────────────
+   No band, no folio company, nothing else on the page. The hand, large. */
+.quote-page { display: flex; flex-direction: column; justify-content: center; gap: var(--sp-5); height: 100%; }
+.quote-mark {
+  font-family: var(--font-display);
+  font-size: 9rem; line-height: .5;
+  color: color-mix(in srgb, var(--accent-ink) 34%, transparent);
+}
+.quote-body {
+  font-family: var(--font-hand);
+  font-size: 3.4rem;
+  line-height: 1.24;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.quote-by {
+  font-family: var(--font-display);
+  font-size: 1.3rem; letter-spacing: .14em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 65%, transparent);
+}
+.quote-by::before { content: "— "; }
+
+/* ── marginalia ──────────────────────────────────────────────────────────────
+   A narrow column in the OUTER margin, in the hand, for the notes a reader
+   would write there. Never in the gutter margin: nobody can write in a fold. */
+.marginalia { display: grid; height: 100%; gap: var(--sp-4); }
+.page.pr .marginalia { grid-template-columns: 1fr 12rem; }
+.page.pl .marginalia { grid-template-columns: 12rem 1fr; }
+.page.pl .marginalia-main { grid-column: 2; }
+.page.pl .marginalia-notes { grid-column: 1; }
+.marginalia-main { display: flex; flex-direction: column; gap: var(--sp-3); }
+.marginalia-notes { display: flex; flex-direction: column; gap: var(--sp-5); padding-top: var(--sp-5); }
+.marginalia-notes > div {
+  font-family: var(--font-hand);
+  font-size: 1.6rem;
+  line-height: 1.25;
+  color: var(--accent-ink);
+  border-top: 1px solid color-mix(in srgb, var(--accent-ink) 40%, transparent);
+  padding-top: var(--sp-2);
+}
+
+/* ── colophon ────────────────────────────────────────────────────────────────
+   The last printed page. Small, centred, narrow measure, and quiet. */
+.colophon { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: var(--sp-3); height: 100%; text-align: center; }
+.colophon-rule { width: 4rem; height: 1px; background: color-mix(in srgb, var(--ink) 45%, transparent); }
+.colophon p { font-size: 1.25rem; line-height: 1.6; max-width: 26rem; color: color-mix(in srgb, var(--ink) 76%, transparent); }
+.colophon-mark { font-family: var(--font-display); font-size: 1.15rem; letter-spacing: .22em; text-transform: uppercase; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REALISM
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── ink bleed-through ───────────────────────────────────────────────────────
+   The cue that says one sheet, not two divs. A page whose reverse is a dark
+   section board really does look faintly grey, and the board's big numeral
+   really does ghost through, MIRRORED, because you are seeing it from behind.
+   Only where it is true: the six pages backed by a board. */
+.bleed-ghost {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  overflow: hidden;
+}
+.bleed-ghost::before {
+  content: attr(data-ghost);
+  position: absolute; top: 34%; left: 12%;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14rem;
+  line-height: 1;
+  color: var(--ink);
+  opacity: .028;
+  transform: scaleX(-1);
+  filter: blur(1.5px);
+}
+.page.pl .bleed-ghost::before { left: auto; right: 12%; }
+/* and the paper itself sits a shade cooler over a dark board */
+.bleed-ghost::after {
+  content: ""; position: absolute; inset: 0;
+  background: var(--ink); opacity: .022;
+}
+
+/* ── wear ────────────────────────────────────────────────────────────────────
+   Two marks in the whole book. A third would read as a filter.
+
+   The dog-ear is a real fold: the corner of the sheet is missing (so the page
+   under it shows through) and the folded triangle lies on top, back-side up,
+   lit from the other side because it is now facing the other way.
+
+   It goes at the FOOT fore-edge corner, and only on a leaf that is paper on BOTH
+   sides. At the head it landed inside the dark title band, so a cream flap beside
+   a dark notch read as a sticker and a graphical artifact rather than a fold — and
+   on that leaf the reverse at that corner was a dark section board, so the flap
+   was the wrong colour for the paper it was supposedly made of. The foot corner is
+   just as common a fold in a real book and lands in cream paper. */
+.page.dog-eared { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 3.2rem), calc(100% - 3.2rem) 100%, 0 100%); }
+.dog-ear {
+  position: absolute; bottom: 0; right: 0; z-index: 6; pointer-events: none;
+  width: 3.2rem; height: 3.2rem;
+  /* the flap is this sheet's own reverse, so it is paper — brightest along the
+     fold and falling away to the tip, because it now faces the other way */
+  background: linear-gradient(315deg,
+    color-mix(in srgb, var(--paper-2) 92%, white) 0%,
+    var(--paper-2) 46%,
+    color-mix(in srgb, var(--paper-2) 78%, var(--ink)) 100%);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  box-shadow: -3px -3px 7px -2px rgba(0, 0, 0, .3);
+}
+/* The corner of the sheet is genuinely gone, so something has to be behind it:
+   the next page, in the shadow of the sheet above. A sibling of the page rather
+   than a pseudo-element, because both of `.leaf-face`'s pseudos are spoken for by
+   the specular sweep and the turn crease. */
+.dog-under {
+  position: absolute; bottom: 0; right: 0; z-index: 0; pointer-events: none;
+  width: 3.3rem; height: 3.3rem;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  background: linear-gradient(315deg,
+    color-mix(in srgb, var(--paper) 76%, var(--ink)) 0%,
+    color-mix(in srgb, var(--paper) 88%, var(--ink)) 60%);
+}
+/* the thumb smudge sits at the fore-edge, at the height a hand holds a page */
+.smudge {
+  position: absolute; z-index: 2; pointer-events: none;
+  top: 46%; width: 5.5rem; height: 9rem;
+  background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--ink) 22%, transparent), transparent 72%);
+  filter: blur(6px);
+  opacity: .5;
+}
+.page.pr .smudge { right: -1rem; }
+.page.pl .smudge { left: -1rem; }

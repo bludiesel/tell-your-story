@@ -1,0 +1,26 @@
+{
+  "skill_name": "tell-your-story",
+  "evals": [
+    {
+      "id": 0,
+      "name": "site-induction-from-raw-notes",
+      "prompt": "I run a gas distribution company and I need a short induction for new field engineers — the kind of thing they work through on a laptop before their first site visit. Cover: why isolation matters, the four-step isolation procedure, what the gauge readings actually mean, and never working alone on a live line. Make it something I can email as one file, no server, works offline. Our brand colour is #C1442A and we're called Meridian Gas.",
+      "expected_output": "A single standalone HTML flipbook built with the skill, using several distinct layouts appropriate to the content (a flow diagram for the four-step procedure, a table or chart for gauge readings, a takeaway for the never-work-alone rule), rebranded to #C1442A via theme.json, with no placeholder text and no external references.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "content-with-obvious-layout-shapes",
+      "prompt": "Turn this into an interactive handbook page set. I have: a project timeline (Jan kickoff, Mar prototype, Jun pilot, Sep rollout), a before/after comparison of our old vs new approval process, a table of the four approval tiers with their limits, and a quote from our CEO I want on its own page. Single HTML file please.",
+      "expected_output": "A book where each piece of content lands on the layout that matches its SHAPE — timeline block for the dated sequence, a compare pair on facing pages for old vs new, a Markdown table for the tiers, and a quote page for the CEO line. Not all prose, and not the wrong layouts.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "vague-ask-plus-branding",
+      "prompt": "can you make me one of those flip book training things for our safety team? needs to look like our brand (dark blue, orange accent) and I want to be able to click through it in a meeting room with a presenter clicker",
+      "expected_output": "A built flipbook with a theme.json rebranded to dark blue + orange, presenter-remote support confirmed, and the assistant should have asked for or invented sensible content rather than shipping template placeholders.",
+      "files": []
+    }
+  ]
+}

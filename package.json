@@ -1,0 +1,37 @@
+{
+  "name": "tell-your-story",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Markdown -> one standalone HTML presentation. Pictures go inside the file or in a folder beside it, switched by one setting.",
+  "scripts": {
+    "build": "node src/build.ts",
+    "sample": "node src/build.ts content/sample-book.md output/book.html",
+    "sample:folder": "node src/build.ts content/sample-book.md output/bookfolder/book.html --assets folder",
+    "capabilities": "node scripts/gen-capabilities.ts",
+    "check": "node scripts/check.ts",
+    "verify": "node scripts/verify.ts",
+    "motion": "node scripts/motion.ts",
+    "typecheck": "tsc --noEmit",
+    "prep": "node scripts/prep.ts",
+    "design": "node scripts/design-sandbox.ts",
+    "prebundle": "node scripts/prebundle.ts"
+  },
+  "dependencies": {
+    "@svgdotjs/svg.js": "^3.2.8",
+    "linkedom": "^0.18.13",
+    "markdown-it": "^15.0.0",
+    "markdown-it-attrs": "^5.0.1",
+    "markdown-it-container": "^4.0.0",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/markdown-it": "^14.1.2",
+    "curtainsjs": "^8.1.6",
+    "esbuild": "^0.28.2",
+    "gsap": "^3.15.0",
+    "page-flip": "^2.0.7",
+    "typescript": "7"
+  }
+}

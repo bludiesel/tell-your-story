@@ -1,0 +1,28 @@
+{
+  "_comment": "The Ink pairing, from the design specification. Only the colours it genuinely fixed are pinned; everything else derives, including the WCAG contrast correction. Use with: --theme themes/ink.json",
+  "name": "Ink",
+  "brand": {
+    "name": "Your Brand",
+    "footer": "Your Brand"
+  },
+  "colors": {
+    "surface_deep": "#0B0B0C",
+    "surface": "#26262A",
+    "surface_alt": "#33333A",
+    "accent": "#B4622F",
+    "accent_bright": "#C0743F",
+    "accent_ink": "#8A4A21",
+    "secondary": "#6C6C74",
+    "secondary_bright": "#8A8A93",
+    "curtain": "#3A3A3E",
+    "curtain_lit": "#62625F",
+    "curtain_deep": "#131315",
+    "curtain_rim": "#C7BBA6",
+    "paper": "#FBFAF6",
+    "paper_alt": "#EFEDE7",
+    "ink": "#1A1A1C",
+    "sticky": "#EFE9D8",
+    "sticky_alt": "#E4E4DC",
+    "sticky_third": "#EEDFD3"
+  }
+}

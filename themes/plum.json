@@ -1,0 +1,27 @@
+{
+  "_comment": "The Plum pairing, from the design specification. Only the colours it genuinely fixed are pinned; everything else derives, including the WCAG contrast correction. Use with: --theme themes/plum.json",
+  "name": "Plum",
+  "brand": {
+    "name": "Your Brand",
+    "footer": "Your Brand"
+  },
+  "colors": {
+    "surface_deep": "#0A0710",
+    "surface": "#1E1727",
+    "surface_alt": "#2A2036",
+    "accent": "#C79A5E",
+    "accent_bright": "#DBB077",
+    "accent_ink": "#7C5A2C",
+    "secondary": "#8A7396",
+    "secondary_bright": "#A48FAE",
+    "curtain": "#331F3E",
+    "curtain_lit": "#553962",
+    "curtain_deep": "#120A17",
+    "curtain_rim": "#C79A5E",
+    "paper": "#FAF7F2",
+    "paper_alt": "#EDE8E2",
+    "sticky": "#EDE6F1",
+    "sticky_alt": "#F2EBDD",
+    "sticky_third": "#E8E4EC"
+  }
+}

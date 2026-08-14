@@ -1,0 +1,27 @@
+{
+  "_comment": "The Tobacco pairing, from the design specification. Only the colours it genuinely fixed are pinned; everything else derives, including the WCAG contrast correction. Use with: --theme themes/tobacco.json",
+  "name": "Tobacco",
+  "brand": {
+    "name": "Your Brand",
+    "footer": "Your Brand"
+  },
+  "colors": {
+    "surface_deep": "#100B07",
+    "surface": "#251B13",
+    "surface_alt": "#33261B",
+    "accent": "#B8823C",
+    "accent_bright": "#CE9A52",
+    "accent_ink": "#7E5722",
+    "secondary": "#8A7358",
+    "secondary_bright": "#A48D71",
+    "curtain": "#3A2A1C",
+    "curtain_lit": "#5E452E",
+    "curtain_deep": "#140D07",
+    "curtain_rim": "#D2AE72",
+    "paper": "#FCF7EA",
+    "paper_alt": "#F1E9D6",
+    "sticky": "#F2E7CF",
+    "sticky_alt": "#E9E4D3",
+    "sticky_third": "#F0DFC8"
+  }
+}

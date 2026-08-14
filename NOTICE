@@ -1,0 +1,64 @@
+# Third-party notices
+
+Everything below ships inside this repository, inside a built book, or both.
+Listed so that whoever redistributes either knows what travels with it.
+
+## Fonts — SIL Open Font License 1.1
+
+`assets/fonts/` holds **subset** copies of two open fonts. Subsetting is
+explicitly permitted by the OFL; the subsets remain under the same licence and
+are not renamed.
+
+| File | Family | Designer | Source |
+|---|---|---|---|
+| `BarlowCondensed-Bold.subset.woff2` | Barlow Condensed | Jeremy Tribby | <https://fonts.google.com/specimen/Barlow+Condensed> |
+| `BarlowCondensed-SemiBold.subset.woff2` | Barlow Condensed | Jeremy Tribby | same |
+| `Caveat.subset.woff2` | Caveat | Impallari Type | <https://fonts.google.com/specimen/Caveat> |
+
+Both are Copyright the respective authors, licensed under the SIL Open Font
+License, Version 1.1. Full licence text: <https://openfontlicense.org>
+
+The OFL's one hard rule is worth stating plainly because it applies to anyone
+forking this: **the fonts may not be sold on their own**, and any derivative
+font must not use the Reserved Font Names. Using them inside a document — which
+is what this tool does — is unrestricted.
+
+## Bundled into every built book
+
+A book produced by this tool is one self-contained HTML file, which means these
+are compiled into it. Sending someone a book sends them these too.
+
+| Library | Licence | What it does in the book |
+|---|---|---|
+| [page-flip](https://github.com/Nodlik/StPageFlip) | MIT | the page-turn geometry — the bend, the shadow, the spine |
+| [GSAP](https://gsap.com) | GreenSock standard "no charge" | the opening sequence and every content reveal |
+| [curtains.js](https://www.curtainsjs.com) | MIT | the WebGL cloth on the opening curtain |
+
+### GSAP is the one to actually read
+
+Every other dependency here is MIT or ISC. GSAP is not. The package carries
+`@license Copyright 2026 — Subject to the terms at https://gsap.com/standard-license`.
+
+The standard licence permits free use in most projects, including commercial
+ones, but it is **not** an open-source licence and it has conditions — notably
+around products where the animation itself is the thing being sold. Recorded
+here rather than buried in a minified bundle, so anyone shipping books made
+with this can check it against their own use before, rather than after.
+
+## Build-time only — does NOT ship inside a book
+
+| Library | Licence | Used for |
+|---|---|---|
+| markdown-it (+ container, attrs) | MIT | Markdown → HTML |
+| linkedom | ISC | a DOM to build the page in |
+| yaml | ISC | front matter |
+| @svgdotjs/svg.js | MIT | drawing the diagrams and the cover mark |
+| esbuild | MIT | squeezing the browser runtime into one committed file |
+| TypeScript | Apache-2.0 | types |
+
+## Design lineage
+
+The book's look was developed with Claude Design and is documented in
+`design/DESIGN.md`. Two implementation ideas were reimplemented (not copied)
+from [Bento](https://github.com/nyblnet/bento), MIT — see `CREDITS.md`, which
+records exactly what was taken and what was deliberately left behind.

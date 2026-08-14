@@ -1,0 +1,25 @@
+{
+  "_comment": "The Blue Leads pairing, from the design specification. Only the colours it genuinely fixed are pinned; everything else derives, including the WCAG contrast correction. Use with: --theme themes/blue.json",
+  "name": "Blue Leads",
+  "brand": {
+    "name": "Your Brand",
+    "footer": "Your Brand"
+  },
+  "colors": {
+    "accent": "#4A7FB5",
+    "accent_bright": "#729BC5",
+    "accent_ink": "#2F5F8E",
+    "secondary": "#E0A33E",
+    "secondary_bright": "#E3AC51",
+    "surface": "#1B2A3A",
+    "surface_alt": "#223A50",
+    "curtain": "#2C4E71",
+    "curtain_lit": "#5A7894",
+    "curtain_rim": "#9DBCD8",
+    "paper": "#F6F4EF",
+    "paper_alt": "#E9E7E0",
+    "sticky": "#DCE9F4",
+    "sticky_alt": "#E7EDDF",
+    "sticky_third": "#F2E5D2"
+  }
+}

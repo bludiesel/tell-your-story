@@ -1,0 +1,22 @@
+{
+  "_comment": "The Deep pairing, from the design specification. Only the colours it genuinely fixed are pinned; everything else derives, including the WCAG contrast correction. Use with: --theme themes/deep.json",
+  "name": "Deep",
+  "brand": {
+    "name": "Your Brand",
+    "footer": "Your Brand"
+  },
+  "colors": {
+    "surface_deep": "#010204",
+    "surface": "#131E29",
+    "surface_alt": "#1B2C3C",
+    "accent": "#F0B24A",
+    "accent_bright": "#FFC96B",
+    "accent_ink": "#7E5A1E",
+    "curtain": "#234563",
+    "curtain_lit": "#7E96AC",
+    "curtain_deep": "#060C13",
+    "curtain_rim": "#FFD48A",
+    "paper": "#FDF8EC",
+    "paper_alt": "#F0E9D8"
+  }
+}

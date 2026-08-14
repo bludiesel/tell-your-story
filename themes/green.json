@@ -1,0 +1,27 @@
+{
+  "_comment": "The Green pairing, from the design specification. Only the colours it genuinely fixed are pinned; everything else derives, including the WCAG contrast correction. Use with: --theme themes/green.json",
+  "name": "Green",
+  "brand": {
+    "name": "Your Brand",
+    "footer": "Your Brand"
+  },
+  "colors": {
+    "surface_deep": "#05100C",
+    "surface": "#14241D",
+    "surface_alt": "#1C3228",
+    "accent": "#C8A24A",
+    "accent_bright": "#DCB861",
+    "accent_ink": "#7A6222",
+    "secondary": "#6E8F7C",
+    "secondary_bright": "#8AA896",
+    "curtain": "#1C3B2E",
+    "curtain_lit": "#35604C",
+    "curtain_deep": "#060F0B",
+    "curtain_rim": "#C8A24A",
+    "paper": "#FBF7EC",
+    "paper_alt": "#EFE9DA",
+    "sticky": "#E7EFE2",
+    "sticky_alt": "#F1EAD7",
+    "sticky_third": "#E3E8E4"
+  }
+}
