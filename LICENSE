@@ -19,19 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-THIRD-PARTY COMPONENTS
-
-The MIT licence above covers this project's own code. Some things it ships or
-bundles carry their own terms, and those terms travel with a built book:
-
-  Fonts (assets/fonts/) .......... SIL Open Font License 1.1 — see NOTICE
-  GSAP ........................... GreenSock standard "no charge" licence
-  page-flip ...................... MIT
-  curtains.js .................... MIT
-  markdown-it, linkedom, yaml .... MIT / ISC
-
-GSAP and page-flip are compiled into every book this tool produces, so anyone
-redistributing a built book redistributes them too. See NOTICE and CREDITS.md.
