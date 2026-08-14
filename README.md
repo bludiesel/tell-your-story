@@ -1,6 +1,6 @@
 <div align="center">
 
-# Tell Your Story
+<img src="docs/banner/header.svg" width="850" alt="Tell Your Story — one Markdown lesson, one standalone HTML flipbook">
 
 **One Markdown file in. One standalone HTML flipbook out.**
 
@@ -9,6 +9,8 @@ tabs, sticky notes, page curvature, presenter-remote control. No server, no
 network, no folder of assets. It opens from a USB stick.
 
 <img src="docs/screenshots/01-curtain.jpg" alt="A WebGL stage curtain parts to reveal a closed 3D book floating in the dark" width="100%">
+
+*The real thing, not a mock-up — a WebGL curtain parting on the closed book.*
 
 </div>
 
@@ -240,6 +242,12 @@ nothing.
 
 ## Light on purpose
 
+<div align="center">
+
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 143 checks passing, 17 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+
+</div>
+
 A built book is one file. The tool that builds it is nearly as lean:
 
 | | |
@@ -248,6 +256,11 @@ A built book is one file. The tool that builds it is nearly as lean:
 | Needed to build a book | **4 packages** — markdown-it, linkedom, yaml, svg.js |
 | Bundled into the book | page-flip, GSAP, curtains.js — already committed as one file, so they are not fetched at build time |
 | Fonts | subset and embedded; a book needs no network |
+
+Every number on that card is measured on this commit, not rounded up for the
+graphic: `143` is what `node scripts/check.ts` prints, `17` is the length of
+`LAYOUTS` in `src/layout.ts` with all seventeen proved reachable by
+`scripts/verify.ts`, and `1` is the entire point of the project.
 
 ---
 
