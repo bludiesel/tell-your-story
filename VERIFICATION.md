@@ -16,7 +16,7 @@ unreachable — shadowed by an earlier test that also matches. Nothing fails;
 the page simply comes out as something else. Walking in through the front
 door the templates describe is the only way to catch it.
 
-**21/21 verified.**
+**22/22 verified.**
 
 | Layout / block | Identifier | Verified | Evidence |
 |---|---|:--:|---|
@@ -41,6 +41,7 @@ door the templates describe is the only way to catch it.
 | Notes and asides — typeset into the document | — | ✅ | 3 match(es) for class="callout callout-(note|tip|warning… |
 | Flow and cycle diagrams | — | ✅ | 2 match(es) for <svg[\s>]… |
 | Two columns | — | ✅ | 1 match(es) for class="[^"]*\bcolumns\b… |
+| The catalogue shows every layout | — | ✅ | all 17 layouts rendered in content/every-layout.md |
 
 ## The runtime
 

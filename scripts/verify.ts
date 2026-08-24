@@ -126,11 +126,21 @@ function parseTemplates(md: string): Array<{ title: string; layout: string; snip
   return out.filter((s) => s.snippets.length > 0)
 }
 
-/** Build a one-layout book through the real CLI and return its HTML. */
-async function buildSnippet(slug: string, body: string): Promise<string> {
+/**
+ * Build a one-layout book through the real CLI and return its HTML.
+ *
+ * `raw` skips the synthetic front matter, for a source that already carries its
+ * own — the catalogue book is a real, finished document rather than a snippet
+ * that needs wrapping.
+ */
+async function buildSnippet(
+  slug: string,
+  body: string,
+  opts: { raw?: boolean } = {},
+): Promise<string> {
   const src = join(WORK, `${slug}.md`)
   const out = join(WORK, `${slug}.html`)
-  await writeFile(src, FRONT + body + '\n', 'utf8')
+  await writeFile(src, opts.raw ? body : FRONT + body + '\n', 'utf8')
   await run(process.execPath, [join(ROOT, 'src', 'build.ts'), src, out], { cwd: ROOT })
   return readFile(out, 'utf8')
 }
@@ -228,6 +238,39 @@ async function main(): Promise<void> {
     const re = BLOCK_MARKS[t.title]
     const count = (html.match(new RegExp(re.source, 'g')) ?? []).length
     record(t.title, '', count > 0, count > 0 ? `${count} match(es) for ${re.source.slice(0, 40)}…` : 'produced no matching markup')
+  }
+
+  // ── THE CATALOGUE BOOK ──────────────────────────────────────────────────
+  // `content/every-layout.md` is the one artefact a person can OPEN to see all
+  // seventeen layouts rendered, rather than imagining them from syntax. It is
+  // documented in SKILL.md as the thing to look at before choosing a layout, so
+  // it has to keep working — and the failure mode is quiet: a layout drops out
+  // of the catalogue, the book still builds, and the reference silently stops
+  // being complete.
+  //
+  // Checked LAST because it is the only row that proves the layouts still work
+  // TOGETHER in one book, rather than each alone in its own fixture.
+  {
+    const html = await buildSnippet(
+      'catalogue',
+      await readFile(join(ROOT, 'content', 'every-layout.md'), 'utf8'),
+      { raw: true },
+    ).catch((error: Error) => `BUILD FAILED: ${error.message.split('\n')[0]}`)
+
+    if (html.startsWith('BUILD FAILED')) {
+      record('The catalogue book builds', '', false, html.slice(0, 90))
+    } else {
+      const inBook = new Set(layoutsIn(html))
+      const missing = known.filter((l) => !inBook.has(l))
+      record(
+        'The catalogue shows every layout',
+        '',
+        missing.length === 0,
+        missing.length === 0
+          ? `all ${known.length} layouts rendered in content/every-layout.md`
+          : `missing from the catalogue: ${missing.join(', ')}`,
+      )
+    }
   }
 
   // ── THE REPORT ──────────────────────────────────────────────────────────

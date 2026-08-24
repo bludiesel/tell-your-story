@@ -202,3 +202,74 @@ body:not(.curtain-open) .book-3d { pointer-events: none; }
    failed to load. A slot nobody filled should be absent, not apologetic. The
    frame returns the moment there is something to put in it. */
 .curtain-photo:not(:has(img)) { display: none; }
+
+/* ── WHEN THE CURTAIN SETTLES, THE PRINT MOVES INTO THE SWAG ──────────────
+   The copy is printed into the cloth texture and therefore travels with the
+   fabric. As the curtain draws, the cloth compresses — and it does NOT
+   compress evenly. Working the shader's own gather backwards at rest
+   (uOpen = 1, uVel = 0, so k = 0.55, swag = 0.12):
+
+       outer edge  s = 0   slope = 0.45   compression ≈ 1.9   ink survives ≈ 0.96
+       inner edge  s = 1   slope = 1.55   compression ≈ 6.5   ink fades to 0
+
+   `inkFade` kills print past ~4x compression on purpose, because a title
+   squeezed ten times over reads as a smear rather than as type. So the closed
+   layout — which centres each block in its own half — lands squarely in the
+   region that gets crushed, and the message is gone the moment it is open.
+
+   The fix is placement, not shader maths: re-print the cloth once the curtain
+   has settled, with the copy moved into the narrow band that stays uncompressed
+   and on screen. `printCopy()` rasterises whatever the DOM has laid out, so a
+   class is the whole mechanism — the closed composition is untouched, and the
+   swag carries a small standing version of the same message for the rest of the
+   session.
+
+   Left swag takes the words, right swag takes the picture: a strip 12vw wide
+   cannot hold a standfirst at a readable size, and pretending otherwise would
+   print a paragraph nobody can read. */
+/* THE STRIP IS COMPUTED, NOT GUESSED. The swag the SHADER leaves is 12% of the
+   viewport, but the open book is drawn on top of it and covers the inner half —
+   measured at 2400px wide, only 6.5% either side is actually visible. Printing
+   to the shader's 12% put half of every line underneath the book.
+
+   The book is `1560px * var(--fit)` wide and centred, so what remains at each
+   edge is exactly `(100vw - 1560px * var(--fit)) / 2`. Same numbers the stage
+   itself uses — it cannot drift, and it stays correct at any window size. */
+.curtain.settled .curtain-side {
+  width: calc(((100vw - 1560px * var(--fit, .6)) / 2) * .66);
+  max-width: none; padding: 0; gap: .45rem;
+  justify-content: center; align-items: center; text-align: center;
+  overflow: hidden;
+}
+.curtain.settled .curtain-side.left  { justify-self: start; margin-left: .45rem; }
+.curtain.settled .curtain-side.right { justify-self: end;   margin-right: .45rem; }
+/* On a narrow window the strip closes to almost nothing and the print becomes a
+   sliver of crushed lettering, which is worse than clean cloth. The stage is
+   height-limited below roughly 1200px so the strip is at its thinnest there —
+   print nothing instead. */
+@media (max-width: 1200px) { .curtain.settled .curtain-side { display: none } }
+/* The standfirst is the one thing that cannot survive the narrowing. */
+.curtain.settled .curtain-sub { display: none; }
+/* VERTICAL, because the strip is. Set horizontally the title wrapped to four
+   ragged fragments and the book clipped every one of them; turned on its side it
+   runs the full height of the cloth and needs no wrap at all — which is what a
+   banner edge does anyway. The left panel reads bottom-to-top and the right
+   top-to-bottom, so both run outward from the stage the way lettering on a real
+   pair of drapes would. */
+.curtain.settled .curtain-title {
+  writing-mode: vertical-rl;
+  font-size: clamp(.8rem, 1.25vw, 1.15rem); line-height: 1;
+  letter-spacing: .04em; white-space: nowrap;
+  text-shadow: 0 6px 18px rgba(0,0,0,.7);
+}
+.curtain.settled .curtain-side.left .curtain-title { transform: rotate(180deg); }
+.curtain.settled .curtain-eyebrow {
+  writing-mode: vertical-rl;
+  font-size: clamp(.6rem, .9vw, .8rem); white-space: nowrap;
+}
+.curtain.settled .curtain-side.left .curtain-eyebrow { transform: rotate(180deg); }
+/* The picture keeps the right strip. Portrait, because the strip is. */
+.curtain.settled .curtain-photo {
+  width: 100%; aspect-ratio: 2 / 3;
+  box-shadow: 0 18px 40px -16px rgba(0,0,0,.9);
+}

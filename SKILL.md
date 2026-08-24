@@ -36,6 +36,7 @@ about each. It never rewrites your words.
 | **[`templates/starter.md`](templates/starter.md)** | Copy this and fill it in. A real three-section book with every placeholder written as `[CAPITALS]`. It builds as it stands, so you can see the shape before you write a word. |
 | **[`templates/CHOOSING.md`](templates/CHOOSING.md)** | **Which layout for which content.** One table, worked top to bottom. Read this before authoring — choosing the layout is the decision most likely to go wrong. |
 | **[`templates/LAYOUTS.md`](templates/LAYOUTS.md)** | Every one of the 17 layouts, with copyable syntax and the placeholder text to replace. |
+| **[`content/every-layout.md`](content/every-layout.md)** | **The catalogue — LOOK at the layouts instead of imagining them.** One page per layout, one block per feature, in a real book you open and turn. Build it once and keep it open while authoring: `node src/build.ts content/every-layout.md output/every-layout.html`. Choosing well is a visual judgement, and reading syntax is not the same as seeing the page it produces. |
 | [`CAPABILITIES.md`](CAPABILITIES.md) | Every feature with one line on when to reach for it. GENERATED from `src/capabilities.ts`; the build **fails** if the code implements something the manifest does not list, so it is complete by construction rather than by anyone remembering. |
 
 **Placeholders cannot ship.** `build` refuses to write a book containing a
@@ -174,6 +175,7 @@ skill, not an application — nothing here is a user-facing program.
 | `node scripts/check.ts` | `scripts/check.ts` | Every check is a bug that once shipped looking fine. The count is deliberately not quoted here — it only ever drifts. |
 | `node scripts/motion.ts` | `scripts/motion.ts` | **What moves on every page**, and whether it obeys the rules. Prints turn behaviour and step count per page for a built book, and fails if a section board starts bending or eating presses. Run it on any book before presenting from it. |
 | `node scripts/verify.ts` | `scripts/verify.ts` | Copies each snippet out of `templates/LAYOUTS.md`, builds it, and checks the page comes back as the layout the template promised. Catches a layout that is documented but unreachable — `pickLayout` is first-match-wins, so an earlier test can shadow a later one with nothing failing. Writes `VERIFICATION.md`. |
+| `node src/build.ts content/every-layout.md output/every-layout.html` | — | **The catalogue.** All 17 layouts rendered in one book. Open it before choosing a layout, and after any change to `layouts.css` — it is the fastest way to see what actually broke. |
 | `node scripts/gen-capabilities.ts` | `scripts/gen-capabilities.ts` | Regenerates `CAPABILITIES.md` from the manifest. Run after adding a feature. |
 | `npx tsc --noEmit` | — | `tsc --noEmit`. TypeScript 7, ~0.11s. |
 | `node src/build.ts content/sample-book.md output/book.html` | — | Builds the shipped sample, for a quick visual check. |

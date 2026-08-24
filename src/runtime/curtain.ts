@@ -581,7 +581,40 @@ function printCopy(canvas: HTMLCanvasElement, stage: HTMLElement): void {
     const el = stage.querySelector<HTMLElement>(sel)
     if (!el) continue
     const cs = getComputedStyle(el)
-    const box = rel(el)
+    // A hidden block still answers getComputedStyle and still has a (zero) box,
+    // so without this the standfirst the settled layout switches off was still
+    // being wrapped into a 0px-wide column and printed as a column of stray
+    // fragments in the top corner of the swag.
+    if (cs.display === 'none' || cs.visibility === 'hidden') continue
+    const rawBox = rel(el)
+
+    // VERTICAL TYPE HAS TO BE ROTATED BY HAND.
+    //
+    // A canvas 2D context has no `writing-mode`. Setting it in CSS turns the
+    // element in the DOM and changes nothing here — the wrapper below simply
+    // measured a 103px-wide box and broke "FIELD SAFETY WORKBOOK" into three
+    // stacked fragments, which is what the swag was showing.
+    //
+    // So the CONTEXT is turned instead: rotate a quarter turn about the box's
+    // centre and hand the wrapper the box with its sides swapped, so it lays
+    // out along the long axis and never wraps. The left panel turns the other
+    // way, so both read outward from the stage the way lettering on a real pair
+    // of drapes does.
+    const vertical = cs.writingMode.startsWith('vertical')
+    const box = vertical
+      ? { x: rawBox.x + (rawBox.w - rawBox.h) / 2, y: rawBox.y + (rawBox.h - rawBox.w) / 2, w: rawBox.h, h: rawBox.w }
+      : rawBox
+    ctx.save()
+    if (vertical) {
+      const cx = rawBox.x + rawBox.w / 2
+      const cy = rawBox.y + rawBox.h / 2
+      // `rotate(180deg)` in the CSS is what flips the left panel; read it back
+      // rather than hard-coding which side is which.
+      const flipped = cs.transform !== 'none' && cs.transform.startsWith('matrix(-1')
+      ctx.translate(cx, cy)
+      ctx.rotate(flipped ? -Math.PI / 2 : Math.PI / 2)
+      ctx.translate(-cx, -cy)
+    }
 
     ctx.font = cs.font && cs.font !== '' ? cs.font
       : `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
@@ -656,6 +689,9 @@ function printCopy(canvas: HTMLCanvasElement, stage: HTMLElement): void {
       })
       y += lineHeight
     }
+    // Pairs with the save() above — the rotation must not leak into the next
+    // element, or every block after a vertical one is drawn on its side.
+    ctx.restore()
   }
 }
 
@@ -1022,6 +1058,27 @@ export function initCurtain(onOpened: () => void): CurtainHandle | null {
       const finish = () => {
         activeTimeline = null
         completeTransition = null
+        // RE-PRINT THE CLOTH FOR THE SWAG.
+        //
+        // The copy lives in the texture and gathers with the fabric, so the
+        // closed layout — centred in each half — ends up in the part that
+        // compresses six times over and `inkFade` correctly erases it. Moving
+        // the copy into the outer band and printing again puts it where the
+        // cloth stays uncompressed and on screen, so the message survives the
+        // opening instead of leaving with it.
+        //
+        // A class and a re-print, no shader change: `printCopy()` reads the
+        // DOM's computed layout, so curtain.css remains the single source of
+        // truth for both compositions. Deferred a frame so the settled layout
+        // has actually been laid out before it is measured.
+        stage.classList.add('settled')
+        requestAnimationFrame(() => {
+          const print = stage.querySelector<HTMLCanvasElement>('.curtain-plane canvas')
+          if (print) {
+            printCopy(print, stage)
+            plane?.textures?.[0]?.needUpdate?.()
+          }
+        })
         onOpened()
         resolve()
       }

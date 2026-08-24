@@ -110,6 +110,7 @@ the whole job:
 |---|---|
 | [`templates/CHOOSING.md`](templates/CHOOSING.md) | **Which layout for which content shape.** The decision most likely to go wrong. Work down the table; the first row that genuinely fits wins |
 | [`templates/LAYOUTS.md`](templates/LAYOUTS.md) | Copyable syntax for every layout |
+| [`content/every-layout.md`](content/every-layout.md) | **The catalogue.** Build it and LOOK: one page per layout, one block per feature. Reading syntax is not the same as seeing the page it makes |
 
 **Then follow this order, and do not skip step 1.**
 
