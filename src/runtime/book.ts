@@ -113,20 +113,49 @@ function boot(): void {
   // which is the reason anybody opened the file.
   const grade = () => {
     const frames: number[] = []
-    let last = performance.now()
+    const startedAt = performance.now()
+    let last = startedAt
     let raf = 0
     const tick = () => {
       const now = performance.now()
       frames.push(now - last)
       last = now
-      if (frames.length < 64) raf = requestAnimationFrame(tick)
+
+      // THE MEASUREMENT MUST NOT TAKE LONGER THAN THE THING IT IS MEASURING.
+      //
+      // This used to wait for 64 frames, full stop. On a healthy display that
+      // is about a second. On a machine with no GPU — a locked-down laptop, a
+      // remote desktop, an embedded browser — the shader falls back to software
+      // and 64 frames can be TWELVE SECONDS, so the verdict arrived long after
+      // the curtain had finished crawling. The governor was correct and useless:
+      // it downgraded a page whose slowest moment was already over.
+      //
+      // Observed in the Claude Code browser pane, which has no acceleration: the
+      // curtain took roughly half a minute to part and never dropped a tier.
+      //
+      // Two exits now. A wall-clock cap of 600ms means a verdict always lands
+      // while the curtain is still opening; and eight frames slower than 55ms
+      // apiece is not a machine that needs more evidence, so it is condemned on
+      // the spot. Fewer samples on a slow machine is the right trade — precision
+      // matters when the answer is "which good tier", not when it is "this thing
+      // cannot render".
+      const elapsed = now - startedAt
+      const early = frames.length >= 8 &&
+        frames.slice(2).every((f) => f > 55)
+      if (early) { settle('perf-min'); return }
+      if (frames.length < 64 && elapsed < 600) raf = requestAnimationFrame(tick)
       else settle()
     }
-    const settle = () => {
+    const settle = (forced?: 'perf-min') => {
       cancelAnimationFrame(raf)
       // The first few frames include layout and font work and are never
-      // representative; the median of the rest is.
-      const s = frames.slice(8).sort((a, b) => a - b)
+      // representative; the median of the rest is. But DO NOT slice away
+      // samples we do not have — the early bail-out stops at eight frames, and
+      // slicing eight off eight leaves nothing, so the median fell back to its
+      // 16ms default and a machine that could not render was graded perf-full.
+      // The warm-up is dropped only when there is enough left to be a sample.
+      const warm = frames.length > 16 ? 8 : 2
+      const s = frames.slice(warm).sort((a, b) => a - b)
       const median = s[Math.floor(s.length / 2)] ?? 16
       // Against the display's OWN rhythm, not a fixed 60Hz. A 120Hz panel that
       // is comfortably hitting 8.3ms must not be graded the same as a 60Hz one
@@ -135,19 +164,37 @@ function boot(): void {
       // interval, so the ratio is what matters.
       const best = s[Math.floor(s.length * 0.1)] ?? median
       const ratio = median / Math.max(best, 1)
-      const tier = ratio > 2.2 || median > 34 ? 'perf-min'
+      const tier = forced ?? (ratio > 2.2 || median > 34 ? 'perf-min'
         : ratio > 1.35 || median > 20 ? 'perf-lite'
-          : 'perf-full'
+          : 'perf-full')
       document.documentElement.classList.remove('perf-full', 'perf-lite', 'perf-min')
       document.documentElement.classList.add(tier)
       // Kept on the element so a reader can read it back, and so a bug report
       // can carry the real numbers rather than "it felt slow".
       document.documentElement.dataset.perf =
-        `${tier} · ${median.toFixed(1)}ms median, ${best.toFixed(1)}ms floor, ${(1000 / median).toFixed(0)}fps`
+        `${tier}${forced ? ' (bailed early)' : ''} · ${median.toFixed(1)}ms median, ${best.toFixed(1)}ms floor, ${(1000 / median).toFixed(0)}fps`
     }
     raf = requestAnimationFrame(tick)
+
+    // A HIDDEN TAB PRODUCES NO FRAMES AT ALL, so a grader built only on
+    // requestAnimationFrame never finishes — it waits forever for evidence that
+    // cannot arrive. Measured in a background tab: zero frames in two seconds,
+    // `data-perf` never set, and every later decision reading it got nothing.
+    //
+    // This is NOT the slow-machine case and must not be graded as one: a hidden
+    // tab is not struggling, it is paused, and condemning it to perf-min would
+    // strip the scenery from a reader who simply had another window in front.
+    // The timer settles on whatever frames did arrive — and if none did, the
+    // defaults stand until the tab is looked at and the resize/regrade path
+    // measures it properly.
+    setTimeout(() => { if (!document.documentElement.dataset.perf) settle() }, 1400)
   }
   grade()
+  // Grade again when the tab is actually looked at. The first attempt may have
+  // run entirely in the background, where there was nothing to measure.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !document.documentElement.dataset.perf) grade()
+  })
   let regrade: ReturnType<typeof setTimeout> | undefined
   window.addEventListener('resize', () => {
     clearTimeout(regrade)
