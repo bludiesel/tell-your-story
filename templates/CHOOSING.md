@@ -111,7 +111,7 @@ structure, you read meaning.
 
 ```bash
 node scripts/prep.ts   content/lesson.md                      # 1. shape it   <- do not skip
-node src/build.ts  content/lesson.md output/lesson.html   # 2. build it
+node dist/build.mjs content/lesson.md output/lesson.html  # 2. build it
 node scripts/check.ts                                         # 3. prove it
 ```
 
