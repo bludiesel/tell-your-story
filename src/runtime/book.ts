@@ -49,8 +49,40 @@ function boot(): void {
   // pictures are the only thing that softens, and a full-bleed photograph is
   // supplied well above page size for exactly that reason. Only the lower bound
   // is clamped, and only to stop a freak viewport collapsing the book to zero.
+  // ── ONE PAGE OR TWO, DECIDED BY WHICH IS BIGGER ────────────────────────
+  //
+  // A phone was showing the whole 1560-wide spread at --fit 0.217: a 338x226
+  // letterbox adrift in an 844px-tall screen, with body type landing at about
+  // four pixels. Measured on a 390x844 viewport, not guessed at.
+  //
+  // page-flip already had `usePortrait: true` and it never fired, because it
+  // decides from its CONTAINER and the container is the fixed stage — always
+  // 1560 CSS pixels wide however small it is drawn. The stage architecture that
+  // makes every measurement absolute is exactly what hid the narrow screen from
+  // the flip engine.
+  //
+  // So the stage itself becomes one page wide when that is better, and the
+  // engine sees a narrow box and turns single pages. No breakpoint and no
+  // device sniffing: work out the page size each mode would actually produce
+  // and take the larger. A phone in portrait picks one page (~0.49, more than
+  // double), a laptop picks the spread, a tablet turned on its side changes its
+  // mind on its own, and the rule cannot be wrong about a device nobody tested.
+  const STAGE_H = 1040
+  const PAGE_W = 780
+  // The 40px reserve is for the fore-edge tabs, which overhang the SPREAD. In
+  // portrait the rail is hidden, so reserving for it just shrinks the page.
+  const stageFit = (stageW: number) =>
+    Math.min((window.innerWidth * 0.97 - (stageW > PAGE_W ? 40 : 0)) / stageW,
+             (window.innerHeight * 0.92) / STAGE_H)
+
   const fitStage = () => {
-    const fit = Math.min((window.innerWidth * 0.97 - 40) / 1560, (window.innerHeight * 0.92) / 1040)
+    const spread = stageFit(PAGE_W * 2)
+    const single = stageFit(PAGE_W)
+    // Equal-or-better keeps the spread, because two pages carry the design's
+    // facing layouts and a tie should not throw them away.
+    const portrait = single > spread
+    document.body.classList.toggle('portrait', portrait)
+    const fit = portrait ? single : spread
     document.documentElement.style.setProperty('--fit', String(Math.max(fit, 0.05)))
     // The stage just changed size, so which corner is clear may have too.
     placeStickies()
@@ -179,7 +211,17 @@ function boot(): void {
       width: 780,
       height: 1040,
       size: 'stretch',
-      minWidth: 320, maxWidth: 1980,
+      // THE PORTRAIT TEST READS minWidth, NOT width. Render.ts:221 is
+      //     if (blockWidth < setting.minWidth * 2 && usePortrait) -> PORTRAIT
+      // With minWidth at 320 that threshold was 640, and the one-page stage is
+      // 780 — so `usePortrait: true` was set, looked configured, and could
+      // never fire. On a phone the engine went on laying out two 189px
+      // half-pages side by side.
+      //
+      // 780 puts the threshold at exactly one spread, so it agrees with the
+      // stage switch above by construction: a 1560 stage is not < 1560 and
+      // stays a spread; a 780 stage is, and turns single pages.
+      minWidth: 780, maxWidth: 1980,
       minHeight: 420, maxHeight: 1200,
       showCover: false,
       usePortrait: true,
@@ -201,6 +243,26 @@ function boot(): void {
       mobileScrollSupport: false,
     })
     flip.loadFromHTML(pages)
+
+    // ORIENTATION IS DECIDED DURING LOAD, AND IT GETS IT WRONG HERE.
+    //
+    // `usePortrait: true` was set from the start and never fired. Narrowing the
+    // stage to one page was necessary but not sufficient: measured after load,
+    // the container was 780px and the engine had still laid out TWO pages of
+    // 189px each, side by side — it picks its orientation while loading, before
+    // the stage's own transform and width have settled.
+    //
+    // `update()` re-measures and re-chooses. Deferred a frame so it runs after
+    // layout rather than in the middle of it.
+    //
+    // `update()` is real — PageFlip.ts:63 — but missing from the shipped
+    // types/index.d.ts, the same gap as `transparent` on curtains.js's Plane.
+    // Cast rather than skip it: the method is what re-runs calculateBoundsRect()
+    // and therefore the orientation choice.
+    if (document.body.classList.contains('portrait')) {
+      const refit = (flip as unknown as { update?: () => void }).update
+      if (refit) requestAnimationFrame(() => refit.call(flip))
+    }
   } catch (error) {
     // Keep the authored paper readable if page-flip cannot initialise. In
     // particular, never add the reveal gate before this point.

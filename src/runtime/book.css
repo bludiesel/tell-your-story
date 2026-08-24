@@ -1030,3 +1030,21 @@ body.blackout { cursor: none; }
    expensive things painted per page, and both are depth cues rather than
    content. */
 .perf-min .pl::before, .perf-min .pr::before { background: none; }
+
+/* ── PORTRAIT: THE STAGE BECOMES ONE PAGE ────────────────────────────────
+   `body.portrait` is set by fitStage() when a single page renders larger than
+   the spread would — a phone held upright, chiefly. Narrowing the stage is what
+   lets page-flip's `usePortrait` finally engage: it reads its CONTAINER, and
+   until now the container was 1560px however small the book was drawn.
+
+   Everything inside is untouched. A page is still 780 x 1040 and a rem is still
+   the same number of stage pixels, so the layouts, the type scale and the
+   catalogue all render exactly as designed — there is simply one page on the
+   easel instead of two. That is the whole point of the fixed stage: the only
+   thing that changes is how much of it you are looking at. */
+body.portrait .book-3d { width: 780px; }
+/* The fore-edge rail hangs off the spread's right edge; on one page it would
+   sit over the text block. */
+body.portrait .rail { display: none; }
+/* No gutter to keep clear of when there is no facing page. */
+body.portrait .below { padding-left: var(--pg-x); padding-right: var(--pg-x); }
