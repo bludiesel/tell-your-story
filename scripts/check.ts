@@ -301,6 +301,33 @@ check('manifest: every content block is documented',
     `the runtime sources changed since the bundle was built (${stamped || 'none'} vs ${actual}) — ` +
     'run "node scripts/prebundle.ts". A stale bundle builds happily and ships old behaviour.')
 
+  // ── THE NODE-SIDE TOOLS ─────────────────────────────────────────────────
+  // Same failure, one layer up. A stale dist/build.mjs is worse than a stale
+  // runtime bundle, because it is the DEFAULT path in the docs: a reader with
+  // no node_modules would silently build with last week's engine and have no
+  // way to notice, since the book it produces looks entirely correct.
+  const { toolsStamp, TOOLS_STAMP_PATH } = await import(join(ROOT, 'scripts/prebundle.ts'))
+  const builder = await readFile(join(ROOT, 'dist/build.mjs'), 'utf8').catch(() => '')
+  check('dist: the zero-install builder exists',
+    builder.length > 10000,
+    'run "node scripts/prebundle.ts" and commit dist/ — without it a user must npm install ' +
+    'before they can build anything')
+
+  const toolsStamped = (await readFile(TOOLS_STAMP_PATH, 'utf8').catch(() => '')).trim()
+  const toolsActual = await toolsStamp(ROOT)
+  check('dist: the zero-install builder is not stale',
+    toolsStamped === toolsActual && toolsActual !== 'no-sources',
+    `the builder's sources changed since dist/ was built (${toolsStamped || 'none'} vs ` +
+    `${toolsActual}) — run "node scripts/prebundle.ts". Anyone without node_modules is ` +
+    'running the old engine and cannot tell.')
+
+  // Not startsWith: build.ts carries a `#!/usr/bin/env node` shebang, which
+  // esbuild keeps on line one and puts the banner beneath.
+  check('dist: the require shim survived bundling',
+    builder.slice(0, 400).includes('createRequire'),
+    "dist/build.mjs is missing the createRequire banner — yaml's CommonJS build calls " +
+    "require('process') internally and the builder dies on its first line without it")
+
   check('runtime: page-flip css is vendored',
     (await readFile(join(ROOT, 'assets/pageflip.css'), 'utf8').catch(() => '')).includes('stf__'),
     'assets/pageflip.css is missing — the build would fall back to reading it out of ' +

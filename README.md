@@ -26,12 +26,14 @@ It is deliberately **brand-agnostic**. Every colour, typeface and proportion
 comes out of `theme.json`. Ships neutral; rebrand in one file.
 
 ```bash
-npm install                                              # once
-node scripts/prep.ts  content/lesson.md                  # 1. shape the content  ← do not skip
-node src/build.ts     content/lesson.md output/book.html  # 2. build it
+node scripts/prep.ts content/lesson.md                     # 1. shape it  ← do not skip
+node dist/build.mjs  content/lesson.md output/book.html    # 2. build it
 ```
 
-That's it. `output/book.html` is the deliverable.
+That's it. `output/book.html` is the deliverable — and **there is no install
+step.** Node 22 or newer is the whole requirement. The builder ships with its
+four dependencies compiled in and produces a byte-identical book to the
+from-source path.
 
 ---
 
@@ -43,7 +45,6 @@ Drop it where Claude Code looks for skills and it becomes available by name.
 
 ```bash
 git clone https://github.com/bludiesel/tell-your-story.git ~/.claude/skills/tell-your-story
-cd ~/.claude/skills/tell-your-story && npm install
 ```
 
 For one project only, clone into `<project>/.claude/skills/` instead — the skill
@@ -60,14 +61,14 @@ interactive lesson** — you do not have to name it. If you want to be explicit,
 
 ### Anywhere else
 
-It is a plain Node project. Clone it, `npm install`, and run the scripts. Nothing
-about it depends on Claude Code — the skill wrapper is a convenience, not a
-requirement.
+It is a plain Node project with the builder already compiled. Clone it and run
+the scripts — no install. Nothing about it depends on Claude Code; the skill
+wrapper is a convenience, not a requirement.
 
 ### First run — prove it works before you write anything
 
 ```bash
-node src/build.ts content/sample-book.md output/sample.html
+node dist/build.mjs content/sample-book.md output/sample.html
 open output/sample.html
 ```
 
@@ -78,7 +79,8 @@ the curtain, the flip engine, the fonts and the reveals in one go.
 Then check the machinery honestly reports itself:
 
 ```bash
-node scripts/check.ts     # the full suite — 143 checks
+npm install               # contributors only
+node scripts/check.ts     # the full suite
 npx tsc --noEmit          # types
 ```
 
@@ -90,8 +92,8 @@ you have edited `src/runtime/`.
 
 | | |
 |---|---|
-| **Node 22 or newer** | It runs the TypeScript directly. `node --version` |
-| npm | Ships with Node |
+| **Node 22 or newer** | The entire requirement. `node --version` |
+| ~~npm~~ | **Not needed.** Only to change the skill itself |
 | A browser | Only to *look* at a book. Building needs none |
 
 No Bun, no Python, no Playwright, no build step.
@@ -115,9 +117,9 @@ the whole job:
 **Then follow this order, and do not skip step 1.**
 
 ```bash
-node scripts/prep.ts content/lesson.md    # 1. it tells you how to chunk
-node src/build.ts    content/lesson.md output/book.html
-node scripts/motion.ts output/book.html   # 3. what moves, and whether it obeys the rules
+node scripts/prep.ts content/lesson.md   # 1. it tells you how to chunk
+node dist/build.mjs  content/lesson.md output/book.html
+node dist/motion.mjs output/book.html    # 3. what moves, and whether it obeys the rules
 ```
 
 `prep` measures what cannot be judged by reading — page fill against real
@@ -245,7 +247,7 @@ nothing.
 
 <div align="center">
 
-<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 143 checks passing, 17 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 146 checks passing, 17 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
 
 </div>
 
@@ -254,7 +256,7 @@ A built book is one file. The tool that builds it is nearly as lean:
 | | |
 |---|---|
 | Runtime | **Node only.** No Bun, no Python, no browser, no build step |
-| Needed to build a book | **4 packages** — markdown-it, linkedom, yaml, svg.js |
+| Needed to build a book | **Nothing to install.** The 4 packages it uses — markdown-it, linkedom, yaml, svg.js — are compiled into the committed `dist/build.mjs` |
 | Bundled into the book | page-flip, GSAP, curtains.js — already committed as one file, so they are not fetched at build time |
 | Fonts | subset and embedded; a book needs no network |
 
@@ -270,9 +272,9 @@ graphic: `143` is what `node scripts/check.ts` prints, `17` is the length of
 | Command | What it does |
 |---|---|
 | `node scripts/prep.ts <file>` | **Run this first.** Measures page lengths against real capacity, finds headless pages, warns when a facing pair has been split, proposes the reveal order. Reports; never rewrites your words. `--json` for machine use. |
-| `node src/build.ts <in> <out>` | Markdown → one standalone HTML book. |
+| `node dist/build.mjs <in> <out>` | Markdown → one standalone HTML book. **No install.** `src/build.ts` is the same thing from source, for contributors. |
 | `node scripts/check.ts` | The full suite. Every check in it is a bug that once shipped looking fine. |
-| `node scripts/motion.ts <book.html>` | **What moves on every page.** Prints turn behaviour and step count per page, and fails if a section board starts bending or swallowing presses. |
+| `node dist/motion.mjs <book.html>` | **What moves on every page.** Prints turn behaviour and step count per page, and fails if a section board starts bending or swallowing presses. |
 | `node scripts/verify.ts` | Copies each snippet out of `LAYOUTS.md`, builds it, and checks the page comes back as the layout the template promised. Writes [`VERIFICATION.md`](VERIFICATION.md). |
 | `node scripts/drive-browser.mjs <url>` | Drives a built book in a real headless Chrome — curtain, turns, reveals, a held clicker, the tabs, the resume. The only thing that can see what a button press actually does. |
 

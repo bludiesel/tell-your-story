@@ -58,6 +58,33 @@ export async function runtimeStamp(root = ROOT): Promise<string> {
   return h.digest('hex').slice(0, 16)
 }
 
+export const TOOLS_STAMP_PATH = join(ROOT, 'dist', 'tools.sha')
+export const TOOLS_SOURCES_PATH = join(ROOT, 'dist', 'tools.sources')
+
+/**
+ * The stamp for `dist/`, taken over the exact files esbuild reported pulling in
+ * (written to `dist/tools.sources` when the bundles are built) plus
+ * `package.json`, since a dependency bump changes the tools too.
+ *
+ * Recorded rather than hand-listed so it cannot drift: add an import to
+ * `src/build.ts` and the next bundle records it automatically, while editing a
+ * file the tools do not touch never raises a false alarm.
+ */
+export async function toolsStamp(root = ROOT): Promise<string> {
+  const h = createHash('sha256')
+  let list: string[]
+  try {
+    list = (await readFile(join(root, 'dist', 'tools.sources'), 'utf8'))
+      .split('\n').map((s) => s.trim()).filter(Boolean)
+  } catch {
+    return 'no-sources'
+  }
+  for (const rel of [...list, 'package.json']) {
+    try { h.update(await readFile(join(root, rel))) } catch { h.update(`missing:${rel}`) }
+  }
+  return h.digest('hex').slice(0, 16)
+}
+
 // esbuild, NOT Bun.build.
 //
 // Bundling browser JavaScript needs a bundler in any language — that part is
@@ -97,4 +124,59 @@ if (runDirectly) {
   console.log(`  ${BUNDLE_PATH}`)
   console.log(`  ${Math.round(Buffer.byteLength(js) / 1024)} KB · stamp ${await runtimeStamp()}`)
   console.log('  commit this — it is what makes the skill installable without Bun')
+
+  // ── THE NODE-SIDE TOOLS, SO A READER NEEDS NO INSTALL EITHER ───────────
+  //
+  // The runtime bundle above removed the three animation libraries from a
+  // user's disk. These remove the last four: markdown-it, linkedom, yaml and
+  // svg.js are compiled into the builder here, so `node dist/build.mjs` works
+  // in a folder with no node_modules at all. Verified byte-identical against
+  // the installed path — same book, same SHA, the packages are simply linked
+  // ahead of time rather than downloaded.
+  //
+  // `motion` comes too because it is the one QA tool an AUTHOR runs — it says
+  // what moves on every page. `check`, `verify` and this script stay
+  // install-only: they are for people changing the skill, not using it.
+  //
+  // THE REQUIRE SHIM IS LOAD-BEARING. `yaml`'s CommonJS build calls
+  // `require('process')` internally. Bundled to ESM without this banner the
+  // builder dies on its first line with "Dynamic require of process is not
+  // supported" — and CJS output is not an option either, because build.ts uses
+  // top-level await and import.meta.url.
+  const NODE_BANNER =
+    'import{createRequire as __cr}from"node:module";const require=__cr(import.meta.url);'
+  const TOOLS = [
+    { entry: 'src/build.ts', out: 'dist/build.mjs' },
+    { entry: 'scripts/motion.ts', out: 'dist/motion.mjs' },
+  ]
+
+  await mkdir(join(ROOT, 'dist'), { recursive: true })
+  // The stamp covers exactly what esbuild actually pulled in. Taking it from
+  // the metafile rather than a hand-written list means a new import is covered
+  // the moment it is added — and, just as important, editing a file the tools
+  // do NOT depend on never raises a false alarm. A staleness warning people
+  // learn to ignore is worse than none.
+  const inputs = new Set<string>()
+  for (const tool of TOOLS) {
+    const built = await build({
+      entryPoints: [join(ROOT, tool.entry)],
+      bundle: true,
+      format: 'esm',
+      platform: 'node',
+      target: 'node22',
+      banner: { js: NODE_BANNER },
+      metafile: true,
+      write: false,
+    })
+    await writeFile(join(ROOT, tool.out), built.outputFiles![0]!.text)
+    for (const file of Object.keys(built.metafile!.inputs)) {
+      if (!file.includes('node_modules')) inputs.add(file)
+    }
+    const kb = Math.round(Buffer.byteLength(built.outputFiles![0]!.text) / 1024)
+    console.log(`  ${tool.out} · ${kb} KB`)
+  }
+  await writeFile(TOOLS_SOURCES_PATH, [...inputs].sort().join('\n') + '\n')
+  await writeFile(TOOLS_STAMP_PATH, await toolsStamp())
+  console.log(`  dist/ stamp ${await toolsStamp()} over ${inputs.size} source files`)
+  console.log('  commit dist/ too — it is what makes the skill need no npm install')
 }

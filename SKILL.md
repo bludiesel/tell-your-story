@@ -16,12 +16,30 @@ network, no folder of assets unless you ask for one. It opens from a USB stick.
 
 ## The order to do things in
 
+**NO INSTALL NEEDED.** Node 22 or newer, and nothing else.
+
 ```bash
-npm install                                   # once
-node scripts/prep.ts   content/lesson.md              # 1. shape the content  ← do not skip
-node src/build.ts  content/lesson.md output/lesson.html   # 2. build it
-node scripts/check.ts                                 # 3. prove it still works
+node scripts/prep.ts  content/lesson.md                      # 1. shape it  ← do not skip
+node dist/build.mjs   content/lesson.md output/lesson.html   # 2. build it
+node dist/motion.mjs  output/lesson.html                     # 3. see what moves
 ```
+
+`dist/build.mjs` is the builder with its four dependencies compiled in, committed
+to the repo. It produces a **byte-identical** book to `src/build.ts` — same
+SHA-256 — so nothing is traded away by using it. `prep` needs nothing at all: it
+imports only `node:fs` and `node:path`.
+
+**Changing the skill** is the only reason to install anything:
+
+```bash
+npm install                # esbuild + typescript, for contributors only
+node scripts/check.ts      # the full suite
+node scripts/verify.ts     # every documented layout, built and identified
+node scripts/prebundle.ts  # rebuild dist/ and assets/ after editing src/
+```
+
+`check` fails if `dist/` is stale, so a shipped builder cannot quietly fall
+behind the source it was built from.
 
 **Step 1 is the one that decides whether the result is any good.** A
 well-chunked source makes a good book; a wall of text defeats every feature in
