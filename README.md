@@ -28,6 +28,7 @@ comes out of `theme.json`. Ships neutral; rebrand in one file.
 ```bash
 node scripts/prep.ts content/lesson.md                     # 1. shape it  ← do not skip
 node dist/build.mjs  content/lesson.md output/book.html    # 2. build it
+node dist/build.mjs  content/lesson.md output/book.html --watch   # or: rebuild on save
 ```
 
 That's it. `output/book.html` is the deliverable — and **there is no install
@@ -114,7 +115,8 @@ the whole job:
 |---|---|
 | [`templates/CHOOSING.md`](templates/CHOOSING.md) | **Which layout for which content shape.** The decision most likely to go wrong. Work down the table; the first row that genuinely fits wins |
 | [`templates/LAYOUTS.md`](templates/LAYOUTS.md) | Copyable syntax for every layout |
-| [`content/every-layout.md`](content/every-layout.md) | **The catalogue.** Build it and LOOK: one page per layout, one block per feature. Reading syntax is not the same as seeing the page it makes |
+| [`docs/every-layout.html`](docs/every-layout.html) | **The catalogue, pre-built.** Open it — no build needed. |
+| [`content/every-layout.md`](content/every-layout.md) | **The catalogue source.** Build it and LOOK: one page per layout, one block per feature. Reading syntax is not the same as seeing the page it makes |
 
 **Then follow this order, and do not skip step 1.**
 

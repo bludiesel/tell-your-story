@@ -33,6 +33,7 @@ interface Options {
   mode: AssetMode
   themePath: string
   quiet: boolean
+  watch: boolean
 }
 
 function parseArgs(argv: string[]): Options {
@@ -40,6 +41,7 @@ function parseArgs(argv: string[]): Options {
   let mode: AssetMode = 'inline'
   let themePath = join(SKILL_ROOT, 'theme.json')
   let quiet = false
+  let watch = false
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]
@@ -51,6 +53,8 @@ function parseArgs(argv: string[]): Options {
       mode = value
     } else if (arg === '--theme') {
       themePath = resolve(argv[++i] ?? '')
+    } else if (arg === '--watch') {
+      watch = true
     } else if (arg === '--quiet') {
       quiet = true
     } else if (arg === '--help' || arg === '-h') {
@@ -65,7 +69,7 @@ function parseArgs(argv: string[]): Options {
   if (positional.length < 1) { usage(); process.exit(1) }
   const input = resolve(positional[0])
   const output = resolve(positional[1] ?? input.replace(/\.mdx?$/i, '.html'))
-  return { input, output, mode, themePath, quiet }
+  return { input, output, mode, themePath, quiet, watch }
 }
 
 function usage(): void {
@@ -75,6 +79,7 @@ function usage(): void {
     node src/build.ts <input.md> [output.html] [options]
 
   Options
+    --watch            rebuild whenever the lesson or the theme changes
     --assets inline    pack pictures INSIDE the HTML file        (default)
     --assets folder    put pictures in an ./assets/ folder beside it
     --theme <path>     theme.json to use            (default: skill root)
@@ -238,8 +243,77 @@ const TEMPLATE_PLACEHOLDERS = new Set([
   "[YOUR BRAND]",
 ])
 
+/**
+ * --watch, as a re-exec rather than a loop inside the builder.
+ *
+ * Authoring was edit, switch window, run the build, reload. The build takes
+ * about a fifth of a second, so the typing was never the cost — the ceremony
+ * was.
+ *
+ * Each rebuild is a FRESH PROCESS on purpose. The builder holds real state
+ * across a run: an AssetStore interning by content hash, a markdown-it instance
+ * with registered containers, a parsed theme. Re-running it in-process would
+ * mean auditing every one of those for reuse, and the first thing to go stale
+ * would be something quiet like a cached font buffer. A subprocess cannot carry
+ * anything over, so what you see is exactly what a cold `node dist/build.mjs`
+ * would produce — which is the only thing worth watching for.
+ *
+ * Watched: the lesson, its theme, and the directory the lesson lives in, so a
+ * picture dropped in beside it counts too. Debounced, because an editor writing
+ * a file fires several events and a half-written Markdown file builds badly.
+ */
+async function watchAndRebuild(opts: Options): Promise<never> {
+  const { watch } = await import('node:fs')
+  const { spawn } = await import('node:child_process')
+  const args = process.argv.slice(2).filter((a) => a !== '--watch')
+
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let running = false
+  // An edit made DURING a rebuild must not be lost. Dropping it was the first
+  // version and it is the worst possible behaviour for a watcher: you save,
+  // nothing appears, and you cannot tell whether the tool is slow or broken.
+  // One pending rebuild is remembered and run on completion — coalesced, so ten
+  // saves during one build still cost exactly one more build.
+  let pending = false
+  const rebuild = () => {
+    if (running) { pending = true; return }
+    running = true
+    const started = Date.now()
+    const child = spawn(process.execPath, [process.argv[1]!, ...args], { stdio: 'inherit' })
+    child.on('exit', (code) => {
+      running = false
+      const stamp = new Date().toTimeString().slice(0, 8)
+      console.log(code === 0
+        ? `  ${stamp}  rebuilt in ${Date.now() - started}ms — reload the page`
+        : `  ${stamp}  build failed (exit ${code}) — the last good book is untouched`)
+      if (pending) { pending = false; rebuild() }
+    })
+  }
+
+  // IGNORE WHAT WE OURSELVES WROTE, OR THE WATCHER EATS ITS OWN TAIL.
+  // Watching the lesson's directory is what picks up a picture dropped in
+  // beside it — and when the book is written into that same directory, as it
+  // usually is, the write retriggers the watch. Measured: one edit produced
+  // twenty rebuilds, each one starting the next.
+  const ours = new Set([basename(opts.output), basename(opts.output) + '.map'])
+  const nudge = (_event: unknown, filename: string | Buffer | null) => {
+    const name = typeof filename === 'string' ? filename : filename?.toString()
+    if (name && (ours.has(name) || name.startsWith('assets/'))) return
+    clearTimeout(timer)
+    timer = setTimeout(rebuild, 250)
+  }
+  for (const path of [opts.input, opts.themePath, dirname(opts.input)]) {
+    try { watch(path, nudge) } catch { /* a theme beside the skill may not be watchable */ }
+  }
+
+  console.log(`\n  watching ${basename(opts.input)} — Ctrl-C to stop`)
+  rebuild()
+  return new Promise<never>(() => {}) // hold the process open
+}
+
 async function main(): Promise<void> {
   const opts = parseArgs(process.argv.slice(2))
+  if (opts.watch) await watchAndRebuild(opts)
   const log = (msg: string) => { if (!opts.quiet) console.log(msg) }
 
   let source: string

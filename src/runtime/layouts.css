@@ -683,3 +683,38 @@
 }
 .page.pr .smudge { right: -1rem; }
 .page.pl .smudge { left: -1rem; }
+
+/* ── HANDWRITING: THE HAND-SET LINES ARE WRITTEN ON, NOT FADED IN ─────────
+   Technique B from the research — a per-line masked wipe with a nib riding the
+   leading edge. Chosen over drawing real monoline glyph paths because that
+   needs a second font and one <path> per letter; on a page of prose that is
+   fifteen hundred paths for an effect nobody watches to the end. This costs one
+   element per line and works with the Caveat we already ship.
+
+   Three details do the persuading, and it is a fade without all three: it runs
+   PER LINE rather than per block, the edge is feathered and slightly slanted to
+   the pen's angle rather than a guillotine, and a nib rides the leading edge.
+
+   `--p` is driven from 0 to 1 by GSAP. The mask is declared here so the resting
+   state is fully written — if the script never runs, the words are simply
+   there. Failing visible, the same rule the reveals obey. */
+.hand-writing {
+  --p: 1;
+  -webkit-mask-image: linear-gradient(100deg,
+      #000 calc(var(--p) * 100%), transparent calc(var(--p) * 100% + 1.4ch));
+          mask-image: linear-gradient(100deg,
+      #000 calc(var(--p) * 100%), transparent calc(var(--p) * 100% + 1.4ch));
+  /* Caveat's ascenders and descenders leave the line box; without room the mask
+     shears them off mid-swash. */
+  padding-block: .35em; margin-block: -.35em;
+  position: relative;
+}
+.hand-nib {
+  position: absolute; width: .42ch; height: .42ch; border-radius: 50%;
+  background: currentColor; opacity: .8; pointer-events: none;
+  top: .62em; will-change: left;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hand-writing { --p: 1; -webkit-mask-image: none; mask-image: none; }
+  .hand-nib { display: none; }
+}

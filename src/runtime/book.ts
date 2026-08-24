@@ -430,32 +430,66 @@ function boot(): void {
   let typed: Array<{ el: HTMLElement; full: string }> = []
 
   function restoreTyped(): void {
-    typed.forEach(({ el, full }) => { el.textContent = full })
+    // The words were never removed, so there is no text to put back — what has
+    // to be undone is the MASK, which GSAP's revert() will not touch because it
+    // is a custom property we set through style, plus the nib element, which it
+    // knows nothing about. A turn interrupting mid-write would otherwise leave
+    // the line permanently half-erased.
+    typed.forEach(({ el }) => {
+      el.style.setProperty('--p', '1')
+      el.classList.remove('hand-writing')
+      el.querySelector('.hand-nib')?.remove()
+    })
     typed = []
   }
 
   /**
-   * Write a line on, character by character.
+   * WRITTEN ON, NOT TYPED ON.
    *
-   * Only for elements with no child ELEMENTS — retyping innerHTML would rebuild
-   * markup one bracket at a time and briefly render raw tags. The full string is
-   * restored on completion and by `restoreTyped()`, because GSAP's revert()
-   * undoes inline styles and knows nothing about text content.
+   * This used to rewrite `textContent` character by character. It looked like a
+   * terminal, not a pen: every glyph arrived at full opacity with a hard edge,
+   * and the line's width jumped on every frame, so anything centred twitched.
+   * DESIGN.md §8 asked for a mask and this is it.
+   *
+   * A feathered gradient mask sweeps across the line at roughly the angle a
+   * right-handed pen leans, with a nib riding the leading edge. Three details do
+   * the persuading and it is a plain wipe without all three: the edge is soft
+   * rather than a guillotine, it is slanted rather than vertical, and the nib is
+   * there at all. Drop the nib and most people read it as a fade.
+   *
+   * The text is never touched, so it stays selectable, searchable and present
+   * for a screen reader throughout — which the character-by-character version
+   * could not claim, since for most of its run the element genuinely did not
+   * contain the words.
+   *
+   * Duration follows the LINE LENGTH: a two-word eyebrow flicks past, a full
+   * sentence takes its time. A constant duration is the single biggest tell.
    */
   function typeOn(el: HTMLElement, tl: gsap.core.Timeline, at: number): void {
-    const full = el.textContent ?? ''
-    typed.push({ el, full })
-    const state = { n: 0 }
-    el.textContent = ''
+    const chars = (el.textContent ?? '').length
+    // Recorded so restoreTyped() can put it back if a turn interrupts mid-write.
+    typed.push({ el, full: el.textContent ?? '' })
+    el.classList.add('hand-writing')
+
+    const nib = document.createElement('i')
+    nib.className = 'hand-nib'
+    el.appendChild(nib)
+
+    const state = { p: 0 }
     tl.set(el, { opacity: 1, y: 0 }, at)
+    tl.set(el, { '--p': 0 }, at)
     tl.to(state, {
-      n: full.length,
-      // Fast enough to keep up with a speaker, capped so a long paragraph does
-      // not hold the room hostage.
-      duration: Math.min(0.018 * full.length, 2.0),
+      p: 1,
+      duration: Math.min(0.3 + chars * 0.026, 2.0),
       ease: 'none',
-      onUpdate: () => { el.textContent = full.slice(0, Math.round(state.n)) },
-      onComplete: () => { el.textContent = full },
+      onUpdate: () => {
+        el.style.setProperty('--p', String(state.p))
+        nib.style.left = `${state.p * 100}%`
+      },
+      onComplete: () => {
+        el.style.setProperty('--p', '1')
+        nib.remove()
+      },
     }, at)
   }
 

@@ -155,6 +155,7 @@ _command line — the output is always a book_
 | `--assets inline` | Pictures packed INSIDE the HTML (default) | One file to email. Bigger, but nothing to lose. |
 | `--assets folder` | Pictures in an ./assets folder beside it | Picture-heavy material that stays in one place. |
 | `--theme` | Point at a different theme.json | Rebranding for another client. |
+| `--watch` | Rebuild whenever the lesson or its theme changes | Authoring. Leave it running, save, reload — about 85ms a rebuild. Each one is a fresh process, so nothing is carried over from the last. |
 | `--quiet` | Print only the result line | Scripted builds. |
 
 ## Authoring tools (run these, do not skip prep)

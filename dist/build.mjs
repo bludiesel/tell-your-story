@@ -37873,6 +37873,7 @@ function parseArgs(argv) {
   let mode = "inline";
   let themePath = join3(SKILL_ROOT, "theme.json");
   let quiet = false;
+  let watch = false;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--assets") {
@@ -37883,6 +37884,8 @@ function parseArgs(argv) {
       mode = value;
     } else if (arg === "--theme") {
       themePath = resolve(argv[++i] ?? "");
+    } else if (arg === "--watch") {
+      watch = true;
     } else if (arg === "--quiet") {
       quiet = true;
     } else if (arg === "--help" || arg === "-h") {
@@ -37900,7 +37903,7 @@ function parseArgs(argv) {
   }
   const input = resolve(positional[0]);
   const output = resolve(positional[1] ?? input.replace(/\.mdx?$/i, ".html"));
-  return { input, output, mode, themePath, quiet };
+  return { input, output, mode, themePath, quiet, watch };
 }
 function usage() {
   console.log(`
@@ -37909,6 +37912,7 @@ function usage() {
     node src/build.ts <input.md> [output.html] [options]
 
   Options
+    --watch            rebuild whenever the lesson or the theme changes
     --assets inline    pack pictures INSIDE the HTML file        (default)
     --assets folder    put pictures in an ./assets/ folder beside it
     --theme <path>     theme.json to use            (default: skill root)
@@ -38028,8 +38032,53 @@ var TEMPLATE_PLACEHOLDERS = /* @__PURE__ */ new Set([
   "[YOUR BRAND \xB7 WHAT THIS IS]",
   "[YOUR BRAND]"
 ]);
+async function watchAndRebuild(opts) {
+  const { watch } = await import("node:fs");
+  const { spawn } = await import("node:child_process");
+  const args = process.argv.slice(2).filter((a) => a !== "--watch");
+  let timer;
+  let running = false;
+  let pending = false;
+  const rebuild = () => {
+    if (running) {
+      pending = true;
+      return;
+    }
+    running = true;
+    const started = Date.now();
+    const child = spawn(process.execPath, [process.argv[1], ...args], { stdio: "inherit" });
+    child.on("exit", (code2) => {
+      running = false;
+      const stamp = (/* @__PURE__ */ new Date()).toTimeString().slice(0, 8);
+      console.log(code2 === 0 ? `  ${stamp}  rebuilt in ${Date.now() - started}ms \u2014 reload the page` : `  ${stamp}  build failed (exit ${code2}) \u2014 the last good book is untouched`);
+      if (pending) {
+        pending = false;
+        rebuild();
+      }
+    });
+  };
+  const ours = /* @__PURE__ */ new Set([basename2(opts.output), basename2(opts.output) + ".map"]);
+  const nudge = (_event, filename) => {
+    const name = typeof filename === "string" ? filename : filename?.toString();
+    if (name && (ours.has(name) || name.startsWith("assets/"))) return;
+    clearTimeout(timer);
+    timer = setTimeout(rebuild, 250);
+  };
+  for (const path of [opts.input, opts.themePath, dirname(opts.input)]) {
+    try {
+      watch(path, nudge);
+    } catch {
+    }
+  }
+  console.log(`
+  watching ${basename2(opts.input)} \u2014 Ctrl-C to stop`);
+  rebuild();
+  return new Promise(() => {
+  });
+}
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  if (opts.watch) await watchAndRebuild(opts);
   const log = (msg) => {
     if (!opts.quiet) console.log(msg);
   };

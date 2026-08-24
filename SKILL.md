@@ -22,6 +22,9 @@ network, no folder of assets unless you ask for one. It opens from a USB stick.
 node scripts/prep.ts  content/lesson.md                      # 1. shape it  ← do not skip
 node dist/build.mjs   content/lesson.md output/lesson.html   # 2. build it
 node dist/motion.mjs  output/lesson.html                     # 3. see what moves
+
+# authoring? leave this running and just save:
+node dist/build.mjs   content/lesson.md output/lesson.html --watch
 ```
 
 `dist/build.mjs` is the builder with its four dependencies compiled in, committed

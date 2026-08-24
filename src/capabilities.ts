@@ -178,6 +178,7 @@ export const CAPABILITIES: CapabilityGroup[] = [
     items: [      { id: '--assets inline', what: 'Pictures packed INSIDE the HTML (default)', use: 'One file to email. Bigger, but nothing to lose.' },
       { id: '--assets folder', what: 'Pictures in an ./assets folder beside it', use: 'Picture-heavy material that stays in one place.' },
       { id: '--theme', what: 'Point at a different theme.json', use: 'Rebranding for another client.' },
+      { id: '--watch', what: 'Rebuild whenever the lesson or its theme changes', use: 'Authoring. Leave it running, save, reload — about 85ms a rebuild. Each one is a fresh process, so nothing is carried over from the last.' },
       { id: '--quiet', what: 'Print only the result line', use: 'Scripted builds.' },
     ],
   },
