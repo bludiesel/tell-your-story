@@ -95,6 +95,7 @@ you have edited `src/runtime/`.
 | **Node 22 or newer** | The entire requirement. `node --version` |
 | ~~npm~~ | **Not needed.** Only to change the skill itself |
 | A browser | Only to *look* at a book. Building needs none |
+| Fonts | **None to install.** Barlow Condensed and Caveat are subset and embedded in every book; both are Google Fonts under the SIL OFL if you ever want the full families |
 
 No Bun, no Python, no Playwright, no build step.
 

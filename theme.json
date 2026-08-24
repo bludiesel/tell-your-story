@@ -7,54 +7,46 @@
   },
   "colors": {
     "_comment": "Blue and teal as a SINGLE ARC, not two colours put next to each other: hue drifts one way only (215° → 176°) and chroma rises as things lighten, so any two of these agree. Breaking that — a warm metal on the braid, a cream paper — is what makes it read as two palettes.",
-
     "surface_deep": "#03080E",
     "surface": "#0F2733",
     "surface_alt": "#16333F",
-
     "accent": "#35C0B6",
     "accent_bright": "#5FD4CB",
     "accent_ink": "#0F6B65",
-
     "secondary": "#3E7FB8",
     "secondary_bright": "#6BA3D2",
-
     "curtain": "#0B3A42",
     "curtain_lit": "#1C6B72",
     "curtain_deep": "#041519",
     "curtain_rim": "#79C3BD",
-
     "paper": "#F2F7F6",
     "paper_alt": "#E3EDEC",
     "ink": "#0E2029",
     "link_on_paper": "#2C6796",
-
     "_stage_pool_comment": "The pool of light the book stands in. Pinned because the reference theme pinned --rgb-pool (6,28,34) while leaving --stage-pool derived, so the fill and its own rgb triple disagreed by a visible amount. Pinning the colour makes both agree.",
     "stage_pool": "#061C22",
-
     "sticky": "#BCE4DA",
     "sticky_alt": "#C7DAF1",
     "sticky_third": "#D3E7C9",
-
     "white": "#FFFFFF",
     "text_on_dark": "#EEF3F9",
     "text_on_light": "#0E2029"
   },
   "fonts": {
-    "display": "'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif",
+    "display": "'Barlow Condensed', 'Arial Narrow', 'Liberation Sans Narrow', 'Roboto Condensed', system-ui, sans-serif",
     "body": "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     "mono": "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
     "book_body": "Georgia, 'Iowan Old Style', 'Times New Roman', serif",
-    "handwriting": "'Caveat', 'Bradley Hand', cursive"
+    "handwriting": "'Caveat', 'Segoe Script', 'Bradley Hand', 'Brush Script MT', cursive"
   },
   "space": {
-    "_comment": "One scale, used everywhere. The page margins are the same four numbers on every page in the book.",
     "1": ".5rem",
     "2": ".75rem",
     "3": "1rem",
     "4": "1.5rem",
     "5": "2rem",
     "6": "3rem",
+    "_comment": "One scale, used everywhere. The page margins are the same four numbers on every page in the book.",
     "page_x": "4.5rem",
     "page_top": "3rem",
     "page_bottom": "4rem"

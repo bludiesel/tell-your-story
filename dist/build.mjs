@@ -37546,7 +37546,7 @@ var DEFAULT_THEME = {
     text_on_dark: "#EEF3F9"
   },
   fonts: {
-    display: "'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif",
+    display: "'Barlow Condensed', 'Arial Narrow', 'Liberation Sans Narrow', 'Roboto Condensed', system-ui, sans-serif",
     body: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     mono: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
   },
@@ -37830,7 +37830,7 @@ function bookCss(p, fonts = {}, markRef = "") {
   --rgb-accent:${rgbTriple(p.accent)};
   --font-ui:${fonts.body ?? DEFAULT_THEME.fonts.body};
   --font-body:${fonts.book_body ?? "Georgia,'Iowan Old Style','Times New Roman',serif"};
-  --font-hand:${fonts.handwriting ?? "'Caveat','Bradley Hand',cursive"};
+  --font-hand:${fonts.handwriting ?? "'Caveat','Segoe Script','Bradley Hand','Brush Script MT',cursive"};
   --mark-check:url("${checkMarkUri(p.accentInk)}");
   --mark-cross:url("${crossMarkUri(p.danger ?? "#E5484D")}");
   --mark-circle:url("${circleMarkUri(p.accentInk)}");

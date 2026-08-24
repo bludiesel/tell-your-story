@@ -1105,12 +1105,49 @@ check('book: shipped grain filter resolves',
 
   const want = grab(plainRoots(reference))
   const got = grab(plainRoots(generated))
+  /**
+   * DELIBERATE DIVERGENCES FROM THE REFERENCE, each with its reason.
+   *
+   * The reference stylesheet is the design authority and stays untouched, so a
+   * change we make on purpose has to be declared here rather than by quietly
+   * editing the thing we are checking against. A divergence with no entry is
+   * still a failure — which is the point.
+   */
+  const ALLOWED: Record<string, string> = {
+    // The reference was written on a Mac. Bradley Hand does not exist on
+    // Windows or Linux, so the hand-set type fell straight through to generic
+    // `cursive` — Comic Sans on most Windows machines, which is not a fallback
+    // so much as a punchline. Same for Arial Narrow, absent on many Linux
+    // installs. Extra names only; the reference's own order is preserved, so a
+    // machine that HAS the reference fonts renders exactly as designed.
+    '--font-display': 'cross-platform fallbacks added after Arial Narrow',
+    '--font-hand': 'cross-platform fallbacks added after Caveat',
+  }
   const drifted: string[] = []
   const missing: string[] = []
+  const allowed: string[] = []
   for (const [k, v] of Object.entries(want)) {
-    if (!(k in got)) missing.push(k)
-    else if (norm(got[k]!) !== norm(v)) drifted.push(`${k}: want ${v}, got ${got[k]}`)
+    if (!(k in got)) { missing.push(k); continue }
+    if (norm(got[k]!) === norm(v)) continue
+    // A declared divergence must still contain EVERY family the reference
+    // names, in the reference's own order — a subsequence test, not a substring
+    // one, because the whole point is inserting new names BETWEEN the old ones.
+    // This is what stops "extension" being a cover story for a replacement: drop
+    // or reorder any reference face and it fails like any other drift.
+    const subsequence = (needle: string[], hay: string[]) => {
+      let i = 0
+      for (const h of hay) if (i < needle.length && h === needle[i]) i++
+      return i === needle.length
+    }
+    const families = (s: string) => norm(s).split(',').filter(Boolean)
+    const isExtension = Boolean(ALLOWED[k]) && subsequence(families(v), families(got[k]!))
+    if (isExtension) allowed.push(`${k} — ${ALLOWED[k]}`)
+    else drifted.push(`${k}: want ${v}, got ${got[k]}`)
   }
+  check(`design: ${allowed.length} declared divergence(s) still extend the reference`,
+    allowed.length === Object.keys(ALLOWED).length,
+    `declared in ALLOWED but not actually an extension of the reference stack: ` +
+    Object.keys(ALLOWED).filter((k) => !allowed.some((a) => a.startsWith(k))).join(', '))
   check(`design: all ${Object.keys(want).length} reference tokens are generated`,
     missing.length === 0, missing.join(' '))
   check('design: no generated token has drifted from the reference',
