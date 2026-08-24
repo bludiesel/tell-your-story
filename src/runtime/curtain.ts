@@ -172,8 +172,20 @@ float clothHeight(vec2 uv) {
   float belly = sin(c.x * 3.0 + uTime * 0.9) * (0.018 + 0.055 * v + 0.05 * abs(uAccel));
   float drag = sin((1.0 - c.z) * 9.0 - uTime * 5.0) * 0.05 * clamp(uVel, -1.0, 1.0);
 
+  /* THE SWAG'S OWN BREATH.
+     belly and drag are both multiplied by free (= s, the distance out from
+     the leading edge), which is near zero exactly where the gathered swag
+     sits — so once the curtain settled, the only cloth still on screen was the
+     only cloth that could not move. Measured: the outer strip carried a
+     fraction of the motion the middle did. This term is weighted the other
+     way, lives only while the curtain is open, and runs at a third of a radian
+     a second, so it reads as heavy velvet stirring rather than wind. */
+  float swagBreath = sin(c.y * 2.6 + uTime * 0.31) * 0.055 * uOpen
+                   * (1.0 - free) * mix(0.5, 1.0, hem);
+
   return pleat * mix(0.35, 1.0, free)
-       + (belly + drag) * free * mix(0.4, 1.0, hem);
+       + (belly + drag) * free * mix(0.4, 1.0, hem)
+       + swagBreath;
 }
 
 /* Two-tap forward difference — half the extra height() calls of a central
@@ -309,7 +321,16 @@ void main() {
   float d = (src.x - sweepPos) * 3.0;
   float band = exp(-d * d);
   float breathe = 0.5 + 0.5 * sin(uTime * 0.21 + src.y * 1.1);
-  float sweep = 1.0 + (band * 0.30 + breathe * 0.08) * (1.0 - uOpen * 0.75);
+  /* THE SETTLED SWAG HAS TO STAY ALIVE.
+     This damped the light to a quarter once open, so the cloth framing the book
+     was effectively a still image — and the swag is the ONLY part of the stage
+     that can still move at that point. Held at 55% instead, and given a second,
+     much slower fold that travels only when the curtain IS open: a period of
+     about seventeen seconds, so it reads as a draught moving heavy velvet
+     rather than a shimmer competing with the page. */
+  float restDrift = sin(uTime * 0.37 + src.y * 2.3) * 0.5 + 0.5;
+  float sweep = 1.0 + (band * 0.30 + breathe * 0.08) * (1.0 - uOpen * 0.45)
+                    + restDrift * 0.06 * uOpen;
   col *= sweep; lit *= sweep;
 
   /* THE NAP. Velvet has a directional pile, so a broad soft sheen lies across

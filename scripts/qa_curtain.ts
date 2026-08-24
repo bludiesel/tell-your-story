@@ -57,9 +57,20 @@ const source = readFileSync(SOURCE, 'utf8')
  * still be testable, so an absent CLOTH is an empty prefix rather than a
  * failure.
  */
+/**
+ * `literal()` returns the template's RAW text, so an interpolation such as
+ * `${CLOTH}` and an escape such as `\n` arrive verbatim — and GLSL rejects both
+ * on sight (`'$' : invalid character`). The shared chunk is already prepended
+ * below, so the marker is dropped rather than expanded; escapes are resolved
+ * because that is what the TypeScript template does at runtime. Skipping this
+ * made every compile check fail identically at the same line, which is exactly
+ * the silent failure this harness exists to catch.
+ */
+const resolve = (glsl: string) => glsl.replace(/\$\{CLOTH\}/g, '').replace(/\\n/g, '\n')
+
 const shared = /const\s+CLOTH\s*=\s*`/.test(source) ? literal(source, 'CLOTH') : ''
-const vertex = shared + '\n' + literal(source, 'VERTEX')
-const fragment = shared + '\n' + literal(source, 'FRAGMENT')
+const vertex = shared + '\n' + resolve(literal(source, 'VERTEX'))
+const fragment = shared + '\n' + resolve(literal(source, 'FRAGMENT'))
 
 const json = (v: unknown) => JSON.stringify(v)
 
@@ -270,9 +281,15 @@ function run() {
   // read of pleat density, and it is the difference between the two numbers —
   // not either one alone — that distinguishes a gather from a slide.
   function foldsInWindow(px) {
+    // One sample per pixel COLUMN, not a fixed 600: the window is 9.5% of a
+    // 640px canvas, so 600 samples landed ~10 to a pixel, every neighbouring
+    // pair was byte-identical, and the turning-point count was structurally
+    // pinned at zero for both states. Oversampling a raster does not add
+    // detail, it just manufactures flat ground.
     const y = 0.5, vals = [];
-    for (let i = 0; i < 600; i++) {
-      const c = at(px, 0.005 + (i / 599) * 0.095, y);
+    const N = Math.max(2, Math.round(0.095 * W));
+    for (let i = 0; i < N; i++) {
+      const c = at(px, 0.005 + (i / (N - 1)) * 0.095, y);
       if (!isGap(c)) vals.push(luma(c));
     }
     let turns = 0;
@@ -302,8 +319,15 @@ function run() {
   const swagLuma = luma(at(wide, 0.09, 0.5));
   record('crushed print does not survive in the swag', swagLuma < 0.45, 'swag luma ' + swagLuma.toFixed(3));
 
+}
+
+/* run() bails early on a compile or link failure — the very cases this page is
+   for. Publishing from a finally is what makes those visible: without it the
+   verdict global stayed undefined and the page read "running…" forever, so a
+   broken shader was indistinguishable from a harness that never started. */
+function publish() {
   const failed = checks.filter((c) => !c.pass);
-  window.__CURTAIN_QA__ = { pass: failed.length === 0, checks, failed };
+  window.__CURTAIN_QA__ = { pass: failed.length === 0 && checks.length > 0, checks, failed };
   document.getElementById('out').textContent =
     checks.map((c) => (c.pass ? 'PASS  ' : 'FAIL  ') + c.name + (c.detail ? '   [' + c.detail + ']' : '')).join('\\n') +
     '\\n\\n' + (failed.length === 0 ? 'ALL PASS' : failed.length + ' FAILED');
@@ -311,9 +335,7 @@ function run() {
 
 try { run(); } catch (err) {
   record('harness ran', false, String(err && err.stack || err));
-  window.__CURTAIN_QA__ = { pass: false, checks, failed: checks.filter((c) => !c.pass) };
-  document.getElementById('out').textContent = 'HARNESS ERROR\\n' + String(err && err.stack || err);
-}
+} finally { publish(); }
 </script>
 `
 

@@ -69,11 +69,26 @@ function boot(): void {
   // mind on its own, and the rule cannot be wrong about a device nobody tested.
   const STAGE_H = 1040
   const PAGE_W = 780
+  // HOW MUCH OF THE WINDOW THE BOOK IS ALLOWED. The rest is curtain.
+  //
+  // At 0.97 the book filled the window and left 10% of cloth a side — enough to
+  // frame it, not enough to watch. The swag is the only part of the stage that
+  // still moves once the book is open, and it was being squeezed almost out of
+  // sight. 0.84 takes it to 13.5% (192px to 259px a side at 1920x1200) for a
+  // tenth off the book, which costs two pixels of body type: 24.4px before,
+  // 22.3px after, still comfortably above the ~16px a reader needs.
+  //
+  // APPLIED TO BOTH AXES, because either can bind. Changing only the width
+  // factor did nothing at 1920x1200 — measured, and the reason is that the
+  // HEIGHT was the limit there, so the book stayed exactly the same size and
+  // the cloth stayed at 10%. Whichever edge the book is touching is the one
+  // that has to give room back.
+  const STAGE_FILL = 0.84
   // The 40px reserve is for the fore-edge tabs, which overhang the SPREAD. In
   // portrait the rail is hidden, so reserving for it just shrinks the page.
   const stageFit = (stageW: number) =>
-    Math.min((window.innerWidth * 0.97 - (stageW > PAGE_W ? 40 : 0)) / stageW,
-             (window.innerHeight * 0.92) / STAGE_H)
+    Math.min((window.innerWidth * STAGE_FILL - (stageW > PAGE_W ? 40 : 0)) / stageW,
+             (window.innerHeight * STAGE_FILL) / STAGE_H)
 
   const fitStage = () => {
     const spread = stageFit(PAGE_W * 2)
