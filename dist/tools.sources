@@ -1,3 +1,4 @@
+scripts/build_studio.ts
 scripts/motion.ts
 src/assets.ts
 src/book.ts

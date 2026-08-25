@@ -165,7 +165,8 @@ _command line, before and after building_
 | | What it is | When to use it |
 |---|---|---|
 | `node scripts/prep.ts` | Analyses raw content and says how to chunk it | ALWAYS run this before building. It measures what you cannot judge by reading — page lengths against real capacity, missing sections, headless pages — and gives the action for each. It reports; it never rewrites your words. --json for machine use. |
-| `node scripts/check.ts` | The 84-check suite | After any change to the kit. Each check is a bug that once shipped looking fine. |
+| `node scripts/check.ts` | The check suite | After any change to the kit. Each check is a bug that once shipped looking fine. The count is not quoted anywhere on purpose — it only ever drifts. |
+| `node dist/studio.mjs` | The Ink Studio — makes artwork look drawn on the page | Before putting any supplied picture in a book. Writes output/ink-studio.html, one self-contained page needing no install: drop the artwork in, turn Line, Tone and Nib, and save a transparent PNG that carries only the ink, so the page own paper and grain read through it. Previews in this book real ink, so what you approve is what lands. Pass a theme path to draw in another book ink. |
 | `node scripts/gen-capabilities.ts` | Regenerates CAPABILITIES.md from the manifest | After adding a feature. The build fails if the manifest is missing something the code has. |
 
 ## Reader controls (built in, nothing to author)

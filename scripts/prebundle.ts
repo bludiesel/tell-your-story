@@ -121,8 +121,25 @@ if (runDirectly) {
     join(ROOT, 'assets', 'pageflip.css'),
     await readFile(join(ROOT, 'node_modules/page-flip/src/Style/stPageFlip.css'), 'utf8'),
   )
+  // The studio is a browser bundle too, and for the same reason: an author
+  // opening it must not need an install. It is separate from the runtime
+  // because nothing here ever travels inside a book — a reader gets pages, an
+  // author gets the tool that made the pictures on them.
+  const studio = await build({
+    entryPoints: [join(ROOT, 'src/studio/studio.ts')],
+    bundle: true,
+    format: 'esm',
+    platform: 'browser',
+    minify: true,
+    write: false,
+    legalComments: 'none',
+  })
+  const studioJs = studio.outputFiles![0]!.text
+  await writeFile(join(ROOT, 'assets', 'studio.bundle.js'), studioJs)
+
   console.log(`  ${BUNDLE_PATH}`)
   console.log(`  ${Math.round(Buffer.byteLength(js) / 1024)} KB · stamp ${await runtimeStamp()}`)
+  console.log(`  assets/studio.bundle.js · ${Math.round(Buffer.byteLength(studioJs) / 1024)} KB`)
   console.log('  commit this — it is what makes the skill installable without Bun')
 
   // ── THE NODE-SIDE TOOLS, SO A READER NEEDS NO INSTALL EITHER ───────────
@@ -148,6 +165,9 @@ if (runDirectly) {
   const TOOLS = [
     { entry: 'src/build.ts', out: 'dist/build.mjs' },
     { entry: 'scripts/motion.ts', out: 'dist/motion.mjs' },
+    // The studio generator is an AUTHOR's tool, like motion — it is how the
+    // pictures in a book get made, so it cannot be install-only.
+    { entry: 'scripts/build_studio.ts', out: 'dist/studio.mjs' },
   ]
 
   await mkdir(join(ROOT, 'dist'), { recursive: true })

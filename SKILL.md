@@ -200,6 +200,7 @@ skill, not an application — nothing here is a user-facing program.
 | `node dist/motion.mjs` | `dist/motion.mjs` | **What moves on every page**, and whether it obeys the rules. Prints turn behaviour and step count per page for a built book, and fails if a section board starts bending or eating presses. Run it on any book before presenting from it. |
 | `node scripts/verify.ts` | `scripts/verify.ts` | Copies each snippet out of `templates/LAYOUTS.md`, builds it, and checks the page comes back as the layout the template promised. Catches a layout that is documented but unreachable — `pickLayout` is first-match-wins, so an earlier test can shadow a later one with nothing failing. Writes `VERIFICATION.md`. |
 | `node dist/build.mjs content/every-layout.md output/every-layout.html` | — | **The catalogue.** All 17 layouts rendered in one book. Open it before choosing a layout, and after any change to `layouts.css` — it is the fastest way to see what actually broke. |
+| `node dist/studio.mjs` | `scripts/build_studio.ts` | **The Ink Studio.** Writes `output/ink-studio.html` — one self-contained page, no install — where an author turns supplied artwork into something that looks drawn on the page. Takes an optional theme path, so the preview is the book's real ink on the book's real paper. See *Artwork* below. |
 | `node scripts/gen-capabilities.ts` | `scripts/gen-capabilities.ts` | Regenerates `CAPABILITIES.md` from the manifest. Run after adding a feature. |
 | `npx tsc --noEmit` | — | `tsc --noEmit`. TypeScript 7, ~0.11s. |
 | `node dist/build.mjs content/sample-book.md output/book.html` | — | Builds the shipped sample, for a quick visual check. |
@@ -213,6 +214,7 @@ skill, not an application — nothing here is a user-facing program.
 |---|---|
 | `src/` | The build. `build.ts` (CLI) · `book.ts` (pages, sections, boards) · `markdown.ts` (blocks) · `theme.ts` (palette, contrast) · `assets.ts` (the inline/folder switch) · `fonts.ts` (embedding) · `svg.ts` (build-time SVG) · `capabilities.ts` (the manifest) |
 | `src/runtime/` | What ships **inside** the HTML: `book.ts`/`book.css` (flipbook) and `curtain.ts`/`curtain.css` (WebGL stage curtain). Bundled by esbuild into the committed `assets/runtime.bundle.js`, then inlined. |
+| `src/studio/` | The Ink Studio: `ink.ts` (the treatment — pure arithmetic over pixels, no DOM) and `studio.ts` (its interface). Bundled to `assets/studio.bundle.js`. **Never travels inside a book** — a reader gets pages, an author gets the tool that made the pictures on them. |
 | `src/types/` | Hand-written ambient declarations for curtainsjs, page-flip and markdown-it-container. **Not dead files** — the compiler consumes them without any import, so grepping for their names finds nothing. |
 | `scripts/` | Dev tooling. Never shipped inside a book. |
 | `assets/fonts/` | The embedded woff2 faces, already subset. |
@@ -258,6 +260,54 @@ Three rules that matter:
    which pages break this.
 3. **Pictures are ordinary Markdown.** `![alt](img/x.png)` — packed into the
    file automatically and deduplicated by content.
+
+## Artwork — make it look drawn, do not paste it in
+
+A book of paper, handwriting and grain puts a photograph on a page and the
+photograph is the one thing on that spread that came from a different hand. The
+Ink Studio fixes that before the picture ever reaches a lesson.
+
+```bash
+node dist/studio.mjs                      # -> output/ink-studio.html, using theme.json
+node dist/studio.mjs themes/slate.json    # -> the same page in that theme's ink
+```
+
+Open the page, drop the artwork in, and turn three things:
+
+| Control | What it does | Reach for it when |
+|---|---|---|
+| **Line** | How much pen. `0` is a pure wash, `~0.9` is a drawing, `>2` is an engraving. | The subject has clear shapes worth outlining. |
+| **Tone** | How much pigment the wash lays down. The rest of the page stays bare paper. | The picture needs weight without lines. |
+| **Nib** | The width of the pen, in pixels. | Detail is too busy — a broader nib loses it deliberately. |
+
+Then **Save transparent PNG**, and use the result like any other picture:
+
+```markdown
+![A technician checking a cylinder](artwork.ink.png)
+```
+
+Nothing in the book changes to support this. The export is an ordinary PNG, so
+the asset store packs it, `--assets folder` splits it out, and it prints.
+
+**Why the export is transparent.** It carries only *how much pen landed where* —
+not a picture on a white square. The page's own paper, grain and edge shadow
+read through the drawing, so it sits ON the sheet instead of in a rectangle laid
+over it. Tick **Check it on a dark page** to see that for yourself.
+
+**Three things worth knowing before you judge a result.**
+
+- **Artwork beats photographs.** Flat areas ink cleanly; film grain and woven
+  cloth register as thousands of tiny edges and come out as texture. That is the
+  treatment reporting the picture honestly, not a fault — reach for a broader
+  nib, or a lower `line`.
+- **A source on white drops out completely.** A subject photographed against a
+  dark studio ground washes to pigment across the whole frame, and the drawing
+  reads as a tinted rectangle. Cut the background out first and it will sit
+  directly on the paper.
+- **The ink follows the theme, the export does not follow a rebrand.** The
+  studio draws in the palette's `ink`, so the colours are right by construction —
+  but the exported PNG is a file. Change `theme.json` and the artwork wants
+  re-exporting, which is one drop and one click.
 
 ## Rebranding
 

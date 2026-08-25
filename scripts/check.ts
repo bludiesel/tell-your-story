@@ -36,9 +36,9 @@ function check(name: string, ok: boolean, detail = ''): void {
  * proving the Bun path worked while the shipped Node path went untested, which
  * is precisely the wrong thing for a suite whose job is to catch that.
  */
-async function build(args: string[]): Promise<{ code: number; out: string }> {
+async function runScript(script: string, args: string[]): Promise<{ code: number; out: string }> {
   return await new Promise((res) => {
-    const proc = spawn(process.execPath, [join(ROOT, 'src/build.ts'), ...args], {
+    const proc = spawn(process.execPath, [join(ROOT, script), ...args], {
       cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'],
     })
     let out = ''
@@ -47,6 +47,8 @@ async function build(args: string[]): Promise<{ code: number; out: string }> {
     proc.on('close', (code) => res({ code: code ?? 0, out }))
   })
 }
+
+const build = (args: string[]) => runScript('src/build.ts', args)
 
 console.log('\ntell-your-story — checks\n')
 
@@ -228,6 +230,60 @@ const unplayed = [...new Set(keyframeNames)].filter(
 check('book: every keyframe is played by something',
   unplayed.length === 0,
   unplayed.length ? `never runs: ${unplayed.join(', ')}` : `${keyframeNames.length} keyframes checked`)
+
+// ── the Ink Studio ──────────────────────────────────────────────────────────
+//
+// The studio is the only tool here an AUTHOR opens rather than an assistant
+// runs, so it has to survive being handed over: one file, no install, and
+// previewing the ink the book is actually printed in.
+const studioDir = join(TMP, 'studio')
+const studioPath = join(studioDir, 'ink-studio.html')
+const studioRun = await runScript('scripts/build_studio.ts', ['theme.json', studioPath])
+check('studio: it builds', studioRun.code === 0, studioRun.out.trim())
+const studioHtml = studioRun.code === 0 ? await readFile(studioPath, 'utf8') : ''
+
+// SELF-CONTAINED, like everything else this kit emits. A studio that fetches
+// its own script is a studio that stops working the moment it is moved out of
+// the folder it was built in — which is exactly what an author does with it.
+const studioExternal = [...studioHtml.matchAll(/<(?:script|link|img)\b[^>]*?\s(?:src|href)=["']([^"']+)["']/gi)]
+  .map((m) => m[1]!)
+  .filter((u) => !u.startsWith('data:'))
+check('studio: nothing is loaded from outside the file',
+  studioExternal.length === 0,
+  studioExternal.length ? `reaches out to: ${studioExternal.join(', ')}` : 'one file, no install')
+
+// THE INK MUST BE THE BOOK'S INK, AND DERIVED RATHER THAN TYPED.
+//
+// The whole promise is that what an author approves in the studio is what lands
+// on the page. `ink` and `paper` are computed by buildPalette from the one or
+// two colours a theme declares — nobody writes them down — so a studio with its
+// own copy of those values is a studio that silently previews the wrong book.
+const { buildPalette: studioBuildPalette, loadTheme: studioLoadTheme } =
+  await import(join(ROOT, 'src/theme.ts'))
+const studioPalette = studioBuildPalette(await studioLoadTheme(join(ROOT, 'theme.json')))
+const studioTheme = studioHtml.match(/window\.__INK_THEME__\s*=\s*(\{.*?\});/)?.[1]
+const parsedStudioTheme = studioTheme ? JSON.parse(studioTheme) : null
+check('studio: it previews in the book\'s own derived ink and paper',
+  parsedStudioTheme?.ink === studioPalette.ink && parsedStudioTheme?.paper === studioPalette.paper,
+  parsedStudioTheme
+    ? `studio ${parsedStudioTheme.ink} / ${parsedStudioTheme.paper} vs palette ${studioPalette.ink} / ${studioPalette.paper}`
+    : 'no theme was injected into the page at all')
+
+// A COLOUR LITERAL IN THE TREATMENT WOULD OUTLAST EVERY REBRAND.
+// The shell around the tool may be any colour it likes; the drawing may not.
+const inkSource = await readFile(join(ROOT, 'src/studio/ink.ts'), 'utf8')
+const inkLiterals = [...inkSource.matchAll(/#[0-9a-f]{3,8}\b/gi)].map((m) => m[0])
+check('studio: the treatment itself holds no colour',
+  inkLiterals.length === 0,
+  inkLiterals.length ? `hard-coded: ${inkLiterals.join(', ')}` : 'every colour arrives as an argument')
+
+// Every control the instructions promise has to be in the page. SKILL.md names
+// Line, Tone and Nib by name, and a doc that names a control the tool does not
+// have is worse than no doc.
+const studioControls = ['line', 'tone', 'nib'].filter((id) => !studioHtml.includes(`id="${id}"`))
+check('studio: every control the instructions name exists',
+  studioControls.length === 0,
+  studioControls.length ? `missing: ${studioControls.join(', ')}` : 'line, tone, nib')
 
 // Content must survive a dead runtime: hiding is applied BY js, not in the
 // base stylesheet.

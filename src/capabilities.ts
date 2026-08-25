@@ -193,8 +193,15 @@ export const CAPABILITIES: CapabilityGroup[] = [
         use: 'ALWAYS run this before building. It measures what you cannot judge by reading — ' +
              'page lengths against real capacity, missing sections, headless pages — and gives ' +
              'the action for each. It reports; it never rewrites your words. --json for machine use.' },
-      { id: 'node scripts/check.ts', what: 'The 84-check suite',
-        use: 'After any change to the kit. Each check is a bug that once shipped looking fine.' },
+      { id: 'node scripts/check.ts', what: 'The check suite',
+        use: 'After any change to the kit. Each check is a bug that once shipped looking fine. ' +
+             'The count is not quoted anywhere on purpose — it only ever drifts.' },
+      { id: 'node dist/studio.mjs', what: 'The Ink Studio — makes artwork look drawn on the page',
+        use: 'Before putting any supplied picture in a book. Writes output/ink-studio.html, ' +
+             'one self-contained page needing no install: drop the artwork in, turn Line, Tone ' +
+             'and Nib, and save a transparent PNG that carries only the ink, so the page own ' +
+             'paper and grain read through it. Previews in this book real ink, so what you ' +
+             'approve is what lands. Pass a theme path to draw in another book ink.' },
       { id: 'node scripts/gen-capabilities.ts', what: 'Regenerates CAPABILITIES.md from the manifest',
         use: 'After adding a feature. The build fails if the manifest is missing something the code has.' },
     ],

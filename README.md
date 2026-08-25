@@ -251,7 +251,7 @@ nothing.
 
 <div align="center">
 
-<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 154 checks passing, 17 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 160 checks passing, 17 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
 
 </div>
 
@@ -265,7 +265,7 @@ A built book is one file. The tool that builds it is nearly as lean:
 | Fonts | subset and embedded; a book needs no network |
 
 Every number on that card is measured on this commit, not rounded up for the
-graphic: `154` is what `node scripts/check.ts` prints, `17` is the length of
+graphic: `160` is what `node scripts/check.ts` prints, `17` is the length of
 `LAYOUTS` in `src/layout.ts` with all seventeen proved reachable by
 `scripts/verify.ts`, and `1` is the entire point of the project.
 
