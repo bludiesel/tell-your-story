@@ -205,7 +205,7 @@
   --t-flip: 720ms;
   --t-riffle-page: 150ms;
   --t-reveal: 520ms;
-  --t-reveal-stagger: 140ms;
+  --t-reveal-stagger: 90ms;
 }
 @media (prefers-reduced-motion: reduce) {
   :root {
@@ -215,15 +215,10 @@
   }
 }
 
-/* Reveal: each element on a page arrives on its own beat. The step index is
-   set inline as --i by the runtime, so the delay is one rule, not N rules. */
-.js-anim .step { opacity: 0; transform: translateY(10px); }
-.js-anim .step.in {
-  opacity: 1;
-  transform: none;
-  transition: opacity var(--t-reveal) ease calc(var(--i, 0) * var(--t-reveal-stagger)),
-              transform var(--t-reveal) var(--ease-paper) calc(var(--i, 0) * var(--t-reveal-stagger));
-}
+/* Reveal lives in GSAP, not here. This was a `.step` transition staggered by an
+   inline `--i` that nothing ever wrote, so every block on a page arrived on the
+   same beat; `--t-reveal` and `--t-reveal-stagger` are read by `animateStep()`
+   in book.ts instead, which is what makes those two theme knobs do anything. */
 
 /* WRITING ON. Type is masked from the left and the mask retreats, so the words
    appear as if being laid down — no per-character DOM, so it costs one layer
@@ -250,40 +245,21 @@
    gets pressed — the squash at 68% is a thumb going down on the middle of it,
    and the shadow tightening from a wide soft cast to a close one is the note
    arriving at the paper. Nothing settles by fading. */
-@keyframes sticky-press {
-  0% {
-    opacity: 0;
-    transform: translateY(-52px) rotate(calc(var(--tilt) - 8deg)) scale(1.16);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, .1), 26px 54px 60px -22px rgba(0, 0, 0, .5);
-  }
-  45% {
-    opacity: 1;
-    transform: translateY(3px) rotate(calc(var(--tilt) + 1.2deg)) scale(1.03);
-  }
-  68% {
-    transform: translateY(0) rotate(var(--tilt)) scale(.977);
-    box-shadow: 0 1px 1px rgba(0, 0, 0, .22), 2px 5px 10px -6px rgba(0, 0, 0, .38);
-  }
-  84% { transform: translateY(0) rotate(var(--tilt)) scale(1.006); }
-  100% {
-    opacity: 1;
-    transform: translateY(0) rotate(var(--tilt)) scale(1);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .18), 6px 14px 22px -10px rgba(0, 0, 0, .42);
-  }
-}
-.js-anim .step.in .sticky,
-.js-anim .step.in.sticky { animation: sticky-press 720ms cubic-bezier(.24, .86, .3, 1) both; }
-/* a pair goes up one after the other, the way a person would stick them */
-.js-anim .step.in .sticky:nth-of-type(2n) { animation-delay: 190ms; }
-@media (prefers-reduced-motion: reduce) {
-  .js-anim .step.in .sticky, .js-anim .step.in.sticky { animation: none; }
-}
+/* The press itself is a GSAP tween in `animateStep()`. It was a keyframe here,
+   triggered by `.js-anim .step.in .sticky` — and `.step` is not a class this
+   book renders, so a note has been fading in like any other block since the
+   selector was written. GSAP also gets it cleaned up by `revealCtx.revert()`
+   when a reader turns the page mid-press. DESIGN.md: "A sticky note is stuck,
+   not faded in." */
 
-@keyframes book-float-in {
-  from { opacity: 0; transform: translateY(38px) scale(.965) rotateX(9deg); }
-  to   { opacity: 1; transform: none; }
-}
-@keyframes riffle-edge { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.5); } }
+/* `book-float-in` and `riffle-edge` stood here, played by nothing.
+   Both were superseded rather than lost, and one had become a trap: the
+   assembly is a TRANSITION on `.book-3d` now, and this keyframe ended at
+   `transform: none` — the exact declaration book.css warns about, because it
+   drops the fit scale and slams the book to its full 1560px. The riffle's
+   fore-edge flash is `body.riffling .stack { filter: brightness(1.35) }`, a
+   state rather than a pulse, after the 26ms strobe was slowed to a thumb's
+   pace. Keeping either would only offer a future reader a wrong answer. */
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -469,32 +445,13 @@
 .ptable td.num, .ptable th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .ptable tbody tr.total td { font-weight: 700; }
 
-/* horizontal bars, because a book page is wider than it is tall in the space a
-   chart gets, and a label reads better beside its bar than under it */
-.barchart { display: flex; flex-direction: column; gap: var(--sp-2); }
-.bar-row { display: grid; grid-template-columns: 8.5rem 1fr 4rem; align-items: center; gap: var(--sp-2); font-size: 1.3rem; }
-.bar-label { font-family: var(--font-display); letter-spacing: .04em; text-transform: uppercase; font-size: 1.15rem; }
-.bar-track { position: relative; height: 1.5rem; background: color-mix(in srgb, var(--ink) 7%, transparent); }
-.bar-fill {
-  position: absolute; inset: 0 auto 0 0;
-  width: calc(var(--v, 0) * 1%);
-  background: var(--accent-ink);
-  transition: width 620ms cubic-bezier(.2, .8, .25, 1);
-}
-/* THE SECOND SERIES IS THE BLUE. A single-hue chart makes the accent do two
-   jobs at once — "this is the identity colour" and "this bar is different from
-   that one" — and it can only do one. Alternating rows take the mid blue, which
-   is the same road as the teal at the same lightness, so the two read as a pair
-   rather than as a clash. */
-.bar-row:nth-child(2n) .bar-fill { background: color-mix(in srgb, var(--secondary) 82%, var(--ink)); }
-.bar-v { text-align: right; font-variant-numeric: tabular-nums; }
-/* bars have no width until the block is revealed, then they grow in order */
-.step:not(.in) .bar-fill { width: 0; }
-.step.in .bar-row:nth-child(1) .bar-fill { transition-delay: 60ms; }
-.step.in .bar-row:nth-child(2) .bar-fill { transition-delay: 150ms; }
-.step.in .bar-row:nth-child(3) .bar-fill { transition-delay: 240ms; }
-.step.in .bar-row:nth-child(4) .bar-fill { transition-delay: 330ms; }
-.step.in .bar-row:nth-child(5) .bar-fill { transition-delay: 420ms; }
+/* The bar chart is SVG, drawn by `bars()` in diagram.ts as `.dg-bar` rects and
+   grown by GSAP. An HTML `.bar-row`/`.bar-fill` component used to live here,
+   sized by a `--v` custom property that nothing set and revealed by `.step`
+   rules that never matched; no page has ever contained that markup. Its
+   `.barchart { display: flex }` rule was worse than dead — `barchart` is also a
+   LAYOUT NAME (layout.ts), so the one thing the selector matched was a
+   `<div class="page pr barchart">`. */
 
 /* ── timeline across the gutter ──────────────────────────────────────────────
    One rail, two pages. The rail is drawn from the gutter outward on each side,
@@ -505,12 +462,14 @@
 /* the rail is structure, not emphasis: the blue carries it, and the teal dots
    sit on top of it as the things you are meant to read */
   height: 2px; background: color-mix(in srgb, var(--secondary) 72%, var(--ink));
-  transform: scaleX(var(--drawn, 1));
-  transition: transform 700ms cubic-bezier(.16, .84, .3, 1);
+  /* The draw is a GSAP scaleX in `animateStep()`. Doing it here needed a custom
+     property, and the name this used — `--drawn` — is already a THEME token for
+     the write-on mask, declared as `100%`: `scaleX(100%)` is invalid, so the
+     declaration was dropped and the computed transform read `none`. A private
+     name would have worked; no custom property at all is simpler. */
 }
 .page.pl .tl-rail { transform-origin: right center; }
 .page.pr .tl-rail { transform-origin: left center; }
-.step:not(.in) .tl-rail { --drawn: 0; }
 .tl-stops { position: relative; z-index: 2; display: flex; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
 /* THE DOT IS ON THE RAIL; THE CAPTION IS CLEAR OF IT.
    `when` above the dot and `what` below it put one part of every stop on each

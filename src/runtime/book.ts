@@ -677,6 +677,79 @@ function boot(): void {
   }
 
   /**
+   * A motion token in seconds. The theme writes `--t-reveal` and
+   * `--t-reveal-stagger` as ms, and until now the only rule that read them was
+   * a dead `.step` transition — so setting either in a theme did nothing at
+   * all. Read per reveal rather than once, because `prefers-reduced-motion` is
+   * live: a reader who turns it on mid-book gets 1ms from the next page on.
+   */
+  function motionSecs(name: string, fallback: number): number {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+    const n = parseFloat(raw)
+    if (!Number.isFinite(n)) return fallback
+    return raw.endsWith('ms') ? n / 1000 : n
+  }
+  let revealDur = 0.5
+  let revealBeat = 0.09
+  function readMotionTokens(): void {
+    revealDur = motionSecs('--t-reveal', 0.5)
+    revealBeat = motionSecs('--t-reveal-stagger', 0.09)
+  }
+
+  /**
+   * A sticky note is STUCK, not faded in — DESIGN.md. It comes in from above at
+   * the wrong angle, lands past square, and settles onto its tilt while the
+   * shadow collapses under it; the shadow is what makes it read as pressed
+   * rather than as a rectangle that moved.
+   *
+   * The tilt is read rather than set, so the note lands on whatever angle its
+   * `data-at` corner gave it — a press that rotated to zero would flatten every
+   * note, which is exactly what the layout CSS warns about.
+   */
+  function pressStickies(root: HTMLElement, tl: gsap.core.Timeline, at: number): void {
+    const notes = root.classList.contains('sticky')
+      ? [root]
+      : [...root.querySelectorAll<HTMLElement>('.sticky')]
+    notes.forEach((note, i) => {
+      const tilt = parseFloat(getComputedStyle(note).getPropertyValue('--tilt')) || 0
+      const start = at + i * 0.19   // a pair goes up one after the other
+      tl.set(note, {
+        opacity: 0, y: -52, rotate: tilt - 8, scale: 1.16, transformOrigin: '50% 50%',
+        boxShadow: '0 3px 6px rgba(0,0,0,.1), 26px 54px 60px -22px rgba(0,0,0,.5)',
+      }, start)
+      tl.to(note, {
+        keyframes: [
+          { opacity: 1, y: 3, rotate: tilt + 1.2, scale: 1.03, duration: 0.324, ease: 'power2.in' },
+          { y: 0, rotate: tilt, scale: 0.977,
+            boxShadow: '0 1px 1px rgba(0,0,0,.22), 2px 5px 10px -6px rgba(0,0,0,.38)',
+            duration: 0.166, ease: 'power2.out' },
+          { scale: 1.006, duration: 0.115, ease: 'sine.inOut' },
+          { scale: 1,
+            boxShadow: '0 1px 2px rgba(0,0,0,.18), 6px 14px 22px -10px rgba(0,0,0,.42)',
+            duration: 0.115, ease: 'sine.out' },
+        ],
+      }, start)
+    })
+  }
+
+  /**
+   * The timeline rail draws outward from the gutter, then stops — DESIGN.md.
+   * The end it grows from is the page's own business (`.page.pl` grows right to
+   * left, `.page.pr` left to right), so the origin is read off the element
+   * rather than restated here and left to drift.
+   */
+  function drawRails(root: HTMLElement, tl: gsap.core.Timeline, at: number): void {
+    const rails = root.classList.contains('tl-rail')
+      ? [root]
+      : [...root.querySelectorAll<HTMLElement>('.tl-rail')]
+    for (const rail of rails) {
+      tl.fromTo(rail,
+        { scaleX: 0, transformOrigin: getComputedStyle(rail).transformOrigin },
+        { scaleX: 1, duration: 0.7, ease: 'power2.out' }, at + 0.05)
+    }
+  }
+
+  /**
    * Everything a single step brings in: the block, and any diagram inside it.
    *
    * fromTo, NEVER from. A `from` tween takes the element's CURRENT state as its
@@ -686,12 +759,17 @@ function boot(): void {
    * from a state that is deliberately wrong.
    */
   function animateStep(el: HTMLElement, tl: gsap.core.Timeline, at: number): void {
+    // A note presses itself in. Fading it as a block as well would fight the
+    // landing on the one property — opacity — that both tweens want to own.
+    const isNote = el.classList.contains('sticky')
     if (TYPING_ON && el.children.length === 0 && (el.textContent ?? '').trim()) {
       typeOn(el, tl, at)
-    } else {
-      tl.fromTo(el, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, at)
+    } else if (!isNote) {
+      tl.fromTo(el, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: revealDur }, at)
     }
     animateDiagrams(el, tl, at)
+    pressStickies(el, tl, at)
+    drawRails(el, tl, at)
   }
 
   /** Reveal the next block. Returns false when the spread has nothing left. */
@@ -704,7 +782,8 @@ function boot(): void {
       // Members of one group share a step but not an instant: a caption landing
       // a beat behind its picture reads as one movement, whereas both arriving
       // on the same frame reads as a jump cut.
-      next.forEach((el, i) => animateStep(el, tl, i * 0.09))
+      readMotionTokens()
+      next.forEach((el, i) => animateStep(el, tl, i * revealBeat))
     }
     if (revealCtx) revealCtx.add(run)
     else run()
@@ -732,7 +811,8 @@ function boot(): void {
     if (rest.length === 0) return false
     const run = () => {
       const tl = gsap.timeline({ defaults: { ease: 'power2.out' } })
-      rest.forEach((el, i) => animateStep(el, tl, i * 0.03))
+      readMotionTokens()
+      rest.forEach((el, i) => animateStep(el, tl, i * revealBeat / 3))
     }
     if (revealCtx) revealCtx.add(run)
     else run()
@@ -830,6 +910,7 @@ function boot(): void {
     fresh.forEach((el) => el.classList.add('in'))
 
     revealCtx = gsap.context(() => {
+      readMotionTokens()
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
       // The page settles, then its contents arrive. Choreographed in three
@@ -859,7 +940,7 @@ function boot(): void {
       // than a presentation. Document order here, not step order — this is the
       // page as printed, and the pacing no longer applies.
       if (!STEPS_ON || backwards) {
-        blocks.forEach((el, i) => animateStep(el, tl, 0.14 + i * 0.06))
+        blocks.forEach((el, i) => animateStep(el, tl, 0.14 + i * revealBeat * (2 / 3)))
         return
       }
 
@@ -881,7 +962,7 @@ function boot(): void {
       const claimed = heldIntent === 'next'
       heldIntent = null
       const opening = claimed ? [...(groups[0] ?? []), ...(groups[1] ?? [])] : (groups[0] ?? [])
-      opening.forEach((el, i) => animateStep(el, tl, 0.14 + i * 0.09))
+      opening.forEach((el, i) => animateStep(el, tl, 0.14 + i * revealBeat))
       const rest = groups.slice(claimed ? 2 : 1).flat()
       if (rest.length > 0) gsap.set(rest, { opacity: 0, y: 16 })
     })

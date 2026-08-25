@@ -55,7 +55,9 @@ export const CAPABILITIES: CapabilityGroup[] = [
       { id: ':::sticky', what: 'A physical sticky note pinned at an angle',
         use: 'An aside in a HUMAN voice — a reminder someone stuck on afterwards. ' +
              'Distinct from :::note, which is typeset into the document. Colour and ' +
-             'tilt rotate automatically across notes on a page.',
+             'tilt rotate automatically across notes on a page. It arrives by being pressed ' +
+             'onto the paper — in from above, off-square, landing on its tilt — rather ' +
+             'than fading in the way the typeset blocks do.',
         example: ':::sticky Remember\nAsk before you assume — every time.\n:::' },
       // ── the layout catalogue ────────────────────────────────────────────
       // Each of these makes a page take one of the seventeen layouts. A page
@@ -67,7 +69,8 @@ export const CAPABILITIES: CapabilityGroup[] = [
         example: ':::opener chapter one\nThe first paragraph. Its first letter becomes the cap.\n:::' },
       { id: ':::timeline', what: 'A rail across the gutter with dated stops on it',
         use: 'A sequence with real times or dates. One line per stop, written `when | what`. ' +
-             'Use it on BOTH pages of a spread and the rail reads as one line crossing the fold.',
+             'Use it on BOTH pages of a spread and the rail reads as one line crossing the fold. ' +
+             'The rail draws itself outward from the gutter as the page arrives.',
         example: ':::timeline\n08:00 | Permit raised\n09:30 | Line isolated\n:::' },
       { id: ':::compare', what: 'One side of a before/after spread',
         use: 'Put `:::compare before` on one page and `:::compare after` on the next. Both sides ' +

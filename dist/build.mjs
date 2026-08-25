@@ -37583,7 +37583,7 @@ var DEFAULT_THEME = {
     flip: "720ms",
     riffle_page: "150ms",
     reveal: "520ms",
-    reveal_stagger: "140ms",
+    reveal_stagger: "90ms",
     write_speed_ms_per_char: 34
   },
   a11y: { enforce: true, min_contrast: 4.5 }

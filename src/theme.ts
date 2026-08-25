@@ -165,7 +165,7 @@ export const DEFAULT_THEME: ThemeFile = {
     ease_paper: 'cubic-bezier(.16, 1, .3, 1)',
     ease_cloth: 'cubic-bezier(.5, 0, .2, 1)',
     curtain: '2200ms', float: '900ms', open: '1100ms', flip: '720ms',
-    riffle_page: '150ms', reveal: '520ms', reveal_stagger: '140ms',
+    riffle_page: '150ms', reveal: '520ms', reveal_stagger: '90ms',
     write_speed_ms_per_char: 34,
   },
   a11y: { enforce: true, min_contrast: 4.5 },

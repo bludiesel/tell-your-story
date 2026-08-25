@@ -175,6 +175,60 @@ check('book: every single-page override targets a class that exists',
   unusedTargets.length === 0,
   unusedTargets.length ? `hides nothing: ${unusedTargets.map((c) => '.' + c).join(', ')}` : `${portraitTargets.length} checked`)
 
+// EVERY REVEAL-GATED SELECTOR MUST NAME A CLASS THE BOOK ACTUALLY RENDERS.
+//
+// The sibling of the `.rail` check above, and it exists for a worse case. The
+// whole `.step` family — the reveal stagger, the sticky-note press, the bar
+// growth, the timeline rail draw — was gated on `.step.in` / `.step:not(.in)`,
+// and `.step` is not a class this book has ever rendered: the runtime marks
+// `.reveal`. Four separate pieces of choreography, including two the design
+// specifies by name, silently did nothing. CSS never complains about a selector
+// that matches no element, so nothing but a check like this can notice.
+//
+// Scoped to `.in`-gated rules on purpose. A blanket "every class selector must
+// match" would flag every layout the sample book happens not to use, and a
+// check that cries wolf is a check people learn to skip; a rule that gates a
+// REVEAL, on the other hand, has exactly one job and cannot do it from a class
+// that is never on the page. The catalogue is the corpus because it is the one
+// document written to render every block and layout the kit has.
+// Scanned over the STYLESHEET WITH ITS COMMENTS STRIPPED, not the whole file.
+// The first draft matched `.step` in the comments left behind explaining why
+// `.step` was removed — a check that fails because of the note explaining its
+// own last catch is a check nobody can keep.
+const styleCss = [...bookHtml.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)]
+  .map((m) => m[1]!).join('\n').replace(/\/\*[\s\S]*?\*\//g, '')
+const catalogueDir = join(TMP, 'catalogue')
+const cataloguePath = join(catalogueDir, 'c.html')
+const catalogue = await build([join(ROOT, 'content/every-layout.md'), cataloguePath, '--quiet'])
+check('book: the layout catalogue builds', catalogue.code === 0, catalogue.out.trim())
+const catalogueHtml = catalogue.code === 0 ? await readFile(cataloguePath, 'utf8') : ''
+const rendersClass = (cls: string): boolean =>
+  new RegExp(`class="[^"]*\\b${cls}\\b`, 'i').test(bookHtml) ||
+  new RegExp(`class="[^"]*\\b${cls}\\b`, 'i').test(catalogueHtml)
+const gated = [...new Set(
+  [...styleCss.matchAll(/\.([a-z][a-z0-9-]*)(?:\.in\b|:not\(\.in\))/gi)].map((m) => m[1]!),
+)].filter((cls) => cls !== 'in')
+const gatedDead = gated.filter((cls) => !rendersClass(cls))
+check('book: every reveal-gated rule targets a class that exists',
+  gatedDead.length === 0,
+  gatedDead.length
+    ? `gates nothing: ${gatedDead.map((c) => '.' + c).join(', ')}`
+    : `${gated.length} gating classes checked against the sample and the catalogue`)
+
+// A KEYFRAME NOBODY PLAYS IS A FLOURISH THAT WAS LOST, NOT ONE THAT WAS CUT.
+//
+// `sticky-press` was a complete, carefully-authored landing — arrival angle,
+// overshoot, shadow collapse — attached to a trigger that could not fire. It
+// read as present in the source right up until you watched a note fade in like
+// a paragraph. An unplayed keyframe is the visible half of that failure.
+const keyframeNames = [...styleCss.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]!)
+const unplayed = [...new Set(keyframeNames)].filter(
+  (name) => !new RegExp(`animation(?:-name)?\\s*:[^;{}]*\\b${name}\\b`).test(styleCss),
+)
+check('book: every keyframe is played by something',
+  unplayed.length === 0,
+  unplayed.length ? `never runs: ${unplayed.join(', ')}` : `${keyframeNames.length} keyframes checked`)
+
 // Content must survive a dead runtime: hiding is applied BY js, not in the
 // base stylesheet.
 // An UNGUARDED rule is one whose selector begins with `.reveal` — the guarded
