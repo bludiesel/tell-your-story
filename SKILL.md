@@ -159,8 +159,11 @@ Apply these rules when generating or extending a book:
    and are enforced together by `node dist/motion.mjs`, which fails if either drifts.
 
 The curtain, cover opening, page turn, landing reveal, diagram choreography,
-section tabs, and riffle are **built-in choreography**, not per-book Markdown
-controls. There is deliberately no front-matter setting for individual GSAP
+section tabs, riffle, and the one-page/spread view control are **built-in
+choreography**, not per-book Markdown controls. The view control cycles
+automatic → one page → spread and is remembered per reader, not per book, so
+never author a lesson that assumes a facing page is on screen: a spread layout
+must still read when its partner is a page turn away. There is deliberately no front-matter setting for individual GSAP
 durations or eases: a shared motion language keeps a workbook coherent. Choose
 the content's pacing with `steps`, `typing`, and the step markers; extend the
 runtime only when a new inline SVG teaches something the supplied blocks cannot.

@@ -519,6 +519,9 @@ ${pagesHtml}
   </div>
 </div>
 <div class="chrome">
+  <button type="button" data-action="view" data-view="auto"
+    aria-label="Page view: automatic. Click for one page at a time."
+    title="Page view: automatic"><span class="view-glyph">&#9707;</span></button>
   <button type="button" data-action="riffle" aria-label="Riffle back to the first page"
     title="Back to the start">&#8630;</button>
   <button type="button" data-action="prev" aria-label="Previous page">&#8249;</button>

@@ -146,6 +146,35 @@ check('book: grain filter reference resolves',
   `declared id=${grainId ?? '(none)'}, references present: ${/url\(#/.test(grainSvg)}`)
 check('book: grain rect cannot paint solid black', /fill="none"/.test(grainSvg))
 
+// ── single-page mode ──────────────────────────────────────────────────────
+// The reader can force one page or the spread, so both must ship and both must
+// be reachable from the control.
+check('book: the view control ships', /data-action="view"/.test(bookHtml))
+// Asserted as the ORDER ARRAY rather than three loose words: `single` and
+// `spread` both occur elsewhere in the runtime (the page counter is `.spread`),
+// so searching for the words alone would pass even if a mode were dropped.
+check('book: the view control offers all three modes',
+  bookHtml.includes('["auto","single","spread"]'),
+  'auto / one page / spread must all be reachable from the runtime')
+
+// EVERY `body.portrait .x` RULE MUST NAME A CLASS THE BOOK ACTUALLY RENDERS.
+//
+// This exists because `body.portrait .rail { display: none }` sat in the
+// stylesheet for its whole life hiding nothing: the element is `.tabs`, and the
+// only rails in the tree belong to the curtain and the timeline. Nothing failed,
+// nothing warned — the fore-edge tabs simply stayed glued to the edge of a lone
+// page and single-page mode looked like a broken half-spread.
+//
+// A rule that targets a class no page carries is always a typo or a rename, and
+// it is invisible precisely because CSS does not complain.
+const portraitTargets = [...bookHtml.matchAll(/body\.portrait\s+\.([a-z0-9-]+)/gi)].map((m) => m[1])
+const unusedTargets = [...new Set(portraitTargets)].filter(
+  (cls) => !new RegExp(`class="[^"]*\\b${cls}\\b`, 'i').test(bookHtml),
+)
+check('book: every single-page override targets a class that exists',
+  unusedTargets.length === 0,
+  unusedTargets.length ? `hides nothing: ${unusedTargets.map((c) => '.' + c).join(', ')}` : `${portraitTargets.length} checked`)
+
 // Content must survive a dead runtime: hiding is applied BY js, not in the
 // base stylesheet.
 // An UNGUARDED rule is one whose selector begins with `.reveal` — the guarded

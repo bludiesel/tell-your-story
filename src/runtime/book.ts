@@ -90,17 +90,57 @@ function boot(): void {
     Math.min((window.innerWidth * STAGE_FILL - (stageW > PAGE_W ? 40 : 0)) / stageW,
              (window.innerHeight * STAGE_FILL) / STAGE_H)
 
+  // ── the reader's own choice of view ─────────────────────────────────────
+  //
+  // The automatic rule can only ever be a guess about what someone wants to
+  // look at. It picks whichever mode draws the larger page, which is right for
+  // reading and wrong for anyone who came to see the BOOK — a spread is the
+  // object this whole thing is imitating, and on a 4:3 window the rule takes it
+  // away to buy four points of type. So the rule stays the default and the
+  // reader gets the wheel.
+  //
+  // Stored under a plain global key, deliberately unlike the resume bookmark
+  // beneath, which is namespaced per book: where you got to belongs to one
+  // book, but "I want the spread" is a fact about the person and the screen and
+  // should hold for the next book they open from the same folder.
+  type ViewMode = 'auto' | 'single' | 'spread'
+  const VIEW_KEY = 'tell-your-story:view'
+  const VIEW_ORDER: ViewMode[] = ['auto', 'single', 'spread']
+  const readView = (): ViewMode => {
+    try {
+      const raw = localStorage.getItem(VIEW_KEY)
+      return VIEW_ORDER.includes(raw as ViewMode) ? (raw as ViewMode) : 'auto'
+    } catch { return 'auto' }
+  }
+  let viewMode: ViewMode = readView()
+
+  /* Both set later. fitStage runs at boot BEFORE the engine and the chrome
+     exist, and both have to answer when the orientation changes — the engine
+     re-chooses its own layout, the control re-draws its glyph — so they are
+     joined by slots rather than direct calls. The control's repaint is not
+     optional garnish: in `auto` the mode changes on RESIZE with no click
+     involved, and a glyph that only updates when clicked would sit there
+     showing one page beside a spread. */
+  let onOrientationChange: (() => void) | null = null
+  let repaintViewControl: (() => void) | null = null
+
   const fitStage = () => {
     const spread = stageFit(PAGE_W * 2)
     const single = stageFit(PAGE_W)
     // Equal-or-better keeps the spread, because two pages carry the design's
     // facing layouts and a tie should not throw them away.
-    const portrait = single > spread
+    const portrait = viewMode === 'auto' ? single > spread : viewMode === 'single'
+    const was = document.body.classList.contains('portrait')
     document.body.classList.toggle('portrait', portrait)
     const fit = portrait ? single : spread
     document.documentElement.style.setProperty('--fit', String(Math.max(fit, 0.05)))
     // The stage just changed size, so which corner is clear may have too.
     placeStickies()
+    // Only when it actually flipped. This also covers DRAGGING a window from
+    // wide to narrow, which previously swapped the CSS to one page and left the
+    // engine laying out two — the same mismatch that made a single page read as
+    // a squashed spread.
+    if (was !== portrait) { onOrientationChange?.(); repaintViewControl?.() }
   }
   fitStage()
   window.addEventListener('resize', fitStage, { passive: true })
@@ -321,10 +361,24 @@ function boot(): void {
     // types/index.d.ts, the same gap as `transparent` on curtains.js's Plane.
     // Cast rather than skip it: the method is what re-runs calculateBoundsRect()
     // and therefore the orientation choice.
-    if (document.body.classList.contains('portrait')) {
-      const refit = (flip as unknown as { update?: () => void }).update
-      if (refit) requestAnimationFrame(() => refit.call(flip))
+    //
+    // The same call serves the view toggle: switching between one page and the
+    // spread by hand is the identical problem — the container width changed
+    // under an engine that already made its mind up. Landing on the page you
+    // were reading is done by hand because update() re-lays-out from the
+    // engine's own index, and in a spread that index is the LEFT leaf of the
+    // pair, so a straight re-render can drop you a page back.
+    const refit = (flip as unknown as { update?: () => void }).update
+    const refitEngine = () => {
+      if (!refit) return
+      const at = flip.getCurrentPageIndex()
+      requestAnimationFrame(() => {
+        refit.call(flip)
+        if (flip.getCurrentPageIndex() !== at) flip.turnToPage(at)
+      })
     }
+    onOrientationChange = refitEngine
+    if (document.body.classList.contains('portrait')) refitEngine()
   } catch (error) {
     // Keep the authored paper readable if page-flip cannot initialise. In
     // particular, never add the reveal gate before this point.
@@ -1081,6 +1135,43 @@ function boot(): void {
   navClick('[data-action="prev"]', goPrev)
   navClick('[data-action="riffle"]', () => { void riffle() })
   navClick('[data-action="close"]', () => { void closeShow() })
+
+  // ── the view control ────────────────────────────────────────────────────
+  //
+  // One button cycling auto -> one page -> spread, rather than three, because
+  // the chrome is a thin strip that fades while you read and every extra
+  // target in it is one more thing between a reader and the page.
+  //
+  // The glyph shows what you are LOOKING AT, not what the button will do: a
+  // control that previews its own next state makes you read the label to work
+  // out the current one. The label carries the action instead, and a dot marks
+  // "this is the automatic choice" so a reader can tell a mode they picked from
+  // a mode that was picked for them.
+  const viewBtn = document.querySelector<HTMLButtonElement>('[data-action="view"]')
+  const VIEW_SAYS: Record<ViewMode, { next: string; title: string }> = {
+    auto:   { next: 'one page at a time', title: 'Page view: automatic' },
+    single: { next: 'a two-page spread',  title: 'Page view: one page' },
+    spread: { next: 'the automatic choice', title: 'Page view: two-page spread' },
+  }
+  const paintView = () => {
+    if (!viewBtn) return
+    const showingSpread = !document.body.classList.contains('portrait')
+    const glyph = viewBtn.querySelector('.view-glyph')
+    // U+25EB square with a vertical bar = a spread; U+25AF a tall blank = one leaf.
+    if (glyph) glyph.textContent = showingSpread ? '◫' : '▯'
+    viewBtn.dataset.view = viewMode
+    const says = VIEW_SAYS[viewMode]
+    viewBtn.title = says.title
+    viewBtn.setAttribute('aria-label', `${says.title}. Click for ${says.next}.`)
+  }
+  viewBtn?.addEventListener('click', () => {
+    viewMode = VIEW_ORDER[(VIEW_ORDER.indexOf(viewMode) + 1) % VIEW_ORDER.length]
+    try { localStorage.setItem(VIEW_KEY, viewMode) } catch { /* storage denied */ }
+    fitStage()
+    paintView()
+  })
+  repaintViewControl = paintView
+  paintView()
 
   /**
    * RIFFLE back to the front — the thumb-flick you give a book to get back to

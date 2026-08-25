@@ -771,6 +771,19 @@ body.open.idle { cursor: none; }
   content: ""; position: absolute; left: -.55rem; top: 15%; bottom: 15%;
   width: 1px; background: rgba(255,255,255,.16);
 }
+/* The view control sits with riffle and close in the utility group — none of
+   the three is a page turn. */
+.chrome [data-action="view"] { color: var(--ink-on-dark-muted); position: relative; }
+.chrome [data-action="view"]:hover { color: var(--accent-bright); }
+.chrome [data-action="view"] .view-glyph { font-size: 1.05rem; line-height: 1; }
+/* A dot for "the book chose this". Without it, a reader who has never touched
+   the control cannot tell whether the view is a preference of theirs or a
+   consequence of the window they happen to be in. */
+.chrome [data-action="view"][data-view="auto"]::after {
+  content: ""; position: absolute; top: .34rem; right: .34rem;
+  width: .3rem; height: .3rem; border-radius: 50%;
+  background: var(--accent); opacity: .85;
+}
 .chrome [data-action="riffle"] { margin-right: .9rem; position: relative; }
 .chrome [data-action="riffle"]::after {
   content: ""; position: absolute; right: -.55rem; top: 15%; bottom: 15%;
@@ -1043,8 +1056,22 @@ body.blackout { cursor: none; }
    easel instead of two. That is the whole point of the fixed stage: the only
    thing that changes is how much of it you are looking at. */
 body.portrait .book-3d { width: 780px; }
-/* The fore-edge rail hangs off the spread's right edge; on one page it would
-   sit over the text block. */
-body.portrait .rail { display: none; }
+/* The fore-edge tabs hang off the spread's right edge; on one page they sit
+   over the text block instead.
+   This said `.rail` for its whole life and `.rail` is not a class this book
+   ever renders — the element tabsHtml() emits is `.tabs`, and the only rails in
+   the tree belong to the curtain and the timeline block. So the tabs have NEVER
+   hidden in single-page mode: they stayed glued to the edge of a lone page,
+   which is most of why one page read as a broken half-spread. Jumping still
+   works without them because the contents rows carry `data-goto`. */
+body.portrait .tabs { display: none; }
+/* The gutter well and the ribbon are both anchored at `left: 50%` — the fold of
+   a SPREAD. With one page on the easel there is no fold there, so a 120px band
+   of binding shadow was being painted straight down the middle of the text and
+   the page read as two squashed half-pages rather than one whole one. There is
+   no gutter to draw, and the binding is the left edge, so the ribbon moves to
+   where it would actually be sewn. */
+body.portrait .gutterline { display: none; }
+body.portrait .ribbon { left: 9%; }
 /* No gutter to keep clear of when there is no facing page. */
 body.portrait .below { padding-left: var(--pg-x); padding-right: var(--pg-x); }
