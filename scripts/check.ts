@@ -277,10 +277,27 @@ check('studio: the treatment itself holds no colour',
   inkLiterals.length === 0,
   inkLiterals.length ? `hard-coded: ${inkLiterals.join(', ')}` : 'every colour arrives as an argument')
 
+// THE DEFAULT EXPORT HAS TO BE THE SMALL ONE.
+//
+// Pictures are packed into the book as base64, so the studio's default format
+// is the single biggest lever on whether a book stays sendable: the same
+// drawing is 1,838 KB as PNG and 592 KB as WebP. It shipped as PNG first, which
+// is why this is asserted rather than assumed — a default nobody checks is a
+// default that quietly reverts.
+// Matched on the MIME strings themselves rather than on the constant's name:
+// the studio ships minified, so every identifier in it is a single letter.
+const webpAt = studioHtml.indexOf('image/webp')
+const pngAt = studioHtml.indexOf('image/png')
+check('studio: it exports the small format by default, and still offers PNG',
+  webpAt !== -1 && pngAt !== -1 && webpAt < pngAt,
+  webpAt === -1 ? 'no WebP export at all'
+    : pngAt === -1 ? 'PNG was dropped — print needs a lossless option'
+    : webpAt < pngAt ? 'webp first, png kept for print' : 'PNG is listed first, so it is the default')
+
 // Every control the instructions promise has to be in the page. SKILL.md names
 // Line, Tone and Nib by name, and a doc that names a control the tool does not
 // have is worse than no doc.
-const studioControls = ['line', 'tone', 'nib'].filter((id) => !studioHtml.includes(`id="${id}"`))
+const studioControls = ['line', 'tone', 'nib', 'format', 'size'].filter((id) => !studioHtml.includes(`id="${id}"`))
 check('studio: every control the instructions name exists',
   studioControls.length === 0,
   studioControls.length ? `missing: ${studioControls.join(', ')}` : 'line, tone, nib')

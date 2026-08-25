@@ -279,12 +279,21 @@ Open the page, drop the artwork in, and turn three things:
 | **Line** | How much pen. `0` is a pure wash, `~0.9` is a drawing, `>2` is an engraving. | The subject has clear shapes worth outlining. |
 | **Tone** | How much pigment the wash lays down. The rest of the page stays bare paper. | The picture needs weight without lines. |
 | **Nib** | The width of the pen, in pixels. | Detail is too busy — a broader nib loses it deliberately. |
+| **Format** | WebP by default, PNG for print. | Only reach for PNG when the file leaves the book. |
+| **Size** | Export width. 1200 by default. | Bigger only if the artwork is a full bleed on a large display. |
 
-Then **Save transparent PNG**, and use the result like any other picture:
+Then **Save**, and use the result like any other picture:
 
 ```markdown
-![A technician checking a cylinder](artwork.ink.png)
+![A technician checking a cylinder](artwork.ink.webp)
 ```
+
+**Format and size are the two numbers that matter**, because pictures are packed
+*inside* the book as base64 — a book's weight is the sum of them plus a third.
+The same 900×1200 drawing measured: **PNG 1,838 KB, WebP 592 KB.** Both carry
+transparency, so WebP is the default and PNG is there for print. The width
+defaults to 1200, which is already more than a 780 px page resolves. The status
+line shows what each export costs, packed.
 
 Nothing in the book changes to support this. The export is an ordinary PNG, so
 the asset store packs it, `--assets folder` splits it out, and it prints.

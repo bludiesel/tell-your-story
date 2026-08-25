@@ -18082,11 +18082,17 @@ through it. Drop the result into a lesson like any other picture.</p>
     <div class="panel">
       <h2>Export</h2>
       <div class="control">
+        <label for="format"><span class="name">Format</span></label>
+        <select id="format"></select>
+        <span class="hint">Measured on the same drawing: PNG 1,838&nbsp;KB, WebP 592&nbsp;KB.
+        Both carry transparency. Keep PNG for print.</span>
+      </div>
+      <div class="control">
         <label for="size"><span class="name">Size</span></label>
         <select id="size"></select>
-        <span class="hint">A page is 780&nbsp;px wide, so 1600 is already twice what any
-        screen resolves. Alpha does not compress like a photograph \u2014 full size can run to
-        megabytes, and this book has to stay one file you can send.</span>
+        <span class="hint">A page is 780&nbsp;px wide, so 1200 is already more than a screen
+        resolves. Pictures are packed inside the book, so this is the one number that decides
+        whether it stays a file you can send.</span>
       </div>
       <button type="button" id="export" disabled>Save transparent PNG</button>
       <div id="status">Drop a picture to begin.</div>

@@ -66,7 +66,23 @@ const PREVIEW_W = 900
  * more than any display will resolve, so the default costs nothing visible.
  * Full size stays available for print or further editing.
  */
-const EXPORT_WIDTHS = [1200, 1600, 2400, 0] as const
+const EXPORT_WIDTHS = [900, 1200, 1600, 2400, 0] as const
+
+/**
+ * WEBP, NOT PNG, AND THE MEASUREMENT IS THE WHOLE ARGUMENT.
+ *
+ * The same 900x1200 drawing: PNG 1,838 KB, WebP at 0.8 592 KB. Three times
+ * smaller for a picture whose alpha is the point, and this kit inlines its
+ * images as base64 — which adds another third — so the format choice is worth
+ * more than every other size decision here put together.
+ *
+ * PNG stays for print and for handing artwork to someone else's tool, where
+ * lossless matters and one file's weight does not.
+ */
+const EXPORT_FORMATS = [
+  { id: 'image/webp', quality: 0.8, ext: 'webp', label: 'WebP — small (recommended)' },
+  { id: 'image/png', quality: undefined, ext: 'png', label: 'PNG — lossless, much larger' },
+] as const
 
 function render(width: number): Raster | null {
   if (!source) return null
@@ -197,7 +213,21 @@ function exportWidth(): number {
   return chosen > 0 ? chosen : source!.naturalWidth
 }
 
+function exportFormat(): (typeof EXPORT_FORMATS)[number] {
+  const id = $<HTMLSelectElement>('#format').value
+  return EXPORT_FORMATS.find((f) => f.id === id) ?? EXPORT_FORMATS[0]
+}
+
 function wireExport(): void {
+  const format = $<HTMLSelectElement>('#format')
+  for (const f of EXPORT_FORMATS) {
+    const opt = document.createElement('option')
+    opt.value = f.id
+    opt.textContent = f.label
+    format.append(opt)
+  }
+  format.value = EXPORT_FORMATS[0].id
+
   const size = $<HTMLSelectElement>('#size')
   for (const w of EXPORT_WIDTHS) {
     const opt = document.createElement('option')
@@ -205,7 +235,7 @@ function wireExport(): void {
     opt.textContent = w === 0 ? 'Full size (large file)' : `${w} px wide`
     size.append(opt)
   }
-  size.value = '1600'
+  size.value = '1200'
 
   exportBtn.addEventListener('click', () => {
     if (!source) return
@@ -222,17 +252,24 @@ function wireExport(): void {
         cv.width = full.width
         cv.height = full.height
         cv.getContext('2d')!.putImageData(new ImageData(full.data, full.width, full.height), 0, 0)
+        const fmt = exportFormat()
         cv.toBlob((blob) => {
-          if (!blob) { status.textContent = 'The browser refused to encode the PNG.'; return }
+          if (!blob) { status.textContent = `The browser refused to encode ${fmt.ext.toUpperCase()}.`; return }
+          const name = `${sourceName}.ink.${fmt.ext}`
           const a = document.createElement('a')
           a.href = URL.createObjectURL(blob)
-          a.download = `${sourceName}.ink.png`
+          a.download = name
           a.click()
           setTimeout(() => URL.revokeObjectURL(a.href), 4000)
+          // THE COST IS SHOWN, NOT BURIED. This kit packs pictures inside the
+          // HTML, so a book's weight is the sum of these numbers plus a third
+          // for base64 — an author who cannot see the figure cannot choose.
+          const inBook = (blob.size * 1.37) / 1024
           status.textContent =
-            `Saved ${sourceName}.ink.png — ${full.width}×${full.height}, ` +
-            `${(blob.size / 1024).toFixed(0)} KB, drawn in ${Math.round(performance.now() - t0)} ms`
-        }, 'image/png')
+            `Saved ${name} — ${full.width}×${full.height}, ${(blob.size / 1024).toFixed(0)} KB ` +
+            `(about ${inBook.toFixed(0)} KB once packed into a book), ` +
+            `drawn in ${Math.round(performance.now() - t0)} ms`
+        }, fmt.id, fmt.quality)
       } finally {
         exportBtn.disabled = false
       }
