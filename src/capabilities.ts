@@ -162,10 +162,10 @@ export const CAPABILITIES: CapabilityGroup[] = [
       // Caught by the drift check on its first run: accepted by the build for
       // years-old briefs, but nobody had written it down.
       { id: 'eyebrow', what: 'Older alias for curtain_eyebrow', use: 'Accepted for compatibility; prefer curtain_eyebrow in new briefs.' },
-      { id: 'curtain_title', what: 'Headline printed on the curtain', use: 'Defaults to `title`. The last word takes the accent colour.' },
+      { id: 'curtain_title', what: 'Headline printed on the curtain', use: 'Defaults to `title`. The last word takes the accent colour. It is re-printed down the strip of cloth left showing beside the open book, so keep it short enough to read as one vertical line.' },
       { id: 'curtain_text', what: 'Standfirst on the curtain', use: 'One or two sentences: what this is and how long it takes.' },
       { id: 'curtain_hint', what: 'The prompt on the curtain', use: 'Default: "click anywhere to begin".' },
-      { id: 'curtain_photo', what: 'Photograph printed on the curtain', use: 'A path like `img/site.png`. Obeys the --assets switch like any picture.' },
+      { id: 'curtain_photo', what: 'Photograph printed on the curtain', use: 'A path like `img/site.png`. Obeys the --assets switch like any picture. Also carried into the right-hand strip once the curtain settles, dyed into the cloth — so a picture that depends on fine detail will not survive; pick one that reads as a shape.' },
       { id: 'steps', what: 'Reveal page blocks one at a time',
         use: 'Defaults to on for presenter-led training. Set `steps: false` when the reader should see a whole page at once.' },
       { id: 'typing', what: 'Type plain-text blocks into view',

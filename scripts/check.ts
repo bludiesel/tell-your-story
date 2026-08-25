@@ -1188,11 +1188,24 @@ check('book: shipped grain filter resolves',
   // it appears in, silently — so check ours, rather than trusting that we did
   // not inherit the habit along with the stylesheet.
   const declared = new Set(Object.keys(grab(generated)))
+  // Custom properties the RUNTIME sets, so the theme is not expected to declare
+  // them. `--book-w` is how wide the book actually is and `--swag-w` how wide
+  // the curtain's settled print must be laid out — both are geometry, computed
+  // from a measurement, and neither is a colour anyone can rebrand.
+  //
+  // Trimmed to what is genuinely written: `--curl`, `--spec` and `--fan` were
+  // exempted here while appearing nowhere in the source at all, and `--i` and
+  // `--v` are read with fallbacks rather than written (see below).
   const runtimeWritten = new Set(['--swl', '--swr', '--stack-bias', '--book-progress',
-    '--curl', '--spec', '--fan', '--i', '--v'])
+    '--book-w', '--swag-w'])
   const css = await readFile(join(ROOT, 'src/runtime/book.css'), 'utf8') +
     await readFile(join(ROOT, 'src/runtime/curtain.css'), 'utf8')
-  const undeclared = [...new Set([...css.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]!))]
+  // A `var(--x, fallback)` cannot void its declaration — that is what the
+  // fallback is for — so only a BARE reference is dangerous. Distinguishing the
+  // two is what lets the allowlist above shrink to names something really does
+  // set, instead of absorbing every name the theme happens not to declare.
+  const bare = new Set([...css.matchAll(/var\(\s*(--[\w-]+)\s*\)/g)].map((m) => m[1]!))
+  const undeclared = [...bare]
     .filter((t) => !declared.has(t) && !runtimeWritten.has(t) &&
       !new RegExp(`${t}\\s*:`).test(css))
   check('design: no stylesheet references an undeclared token',
@@ -1219,6 +1232,20 @@ check('book: shipped grain filter resolves',
   // A colour literal in the runtime is a second palette that no rebrand reaches.
   const strayHex = [...runtimeTs.matchAll(/['"](#[0-9A-Fa-f]{6})['"]/g)].map((m) => m[1]!)
     .filter((h) => h.toUpperCase() !== '#FF00FF')  // the deliberate missing-token flag
+  // AND THE ALLOWLIST HAS TO EARN ITSELF. Its entries are exempt from the
+  // theme's declaration rule, so a name that lands in it by mistake — a typo, or
+  // a property whose writer was deleted — becomes a var() that resolves to
+  // nothing and silently voids the declaration it sits in. That is the same
+  // failure the check above exists to catch, smuggled past it by the escape
+  // hatch. Every exemption must therefore be a property the runtime really does
+  // write.
+  const notWritten = [...runtimeWritten].filter(
+    (t) => !new RegExp(`setProperty\\(\\s*'${t}'`).test(runtimeTs) &&
+           !new RegExp(`${t}\\s*:`).test(runtimeTs))
+  check(`design: all ${runtimeWritten.size} runtime-written properties are actually written`,
+    notWritten.length === 0,
+    `${notWritten.join(' ')} — exempted from the theme but nothing sets them, so they resolve to nothing`)
+
   check('design: the runtime holds no colour literals',
     strayHex.length === 0,
     `${[...new Set(strayHex)].join(' ')} — every colour comes from the theme, or a rebrand silently misses it`)

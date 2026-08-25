@@ -134,6 +134,17 @@ function boot(): void {
     document.body.classList.toggle('portrait', portrait)
     const fit = portrait ? single : spread
     document.documentElement.style.setProperty('--fit', String(Math.max(fit, 0.05)))
+    // HOW WIDE THE BOOK ACTUALLY IS, published for anything that has to work
+    // around it — today the curtain's settled print, which needs to know how
+    // much cloth is left showing at each edge.
+    //
+    // curtain.css computed that itself as `1560px * var(--fit)`, which silently
+    // assumed a spread. In single-page mode the book is HALF that, so the sum
+    // came out at roughly zero on a 1060px window and negative in places: the
+    // strip collapsed and the print vanished. One page mode is now something a
+    // reader can choose at any width, so the assumption had to go.
+    document.documentElement.style.setProperty(
+      '--book-w', `${(portrait ? PAGE_W : PAGE_W * 2) * fit}px`)
     // The stage just changed size, so which corner is clear may have too.
     placeStickies()
     // Only when it actually flipped. This also covers DRAGGING a window from

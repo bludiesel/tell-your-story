@@ -235,19 +235,26 @@ body:not(.curtain-open) .book-3d { pointer-events: none; }
    The book is `1560px * var(--fit)` wide and centred, so what remains at each
    edge is exactly `(100vw - 1560px * var(--fit)) / 2`. Same numbers the stage
    itself uses — it cannot drift, and it stays correct at any window size. */
+/* WIDTH COMES FROM THE RUNTIME, because it is not a layout width. The panel is
+   laid out in the cloth's MATERIAL space and then gathered, so it has to be
+   wider here than it will be on screen by exactly the compression factor —
+   see `swagWarp()` in curtain.ts, which owns that number and publishes this. */
 .curtain.settled .curtain-side {
-  width: calc(((100vw - 1560px * var(--fit, .6)) / 2) * .66);
+  width: var(--swag-w, 120px);
   max-width: none; padding: 0; gap: .45rem;
-  justify-content: center; align-items: center; text-align: center;
+  justify-content: center; text-align: center;
   overflow: hidden;
 }
-.curtain.settled .curtain-side.left  { justify-self: start; margin-left: .45rem; }
-.curtain.settled .curtain-side.right { justify-self: end;   margin-right: .45rem; }
-/* On a narrow window the strip closes to almost nothing and the print becomes a
-   sliver of crushed lettering, which is worse than clean cloth. The stage is
-   height-limited below roughly 1200px so the strip is at its thinnest there —
-   print nothing instead. */
-@media (max-width: 1200px) { .curtain.settled .curtain-side { display: none } }
+/* Pinned to the OUTER edge of its panel, not centred in it: the gather crushes
+   the cloth harder the further in you go, and `inkFade` erases print past a
+   compression of 4 — which is reached about 5.6% of the way across the screen.
+   Centring put the lettering just past that line, so it was printed into the
+   part of the swag that cannot hold ink. `--book-w` is published by the book's
+   own fit code; this used to compute `1560px * var(--fit)`, which quietly
+   assumed a two-page spread and collapsed to nothing once one-page mode became
+   something a reader can pick at any width. */
+.curtain.settled .curtain-side.left  { justify-self: start; margin-left: .45rem; align-items: flex-start; }
+.curtain.settled .curtain-side.right { justify-self: end;   margin-right: .45rem; align-items: flex-end; }
 /* The standfirst is the one thing that cannot survive the narrowing. */
 .curtain.settled .curtain-sub { display: none; }
 /* VERTICAL, because the strip is. Set horizontally the title wrapped to four

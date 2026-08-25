@@ -472,6 +472,88 @@ interface Run { text: string; color: string }
  * truth for type, colour and position: there is no second layout to keep in sync
  * and a theme change reprints the cloth automatically.
  */
+/* THE SETTLED SWAG IS A PRE-DISTORTION PROBLEM, NOT A LAYOUT ONE.
+ *
+ * `printCopy` rasterises the DOM's SCREEN boxes into a texture that the shader
+ * then samples in the cloth's own MATERIAL space and gathers. Between the two
+ * sits `cloth()`, which crowds the whole half-panel into the swag — so a block
+ * laid out at screen x is not drawn at screen x. Measured at 1920: the settled
+ * title was laid out 18px wide at x=83 and reached the glass 6px wide at x=40,
+ * a 2.7x squeeze at roughly half the intended distance out. It WAS being
+ * printed. It was unreadable, which looked identical to absent.
+ *
+ * The CSS could not have known: the copy is placed in screen coordinates by a
+ * stylesheet, and the compression happens two stages later in a shader. So the
+ * inverse of the gather is applied here, where both numbers are in hand.
+ *
+ * At rest (uOpen = 1) the map from the source coordinate to the screen is, for
+ * the left half:
+ *     s      = x_screen / uSwag            (distance out, in leading edges)
+ *     srcX   = 0.5 * ((1-k)s + k s^2)      k = 0.55, the gather's blend
+ * and its derivative — texture pixels per screen pixel — is exactly the `comp`
+ * the shader computes for lighting and for `inkFade`:
+ *     comp   = 0.5 * ((1-k) + 2ks) / uSwag
+ *
+ * Placing the copy at `srcX` and pre-stretching it by `comp` therefore lands it
+ * where it was meant to be, at the size it was meant to be. The stretch is
+ * linearised about the anchor, which is exact enough over a band this narrow
+ * and far cheaper than warping the raster itself.
+ */
+const GATHER_K = 0.55
+/** Where the outer edge of the printed band should ARRIVE, as a fraction of
+ *  the viewport. Not zero: type flush against the screen edge reads as a
+ *  rendering fault rather than as lettering on cloth. */
+const SWAG_PRINT_INSET = 0.012
+/** How wide the printed band should BE once it arrives. Ink dies past
+ *  `comp` 4 — s ≈ 0.46, or 5.6% of the viewport — so the band has to live
+ *  inside roughly the outer 5% or it fades out halfway across. */
+const SWAG_PRINT_WIDTH = 0.032
+
+const gatherSrc = (s: number) => 0.5 * ((1 - GATHER_K) * s + GATHER_K * s * s)
+const gatherComp = (s: number) => 0.5 * ((1 - GATHER_K) + 2 * GATHER_K * s) / SWAG
+
+/** Anchor (in texture px) and stretch for a settled side panel. */
+function swagWarp(stageW: number, side: 'left' | 'right') {
+  const midScreen = (SWAG_PRINT_INSET + SWAG_PRINT_WIDTH / 2) * stageW
+  const stretch = gatherComp(midScreen / stageW / SWAG)
+  const anchorTex = gatherSrc((SWAG_PRINT_INSET * stageW) / stageW / SWAG) * stageW
+  return { stretch, anchor: side === 'left' ? anchorTex : stageW - anchorTex }
+}
+
+/**
+ * Publish the settled panel's material-space width and decide whether to print
+ * at all. Returns false when there is not enough cloth left showing, in which
+ * case the caller leaves the swag clean.
+ *
+ * The old guard was `@media (max-width: 1200px)` — a viewport width standing in
+ * for a measurement it could not take. It was wrong in both directions: it
+ * silenced the print on a 1060px window that had 260px of cloth on each side
+ * (which is where this was actually being looked at), and it would have let a
+ * wide-but-short window print into a sliver. What matters is how much CLOTH is
+ * on screen, so that is what gets measured.
+ */
+function applySwagLayout(stage: HTMLElement): boolean {
+  const stageW = stage.clientWidth
+  const bookW = parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue('--book-w')) || 0
+  const clothEachSide = (stageW - bookW) / 2
+  // Below this the gathered image is a few pixels of lettering, which reads as
+  // dirt on the cloth rather than as type. Clean cloth is the better answer.
+  //
+  // At the book's current 84% stage fill this floor is never reached — the
+  // narrowest swag any window can produce is wider than the band needs. It is
+  // here because that fill is a tunable that has already moved once: at the old
+  // 97% the swag was thin enough that most windows WOULD fall through, which is
+  // the situation the deleted `max-width: 1200px` media query was groping at.
+  // Tie the decision to the measurement and a future change fails safe.
+  const needed = (SWAG_PRINT_INSET + SWAG_PRINT_WIDTH) * stageW * 1.15
+  if (!(clothEachSide > needed)) return false
+  stage.style.setProperty(
+    '--swag-w', `${SWAG_PRINT_WIDTH * stageW * swagWarp(stageW, 'left').stretch}px`)
+  stage.classList.add('settled')
+  return true
+}
+
 function printCopy(canvas: HTMLCanvasElement, stage: HTMLElement): void {
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
   const w = stage.clientWidth
@@ -490,6 +572,31 @@ function printCopy(canvas: HTMLCanvasElement, stage: HTMLElement): void {
   const rel = (el: Element) => {
     const r = el.getBoundingClientRect()
     return { x: r.left - stageBox.left, y: r.top - stageBox.top, w: r.width, h: r.height }
+  }
+
+  /* Everything the settled layout prints lives inside a `.curtain-side`, so the
+     inverse gather is applied per panel: each has its own outer edge to pin to,
+     and the two mirror. Closed, this is the identity — the closed composition is
+     printed on cloth that is not gathered, so there is nothing to undo. */
+  const settled = stage.classList.contains('settled')
+  /** Concatenate the inverse gather onto the CURRENT transform. No save of its
+   *  own, so a caller that already keeps one — the type loop does — can simply
+   *  add it rather than nest a second. */
+  const warpCtx = (el: Element): void => {
+    const side = settled ? el.closest<HTMLElement>('.curtain-side') : null
+    if (!side) return
+    const isLeft = side.classList.contains('left')
+    const { stretch, anchor } = swagWarp(w, isLeft ? 'left' : 'right')
+    const box = rel(side)
+    ctx.translate(anchor, 0)
+    ctx.scale(stretch, 1)
+    ctx.translate(-(isLeft ? box.x : box.x + box.w), 0)
+  }
+  const draw = (el: Element, fn: () => void) => {
+    ctx.save()
+    warpCtx(el)
+    fn()
+    ctx.restore()
   }
 
   // ── the printed panel ───────────────────────────────────────────────────
@@ -526,6 +633,7 @@ function printCopy(canvas: HTMLCanvasElement, stage: HTMLElement): void {
     // read as a painted BAND across the cloth rather than dye soaking outward.
     const rw = b.w / 2 + padX
     const rh = b.h / 2 + padY
+    draw(side, () => {
     ctx.save()
     ctx.translate(cx, cy)
     ctx.scale(1, rh / rw)
@@ -536,6 +644,7 @@ function printCopy(canvas: HTMLCanvasElement, stage: HTMLElement): void {
     ctx.fillStyle = plate
     ctx.fillRect(-rw, -rw, rw * 2, rw * 2)
     ctx.restore()
+    })
   }
 
   // ── the photo ───────────────────────────────────────────────────────────
@@ -544,6 +653,7 @@ function printCopy(canvas: HTMLCanvasElement, stage: HTMLElement): void {
     const box = rel(frame)
     const img = frame.querySelector('img')
     const radius = parseFloat(getComputedStyle(frame).borderRadius) || 0
+    draw(frame, () => {
     ctx.save()
     ctx.beginPath()
     // roundRect is not everywhere yet; fall back to a plain rectangle rather
@@ -595,6 +705,7 @@ function printCopy(canvas: HTMLCanvasElement, stage: HTMLElement): void {
     eat(bx, by, bw, fh, bx, by, bx, by + fh)                       // top
     eat(bx, by + bh - fh, bw, fh, bx, by + bh, bx, by + bh - fh)   // bottom
     ctx.restore()
+    })
   }
 
   // ── the type ────────────────────────────────────────────────────────────
@@ -626,6 +737,12 @@ function printCopy(canvas: HTMLCanvasElement, stage: HTMLElement): void {
       ? { x: rawBox.x + (rawBox.w - rawBox.h) / 2, y: rawBox.y + (rawBox.h - rawBox.w) / 2, w: rawBox.h, h: rawBox.w }
       : rawBox
     ctx.save()
+    // OUTSIDE the rotation, deliberately. After the quarter turn the type's
+    // glyph-height axis lies along screen x — which is the axis the gather
+    // compresses — so a stretch applied outside the rotation is exactly the one
+    // that survives it. Applied inside, it would stretch the reading direction
+    // and simply space the letters out.
+    warpCtx(el)
     if (vertical) {
       const cx = rawBox.x + rawBox.w / 2
       const cy = rawBox.y + rawBox.h / 2
@@ -1092,14 +1209,15 @@ export function initCurtain(onOpened: () => void): CurtainHandle | null {
         // DOM's computed layout, so curtain.css remains the single source of
         // truth for both compositions. Deferred a frame so the settled layout
         // has actually been laid out before it is measured.
-        stage.classList.add('settled')
-        requestAnimationFrame(() => {
-          const print = stage.querySelector<HTMLCanvasElement>('.curtain-plane canvas')
-          if (print) {
-            printCopy(print, stage)
-            plane?.textures?.[0]?.needUpdate?.()
-          }
-        })
+        if (applySwagLayout(stage)) {
+          requestAnimationFrame(() => {
+            const print = stage.querySelector<HTMLCanvasElement>('.curtain-plane canvas')
+            if (print) {
+              printCopy(print, stage)
+              plane?.textures?.[0]?.needUpdate?.()
+            }
+          })
+        }
         onOpened()
         resolve()
       }

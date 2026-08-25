@@ -139,10 +139,10 @@ _the YAML block at the very top of the file_
 | `footer` | A line on the cover | Ownership, confidentiality, edition. |
 | `curtain_eyebrow` | Small line above the curtain title | Brand or programme name. |
 | `eyebrow` | Older alias for curtain_eyebrow | Accepted for compatibility; prefer curtain_eyebrow in new briefs. |
-| `curtain_title` | Headline printed on the curtain | Defaults to `title`. The last word takes the accent colour. |
+| `curtain_title` | Headline printed on the curtain | Defaults to `title`. The last word takes the accent colour. It is re-printed down the strip of cloth left showing beside the open book, so keep it short enough to read as one vertical line. |
 | `curtain_text` | Standfirst on the curtain | One or two sentences: what this is and how long it takes. |
 | `curtain_hint` | The prompt on the curtain | Default: "click anywhere to begin". |
-| `curtain_photo` | Photograph printed on the curtain | A path like `img/site.png`. Obeys the --assets switch like any picture. |
+| `curtain_photo` | Photograph printed on the curtain | A path like `img/site.png`. Obeys the --assets switch like any picture. Also carried into the right-hand strip once the curtain settles, dyed into the cloth — so a picture that depends on fine detail will not survive; pick one that reads as a shape. |
 | `steps` | Reveal page blocks one at a time | Defaults to on for presenter-led training. Set `steps: false` when the reader should see a whole page at once. |
 | `typing` | Type plain-text blocks into view | Set `typing: true` for a deliberate presenter cadence. Only plain-text blocks type; structured content still arrives as a motion reveal. |
 
