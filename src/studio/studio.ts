@@ -97,6 +97,8 @@ function render(width: number): Raster | null {
   if (!ctx) throw new Error('studio: this browser gave us no 2D canvas')
   ctx.drawImage(source, 0, 0, w, h)
 
+  // σ is in pixels, so it must scale with the picture or a preview-tuned nib
+  // becomes a finer, colder line at export size.
   const scaled: InkSettings = { ...settings, nib: settings.nib * (w / PREVIEW_W) }
   return inkWash(ctx.getImageData(0, 0, w, h), hexToRgb(theme.ink), scaled)
 }
@@ -172,7 +174,10 @@ function wireControls(): void {
   const bind = (id: keyof InkSettings): void => {
     const slider = $<HTMLInputElement>(`#${id}`)
     const readout = $<HTMLElement>(`#${id}-val`)
-    const show = (): void => { readout.textContent = Number(slider.value).toFixed(2) }
+    // ε is a fraction and wants decimals; p and φ are counts and look absurd
+    // with them. Read the step the control declares rather than guessing.
+    const dp = (slider.step.includes('.') ? slider.step.split('.')[1]!.length : 0)
+    const show = (): void => { readout.textContent = Number(slider.value).toFixed(dp) }
     slider.addEventListener('input', () => {
       settings = { ...settings, [id]: Number(slider.value) }
       show()
@@ -180,17 +185,20 @@ function wireControls(): void {
     })
     show()
   }
-  bind('line'); bind('tone'); bind('nib')
+  bind('nib'); bind('line'); bind('threshold'); bind('body')
+  bind('vignette')
 
   for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-preset]')) {
     btn.addEventListener('click', () => {
       const preset = INK_PRESETS[btn.dataset.preset ?? '']
       if (!preset) return
       settings = { ...preset }
-      for (const id of ['line', 'tone', 'nib'] as const) {
+      for (const id of ['nib', 'line', 'threshold', 'body', 'vignette'] as const) {
         const slider = $<HTMLInputElement>(`#${id}`)
         slider.value = String(settings[id])
-        $<HTMLElement>(`#${id}-val`).textContent = settings[id].toFixed(2)
+        const st = slider.step
+        $<HTMLElement>(`#${id}-val`).textContent =
+          settings[id].toFixed(st.includes('.') ? st.split('.')[1]!.length : 0)
       }
       for (const other of document.querySelectorAll('[data-preset]')) other.removeAttribute('aria-current')
       btn.setAttribute('aria-current', 'true')

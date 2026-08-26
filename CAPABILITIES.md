@@ -19,6 +19,7 @@ _in the body of any page, written as ::: fences_
 | `:::takeaway` | The single thing to remember from a page | End of a section, when one idea must survive everything else. |
 | `:::sticky` | A physical sticky note pinned at an angle | An aside in a HUMAN voice — a reminder someone stuck on afterwards. Distinct from :::note, which is typeset into the document. Colour and tilt rotate automatically across notes on a page. It arrives by being pressed onto the paper — in from above, off-square, landing on its tilt — rather than fading in the way the typeset blocks do. |
 | `:::opener` | A chapter opener with a drop cap four lines deep | The first page of a section, where the prose should begin rather than continue. The title of the block becomes the small hand-set line above it. |
+| `{.plate}` | Makes a picture hide the page ruling it sits on | Add it to any picture that should read as printed onto the paper rather than laid over it. The book blurs what is behind the picture, so the paper matches at any position and in any theme; without it the page reads straight through, which suits open line art. Tune with --plate-blur and --plate-fade. |
 | `:::timeline` | A rail across the gutter with dated stops on it | A sequence with real times or dates. One line per stop, written `when | what`. Use it on BOTH pages of a spread and the rail reads as one line crossing the fold. The rail draws itself outward from the gutter as the page arrives. |
 | `:::compare` | One side of a before/after spread | Put `:::compare before` on one page and `:::compare after` on the next. Both sides carry the same structure on purpose — the comparison is only honest if the one difference is the content. |
 | `:::marginalia` | A narrow column with hand notes in the outer margin | Text that a reader would annotate. Any `>` blockquote inside becomes a margin note. Notes always sit in the OUTER margin, never the gutter — nobody can write in a fold. |
@@ -45,6 +46,10 @@ Ask before you assume — every time.
 :::opener chapter one
 The first paragraph. Its first letter becomes the cap.
 :::
+```
+
+```markdown
+![A technician checking a cylinder](artwork.ink.webp){.plate}
 ```
 
 ```markdown

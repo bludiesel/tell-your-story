@@ -453,6 +453,52 @@
    LAYOUT NAME (layout.ts), so the one thing the selector matched was a
    `<div class="page pr barchart">`. */
 
+/* ── A PLATE: A PICTURE THAT HIDES THE RULING IT SITS ON ──────────────────
+   Author writes `![alt](drawing.webp){.plate}`.
+
+   THE PROBLEM. A drawing exported from the Ink Studio carries only ink, so the
+   page's ruled lines run straight through a face — which is wrong, because ink
+   on paper covers what is under it.
+
+   THE OBVIOUS FIX IS WRONG. Baking paper into the export was built three times
+   and failed three times, always the same way: a faint rectangle. A page is a
+   GRADIENT — `--paper` at the head, `--paper-2` at the foot, plus a watermark —
+   and a picture cannot know where on that gradient it sits. Any colour baked in
+   is right in one place and wrong everywhere else.
+
+   THIS DOES NOT GUESS THE COLOUR. It blurs what is actually behind the picture.
+   Ruled lines blurred wider than their own spacing dissolve into their local
+   average, and that average IS the paper at that exact spot — gradient,
+   watermark and all. It cannot be wrong, because it never asks.
+
+   The mask is what keeps it from being a rectangle: it fades the blurred region
+   out at the edges on the same profile the drawing's own ink fades on, so the
+   ruling returns gradually instead of stopping at a line. Two linear gradients
+   intersected give the distance-to-nearest-edge falloff — corners go first,
+   which is what a vignetted plate does.
+
+   FAILS SOFT. A browser without `backdrop-filter` shows the drawing with the
+   ruling reading through it — the previous behaviour, not a broken page. */
+.plate {
+  --plate-blur: 18px;
+  --plate-fade: 12%;
+  -webkit-backdrop-filter: blur(var(--plate-blur));
+  backdrop-filter: blur(var(--plate-blur));
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%);
+  mask-image:
+    linear-gradient(to right, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* nothing animates here — declared so the rule above is never mistaken for
+     motion when someone greps this file for what moves. */
+}
+
 /* ── timeline across the gutter ──────────────────────────────────────────────
    One rail, two pages. The rail is drawn from the gutter outward on each side,
    so the two halves appear to be one line crossing the fold. */

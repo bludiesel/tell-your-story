@@ -17998,6 +17998,7 @@ h1 { font-size: 20px; font-weight: 600; margin: 0 0 2px; letter-spacing: -.01em;
 .control label { display: flex; justify-content: space-between; align-items: baseline;
                  font-size: 13px; margin-bottom: 5px; }
 .control .name { font-weight: 500; }
+.control .name em { font-style: normal; opacity: .55; font-size: 12px; }
 .control output { font-variant-numeric: tabular-nums; color: var(--on-shell-dim); font-size: 12.5px; }
 .control .hint { display: block; font-size: 11.5px; color: var(--on-shell-dim); margin-top: 4px; line-height: 1.45; }
 input[type=range] { width: 100%; accent-color: var(--paper); }
@@ -18018,7 +18019,13 @@ select { width: 100%; background: var(--shell); color: var(--on-shell); font: in
 /* THE SHEET IS THE POINT. The drawing is previewed on the book's real paper,
    with the book's real grain over it, because a picture judged against a white
    browser background is judged against something no reader will ever see. */
-.sheet { position: relative; background: var(--paper); border-radius: 4px; padding: 30px;
+.sheet { position: relative; background: linear-gradient(var(--paper), var(--paper-2));
+         border-radius: 4px; padding: 30px;
+         /* THE PREVIEW HAS RULED LINES BECAUSE A PAGE DOES. Judging a plate
+            against blank paper is what let three baked-paper versions look
+            perfect here and wrong in a book. */
+         background-image: linear-gradient(var(--paper), var(--paper-2)),
+           repeating-linear-gradient(to bottom, transparent 0 26px, color-mix(in srgb, var(--ink) 12%, transparent) 26px 27px);
          box-shadow: 0 1px 2px rgba(0,0,0,.35), 0 24px 60px -26px rgba(0,0,0,.75); }
 body.on-dark .sheet { background: #16242e; }
 .sheet::after {
@@ -18027,17 +18034,32 @@ body.on-dark .sheet { background: #16242e; }
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23g)' opacity='.055'/%3E%3C/svg%3E");
 }
 body.on-dark .sheet::after { mix-blend-mode: screen; opacity: .28; }
-#preview { display: block; width: 100%; height: auto; border-radius: 2px; }
+/* The SAME rule the book applies to a .plate picture, so the preview IS the
+   page. A backtick here would have closed the template literal this lives in. */
+#preview {
+  display: block; width: 100%; height: auto; border-radius: 2px;
+  --plate-blur: 18px; --plate-fade: 12%;
+  -webkit-backdrop-filter: blur(var(--plate-blur));
+  backdrop-filter: blur(var(--plate-blur));
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%);
+  mask-image:
+    linear-gradient(to right, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%);
+  -webkit-mask-composite: source-in; mask-composite: intersect;
+}
 #status { font-size: 12.5px; color: var(--on-shell-dim); margin-top: 12px; min-height: 1.5em; }
 [hidden] { display: none !important; }
 </style>
 </head><body>
 
 <h1>Ink Studio</h1>
-<p class="lede">Turn a supplied picture into something that looks <em>drawn on the page</em>. The
-preview sits on this book's real paper, in its real ink \u2014 theme <code id="theme-name"></code>.
-Export saves a transparent PNG: it carries only the ink, so the page's own paper and grain read
-through it. Drop the result into a lesson like any other picture.</p>
+<p class="lede">Turn a supplied picture into something that looks <em>drawn on the page</em>, using
+<strong>XDoG</strong> (Winnem\xF6ller, Kyprianidis &amp; Olsen, 2012). The preview sits on this book's
+real paper, in its real ink \u2014 theme <code id="theme-name"></code>. Export carries only ink coverage,
+so the page's own paper and grain read through it. Drop the result into a lesson like any other
+picture.</p>
 
 <div class="layout">
   <div>
@@ -18062,21 +18084,42 @@ through it. Drop the result into a lesson like any other picture.</p>
     <div class="panel">
       <h2>The hand</h2>
       <div class="control">
-        <label for="line"><span class="name">Line</span><output id="line-val"></output></label>
-        <input type="range" id="line" min="0" max="3" step="0.05" value="0.9">
-        <span class="hint">How much pen. Nothing is a pure wash; a lot is an engraving.</span>
+        <label for="nib"><span class="name">Nib &nbsp;<em>\u03C3</em></span><output id="nib-val"></output></label>
+        <input type="range" id="nib" min="0.4" max="4" step="0.1" value="1.0">
+        <span class="hint">The smallest mark the pen can make, in pixels. Broad loses detail on purpose.</span>
       </div>
       <div class="control">
-        <label for="tone"><span class="name">Tone</span><output id="tone-val"></output></label>
-        <input type="range" id="tone" min="0" max="1" step="0.02" value="0.46">
-        <span class="hint">How much pigment the wash lays down. The rest is bare paper.</span>
+        <label for="line"><span class="name">Line &nbsp;<em>p</em></span><output id="line-val"></output></label>
+        <input type="range" id="line" min="0" max="60" step="1" value="26">
+        <span class="hint">Sharpness \u2014 how hard an edge is pushed away from what surrounds it.</span>
       </div>
       <div class="control">
-        <label for="nib"><span class="name">Nib</span><output id="nib-val"></output></label>
-        <input type="range" id="nib" min="0.5" max="6" step="0.1" value="1.3">
-        <span class="hint">The width of the pen. Broad loses detail on purpose.</span>
+        <label for="threshold"><span class="name">Threshold &nbsp;<em>\u03B5</em></span><output id="threshold-val"></output></label>
+        <input type="range" id="threshold" min="0.30" max="0.95" step="0.01" value="0.62">
+        <span class="hint">Where ink begins. Above this the sheet is left bare, which is what keeps
+        the drawing off the empty page instead of tinting a rectangle.</span>
+      </div>
+      <div class="control">
+        <label for="body"><span class="name">Body &nbsp;<em>\u03C6</em></span><output id="body-val"></output></label>
+        <input type="range" id="body" min="0.5" max="100" step="0.5" value="5">
+        <span class="hint">How hard the ink commits once it has begun. Low is a wash you can read
+        the page through; high is a woodcut that covers it.</span>
       </div>
       <label class="check"><input type="checkbox" id="ground"> Check it on a dark page</label>
+    </div>
+
+    <div class="panel">
+      <h2>The plate</h2>
+      <p style="font-size:11.5px;color:var(--on-shell-dim);margin:-6px 0 12px">The page's ruled lines
+      are hidden by the book, not by this export \u2014 add <code>&#123;.plate&#125;</code> to the picture in your
+      lesson. The preview below already shows it.</p>
+      <div class="control">
+        <label for="vignette"><span class="name">Edge fade</span><output id="vignette-val"></output></label>
+        <input type="range" id="vignette" min="0" max="0.45" step="0.01" value="0.28">
+        <span class="hint">How far the drawing dissolves into bare page. Zero leaves a hard
+        rectangle; this is what stops it looking pasted on.</span>
+      </div>
+
     </div>
 
     <div class="panel">

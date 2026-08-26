@@ -297,10 +297,33 @@ check('studio: it exports the small format by default, and still offers PNG',
 // Every control the instructions promise has to be in the page. SKILL.md names
 // Line, Tone and Nib by name, and a doc that names a control the tool does not
 // have is worse than no doc.
-const studioControls = ['line', 'tone', 'nib', 'format', 'size'].filter((id) => !studioHtml.includes(`id="${id}"`))
+const studioControls = ['nib', 'line', 'threshold', 'body', 'vignette', 'format', 'size'].filter((id) => !studioHtml.includes(`id="${id}"`))
 check('studio: every control the instructions name exists',
   studioControls.length === 0,
   studioControls.length ? `missing: ${studioControls.join(', ')}` : 'line, tone, nib')
+
+// A PLATE MUST HIDE THE RULING WITHOUT GUESSING THE PAPER.
+//
+// Three versions baked paper into the exported picture so it could cover the
+// page's ruled lines, and all three showed a faint rectangle on a real page: a
+// page is a gradient and a picture cannot know where on it it sits. The rule
+// that replaced them blurs the backdrop instead, which matches by construction.
+// Asserted because the temptation to "just paint the paper colour" is going to
+// come back, and it looks right on a flat test swatch every time.
+const plateRule = styleCss.match(/\.plate\s*\{[^}]*\}/)?.[0] ?? ''
+check('book: a plate hides the ruling by blurring, not by painting paper',
+  /backdrop-filter\s*:\s*blur/.test(plateRule) && /mask-image/.test(plateRule),
+  plateRule === '' ? 'no .plate rule ships at all'
+    : !/backdrop-filter\s*:\s*blur/.test(plateRule) ? 'it paints something instead of blurring the backdrop'
+    : !/mask-image/.test(plateRule) ? 'the blurred region has no mask, so it is a rectangle'
+    : 'blurs its backdrop and masks the edge')
+
+// FAILS SOFT. A browser without backdrop-filter must still show the drawing —
+// the ruling reads through it, which is the default look rather than a fault.
+// A rule that hid the picture instead would blank artwork on older browsers.
+check('book: a plate without backdrop-filter still shows the picture',
+  plateRule !== '' && !/display\s*:\s*none/.test(plateRule) && !/opacity\s*:\s*0\b/.test(plateRule),
+  'the picture must never depend on the effect to be visible')
 
 // Content must survive a dead runtime: hiding is applied BY js, not in the
 // base stylesheet.

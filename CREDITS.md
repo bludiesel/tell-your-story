@@ -1,5 +1,36 @@
 # Credits
 
+## XDoG — the Ink Studio's treatment
+
+Winnemöller, H., Kyprianidis, J. E., Olsen, S. C.
+**"XDoG: An eXtended difference-of-Gaussians compendium including advanced image
+stylization"**, *Computers & Graphics* 36(6), 2012, pp. 740–753.
+<https://doi.org/10.1016/j.cag.2012.03.004>
+
+`src/studio/ink.ts` implements the operator described in that paper: the
+sharpening form `(1+p)·Gσ − p·Gkσ`, the soft threshold
+`T(u) = 1 if u ≥ ε, else 1 + tanh(φ(u−ε))`, and `k = 1.6` — the Marr–Hildreth
+ratio at which a difference of Gaussians best approximates the Laplacian of a
+Gaussian. The preset names (pencil shading, natural media, two-tone woodcut) are
+the styles the paper itself demonstrates; the parameter values were re-tuned
+here, because ε depends on how the input is normalised and every implementation
+normalises differently.
+
+**No code was copied.** The Gaussian is approximated with three box passes
+(Kovesi's sizing) rather than a real kernel, the output is ink *coverage* in the
+alpha channel rather than luminance, and the whole thing runs at authoring time
+on an author's own machine. What is borrowed is the formulation, and it is
+borrowed knowingly: this file first shipped with a hand-rolled difference of
+blurs, which was a worse re-derivation of the same idea.
+
+### Deliberately not taken
+
+The flow-based variant — Kang, H., Lee, S., Chui, C. K., **"Coherent Line
+Drawing"**, *NPAR 2007* — runs the filter along the edge tangent flow so strokes
+stay continuous on noisy photographs. It needs a tangent field computed per
+image, and it is the right answer only if artwork still breaks into speckle
+after XDoG. It has not been needed yet.
+
 ## Bento — ideas, not code
 
 <https://github.com/nyblnet/bento> · MIT · audited at commit `fd55c8f` (2026-08-05)

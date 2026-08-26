@@ -276,11 +276,16 @@ Open the page, drop the artwork in, and turn three things:
 
 | Control | What it does | Reach for it when |
 |---|---|---|
-| **Line** | How much pen. `0` is a pure wash, `~0.9` is a drawing, `>2` is an engraving. | The subject has clear shapes worth outlining. |
-| **Tone** | How much pigment the wash lays down. The rest of the page stays bare paper. | The picture needs weight without lines. |
-| **Nib** | The width of the pen, in pixels. | Detail is too busy — a broader nib loses it deliberately. |
+| **Nib** — σ | The smallest mark the pen can make, in pixels. | Detail is too busy; a broader nib loses it deliberately. |
+| **Line** — p | Sharpness: how hard an edge is pushed from what surrounds it. | The weakest of the four — φ does most of the work. |
+| **Threshold** — ε | Where ink begins. Above it the sheet is left bare. | Too much of the page is inked, or too little. |
+| **Body** — φ | How hard the ink commits. `2` is a wash, `4` a drawing, `16` a woodcut. | **This is the headline control.** |
+| **Edge fade** | How far the drawing dissolves into bare page. | Always. Zero leaves a hard rectangle. |
 | **Format** | WebP by default, PNG for print. | Only reach for PNG when the file leaves the book. |
 | **Size** | Export width. 1200 by default. | Bigger only if the artwork is a full bleed on a large display. |
+
+The treatment is **XDoG** (Winnemöller, Kyprianidis & Olsen, 2012) — see `CREDITS.md`.
+ε and φ are that paper's parameters, not invented ones.
 
 Then **Save**, and use the result like any other picture:
 
@@ -298,10 +303,26 @@ line shows what each export costs, packed.
 Nothing in the book changes to support this. The export is an ordinary PNG, so
 the asset store packs it, `--assets folder` splits it out, and it prints.
 
-**Why the export is transparent.** It carries only *how much pen landed where* —
-not a picture on a white square. The page's own paper, grain and edge shadow
-read through the drawing, so it sits ON the sheet instead of in a rectangle laid
-over it. Tick **Check it on a dark page** to see that for yourself.
+### Add `{.plate}` if the page's ruled lines should not run through it
+
+```markdown
+![A technician checking a cylinder](artwork.ink.webp){.plate}
+```
+
+The export carries only *how much pen landed where*, so by default the page reads
+straight through it — correct for line art on an open page, wrong for a face.
+`{.plate}` makes the book hide its own ruling behind the picture.
+
+**It does not guess the paper colour, it blurs what is actually there.** Ruled
+lines blurred wider than their spacing dissolve into their local average, and
+that average *is* the paper at that spot — gradient, watermark and all. Baking
+paper into the export was built three times and failed three times the same way,
+with a faint rectangle, because a page is a gradient and a picture cannot know
+where on it it sits. This cannot be wrong, because it never asks.
+
+Two knobs, both CSS custom properties on the picture: `--plate-blur` (18px) and
+`--plate-fade` (12%). A browser without `backdrop-filter` simply shows the
+drawing with the ruling reading through — the default look, not a broken page.
 
 **Three things worth knowing before you judge a result.**
 
@@ -315,8 +336,9 @@ over it. Tick **Check it on a dark page** to see that for yourself.
   directly on the paper.
 - **The ink follows the theme, the export does not follow a rebrand.** The
   studio draws in the palette's `ink`, so the colours are right by construction —
-  but the exported PNG is a file. Change `theme.json` and the artwork wants
-  re-exporting, which is one drop and one click.
+  but the exported file is a file. Change `theme.json` and the artwork wants
+  re-exporting, which is one drop and one click. The *paper* is not baked in at
+  all, so `{.plate}` keeps matching whatever the theme becomes.
 
 ## Rebranding
 
