@@ -179,6 +179,23 @@ const injectScript = (html: string, placeholder: string, js: string) =>
  * without its templates, and the guard has to work anyway.
  */
 const TEMPLATE_PLACEHOLDERS = new Set([
+  "[WHAT THEY ARE CONFIRMING]",
+  "[FIRST THING TO CONFIRM]",
+  "[SECOND THING]",
+  "[THIRD THING]",
+  "[WHAT THE PROCEDURE IS]",
+  "[FIRST ACTION]",
+  "[SECOND ACTION]",
+  "[THIRD ACTION]",
+  "[WHAT THE RULE IS ABOUT]",
+  "[THE RIGHT WAY]",
+  "[ANOTHER RIGHT WAY]",
+  "[THE WRONG WAY]",
+  "[ANOTHER WRONG WAY]",
+  "[WHAT THE THING IS]",
+  "[FIRST PART]",
+  "[SECOND PART]",
+  "[THIRD PART]",
   "[ONE OR TWO SHORT PARAGRAPHS ABOUT WHAT THE DRAWING SHOWS.]",
   "[A NOTE IN THE MARGIN]",
   "[A PARAGRAPH THE ASIDE BELONGS TO.]",

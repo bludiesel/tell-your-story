@@ -15,6 +15,10 @@ to end is rarely what you want.
 | Layout | Reach for it when |
 |---|---|
 | [Prose](#prose--the-default--prose) | Most of a real book. The default; no block needed. |
+| [Checklist](#checklist--boxes-to-tick--checklist) | A list the reader has to tick, not just read. |
+| [Steps](#steps--a-numbered-procedure--steps) | Do these, in this order. |
+| [Do / Don't](#do--dont--both-halves-of-a-rule--dodont) | A rule with a right way and a wrong way. |
+| [Anatomy](#anatomy--a-drawing-with-numbered-pins--anatomy) | Naming the parts of a thing. |
 | [Chapter opener](#chapter-opener--a-drop-cap-four-lines-deep--opener) | The first page of a section. |
 | [Statement](#statement--one-line-the-largest-type-in-the-book--statement) | One sentence that has to land on its own. |
 | [Quote page](#quote-page--a-page-given-to-one-sentence--quote-page) | Someone else's words, attributed. |
@@ -296,6 +300,89 @@ For a page that genuinely holds two parallel things.
 [LEFT-HAND COLUMN.]
 
 [RIGHT-HAND COLUMN, the same weight as the first.]
+:::
+```
+
+---
+
+## Checklist — boxes to tick  `checklist`
+
+A list the reader has to **confirm**, not just read. The boxes are sized for a
+real pen, because this is a page people mark standing on a site.
+
+```markdown
+## [HEADING]
+
+:::checklist [WHAT THEY ARE CONFIRMING]
+- [FIRST THING TO CONFIRM]
+- [SECOND THING]
+- [THIRD THING]
+:::
+```
+
+---
+
+## Steps — a numbered procedure  `steps`
+
+Do these, in this order. Not a flow diagram: `:::diagram flow` is for a decision
+that **branches**, and a flow chart of a straight line is harder to follow than
+a numbered list, not easier.
+
+```markdown
+## [HEADING]
+
+:::steps [WHAT THE PROCEDURE IS]
+1. [FIRST ACTION]
+2. [SECOND ACTION]
+3. [THIRD ACTION]
+:::
+```
+
+---
+
+## Do / Don't — both halves of a rule  `dodont`
+
+One page, both halves, one glance. Write two `###` headings inside: the first is
+the DO half, the second the DON'T. Use `:::compare` instead when the two things
+are separated by **time** rather than by judgement — and only when you have a
+facing pair to give it.
+
+No colour carries the meaning, deliberately: a workbook printed in one colour
+still has to work.
+
+```markdown
+## [HEADING]
+
+:::dodont [WHAT THE RULE IS ABOUT]
+### Do
+- [THE RIGHT WAY]
+- [ANOTHER RIGHT WAY]
+### Don't
+- [THE WRONG WAY]
+- [ANOTHER WRONG WAY]
+:::
+```
+
+---
+
+## Anatomy — a drawing with numbered pins  `anatomy`
+
+Naming the parts of a thing. Each key line carries its pin position as **per
+cent across and per cent down the picture** — you know where the parts are and
+the software does not.
+
+Percentages, not pixels, so a pin stays on its part at every page size. Labels
+drawn into the artwork instead cannot survive a resize, a rebrand or a
+translation.
+
+```markdown
+## [HEADING]
+
+:::anatomy [WHAT THE THING IS]
+![[DESCRIPTION FOR SCREEN READERS]](img/[FILE].ink.png){.plate}
+1. [FIRST PART] | 32 20
+2. [SECOND PART] | 60 45
+3. [THIRD PART] | 48 72
 :::
 ```
 

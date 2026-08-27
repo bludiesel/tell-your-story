@@ -20602,7 +20602,23 @@ var BLOCKS = [
   { name: "marginalia", className: "marginalia" },
   { name: "colophon", className: "colophon" },
   { name: "opener", className: "opener", hasTitle: true },
-  { name: "bleed", className: "bleed-out", hasTitle: true }
+  { name: "bleed", className: "bleed-out", hasTitle: true },
+  // ── the workbook instruments ────────────────────────────────────────────
+  // What a TRAINING book does that a book does not: it is followed, ticked and
+  // filled in. The kit had eighteen ways to present a page and no way to hand
+  // the reader a job, which for a workbook is the wrong gap to have.
+  //
+  //   checklist  boxes to tick, sized for a real pen
+  //   steps      a numbered procedure — linear, unlike a flow diagram, which
+  //              is for a decision that branches
+  //   dodont     the two halves of a rule, side by side on ONE page. `compare`
+  //              does this across a SPREAD, which is a different argument and
+  //              breaks if the partner page is a turn away.
+  //   anatomy    a picture with numbered pins on it and a key beneath
+  { name: "checklist", className: "checklist", hasTitle: true },
+  { name: "steps", className: "steps", hasTitle: true },
+  { name: "dodont", className: "dodont", hasTitle: true },
+  { name: "anatomy", className: "anatomy", hasTitle: true }
 ];
 var STEP_CLASSES = /* @__PURE__ */ new Set(["step-first", "step-last", "with-previous"]);
 function createRenderer() {
@@ -37045,6 +37061,10 @@ function pickLayout(html2, kind) {
   if (has(/class="[^"]*\bcontents\b/)) return "contents";
   if (has(/class="[^"]*\bopener\b/)) return "opener";
   if (has(/class="[^"]*\bbleed-out\b/)) return "full-bleed";
+  if (has(/class="[^"]*\banatomy\b/)) return "anatomy";
+  if (has(/class="[^"]*\bchecklist\b/)) return "checklist";
+  if (has(/class="[^"]*\bsteps\b/)) return "steps";
+  if (has(/class="[^"]*\bdodont\b/)) return "dodont";
   if (has(/class="[^"]*\bplate-page\b/)) return "plate";
   if (has(/class="[^"]*\bhalf-bleed\b/)) return "half-bleed";
   if (has(/class="[^"]*\bstatement\b/) && dominates(inside2(/class="[^"]*\bstatement\b[^"]*"[^>]*>([\s\S]*?)<\/(?:div|p|blockquote)>/)))
@@ -37094,7 +37114,7 @@ function tagSlots(html2) {
   return document2.body.innerHTML;
 }
 function renderLayouts(html2) {
-  if (!/timeline|compare|marginalia|colophon|opener|bleed-out|pullquote|<img/.test(html2)) return html2;
+  if (!/timeline|compare|marginalia|colophon|opener|bleed-out|pullquote|checklist|steps|dodont|anatomy|<img/.test(html2)) return html2;
   const { document: document2 } = parseHTML(`<!doctype html><html><body>${html2}</body></html>`);
   const rows = (el) => [...el.querySelectorAll("p, li")].flatMap((p) => (p.innerHTML ?? "").split(/<br\s*\/?>|\n/).map((s) => s.replace(/<[^>]+>/g, "").trim())).filter(Boolean);
   for (const el of [...document2.querySelectorAll(".timeline")]) {
@@ -37160,6 +37180,40 @@ function renderLayouts(html2) {
       const rest = [...body.children].filter((c) => c !== holder).map((c) => c.outerHTML).join("");
       body.innerHTML = `<div class="half-bleed"><div class="half-bleed-art">${art.outerHTML}</div><div class="half-bleed-copy">${rest}</div></div>`;
     }
+  }
+  for (const list2 of [...document2.querySelectorAll(".checklist ul, .checklist ol")]) {
+    for (const li of [...list2.children]) {
+      if (li.querySelector(".tick")) continue;
+      li.insertAdjacentHTML(
+        "afterbegin",
+        '<span class="box" aria-hidden="true"><svg class="tick" viewBox="0 0 24 24" fill="none"><path pathLength="1" d="M4.6 12.9 L9.7 18.6 L20.4 4.9" stroke="currentColor" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'
+      );
+    }
+  }
+  for (const el of [...document2.querySelectorAll(".dodont")]) {
+    const kids = [...el.children];
+    const heads = kids.filter((k) => /^H[1-6]$/.test(k.tagName) && !k.classList.contains("block-title"));
+    if (heads.length !== 2) continue;
+    const halves = heads.map((h, i) => {
+      const until = heads[i + 1];
+      const body = [];
+      for (let n = h.nextElementSibling; n && n !== until; n = n.nextElementSibling) body.push(n);
+      return { label: h.textContent ?? "", body };
+    });
+    const title = el.querySelector(".block-title");
+    el.innerHTML = (title ? title.outerHTML : "") + halves.map((h, i) => `<div class="dodont-half dodont-${i === 0 ? "yes" : "no"}"><div class="dodont-label">${h.label}</div>` + h.body.map((b) => b.outerHTML).join("") + `</div>`).join("");
+  }
+  for (const el of [...document2.querySelectorAll(".anatomy")]) {
+    const img = el.querySelector("img");
+    const list2 = el.querySelector("ol");
+    if (!img || !list2) continue;
+    const items = [...list2.children].map((li, i) => {
+      const raw = (li.textContent ?? "").trim();
+      const m = /^(.*?)\s*\|\s*([\d.]+)\s+([\d.]+)\s*$/.exec(raw);
+      return { n: i + 1, label: m ? m[1].trim() : raw, x: m ? m[2] : null, y: m ? m[3] : null };
+    });
+    const title = el.querySelector(".block-title");
+    el.innerHTML = (title ? title.outerHTML : "") + `<div class="anatomy-plate">${img.outerHTML}` + items.filter((it) => it.x !== null).map((it) => `<span class="anatomy-pin" style="left:${it.x}%;top:${it.y}%">${it.n}</span>`).join("") + `</div><ol class="anatomy-key">` + items.map((it) => `<li><span class="anatomy-n">${it.n}</span>${it.label}</li>`).join("") + `</ol>`;
   }
   for (const el of [...document2.querySelectorAll(".bleed-out")]) {
     const title = el.querySelector(".block-title");
@@ -37979,6 +38033,23 @@ var SCRIPT_CLOSE = "</script>";
 var escapeForScriptTag = (js) => js.replaceAll(SCRIPT_CLOSE, "<\\/script>");
 var injectScript = (html2, placeholder, js) => html2.replace(placeholder, () => escapeForScriptTag(js));
 var TEMPLATE_PLACEHOLDERS = /* @__PURE__ */ new Set([
+  "[WHAT THEY ARE CONFIRMING]",
+  "[FIRST THING TO CONFIRM]",
+  "[SECOND THING]",
+  "[THIRD THING]",
+  "[WHAT THE PROCEDURE IS]",
+  "[FIRST ACTION]",
+  "[SECOND ACTION]",
+  "[THIRD ACTION]",
+  "[WHAT THE RULE IS ABOUT]",
+  "[THE RIGHT WAY]",
+  "[ANOTHER RIGHT WAY]",
+  "[THE WRONG WAY]",
+  "[ANOTHER WRONG WAY]",
+  "[WHAT THE THING IS]",
+  "[FIRST PART]",
+  "[SECOND PART]",
+  "[THIRD PART]",
   "[ONE OR TWO SHORT PARAGRAPHS ABOUT WHAT THE DRAWING SHOWS.]",
   "[A NOTE IN THE MARGIN]",
   "[A PARAGRAPH THE ASIDE BELONGS TO.]",

@@ -66,6 +66,50 @@ An aside in a human voice, pinned on at an angle.
 
 ---
 
+## The workbook instruments
+
+:::checklist Before you go up
+- Permit signed and in date
+- Anchor point rated for the load
+- Second person on site
+:::
+
+---
+
+## A procedure
+
+:::steps Isolating a line
+1. Close the upstream valve
+2. Watch the gauge fall
+3. Tag it so nobody reopens behind you
+:::
+
+---
+
+## Both halves of a rule
+
+:::dodont Ladders
+### Do
+- Tie it off at the top
+- Keep three points of contact
+### Don't
+- Stand on the top two rungs
+- Lean out past your belt
+:::
+
+---
+
+## Naming the parts
+
+:::anatomy The cylinder valve
+![A cylinder valve and its burst disk, drawn](../content/img/valve.ink.png){.plate}
+1. Burst disk | 30 34
+2. Outlet | 62 52
+3. Handwheel | 44 26
+:::
+
+---
+
 ## Columns and a table
 
 :::columns

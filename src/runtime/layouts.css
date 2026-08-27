@@ -502,6 +502,126 @@ img.plate {
   mask-composite: intersect;
 }
 
+/* ══ THE WORKBOOK INSTRUMENTS ════════════════════════════════════════════════
+   A book is read. A WORKBOOK is followed, ticked and filled in. These four are
+   the difference, and every colour in them comes from the theme — a literal
+   here is a second palette no rebrand reaches, and `check.ts` refuses one. */
+
+/* ── checklist: boxes sized for a real pen ───────────────────────────────────
+   1.6rem is not decoration. A tick box printed smaller than about 5mm cannot be
+   marked with a biro without the tick covering the box, and this is a page
+   people mark standing on a site, not at a desk. The box is drawn with a
+   border rather than a glyph so it inherits the ink and survives a rebrand. */
+.checklist { display: flex; flex-direction: column; gap: var(--sp-3); }
+.checklist ul, .checklist ol { list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: var(--sp-3); }
+.checklist li {
+  display: grid; grid-template-columns: 1.6rem 1fr; gap: var(--sp-3);
+  align-items: start;
+  font-size: var(--t-body); line-height: var(--lh-body);
+}
+.checklist .box {
+  width: 1.6rem; height: 1.6rem; margin-top: .1em;
+  border: 2px solid color-mix(in srgb, var(--ink) 55%, transparent);
+  border-radius: 3px;
+  /* The box sits ON the paper, not in it — a hairline highlight under the top
+     edge is what a pressed impression looks like and stops it reading as a
+     flat vector square. */
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--paper) 80%, transparent);
+  display: grid; place-items: center;
+}
+/* THE TICK OVERFLOWS ITS BOX, exactly as a hand-drawn one does. Nobody has ever
+   put a tick neatly inside a printed square, and a tick that fits looks like a
+   checkbox widget from a form rather than a mark somebody made. */
+.checklist .tick {
+  width: 148%; height: 148%; overflow: visible;
+  color: var(--accent-ink);
+  /* Off-square, because a mark made in a hurry is. */
+  rotate: -6deg;
+}
+/* FAIL VISIBLE. The stroke is hidden by JS on the element itself, never here:
+   a book opened with scripting broken, or a reveal that never runs, must show
+   the ticks rather than a page of empty boxes that looks like a bug. */
+.checklist .tick path { stroke-dasharray: 1; }
+
+/* ── steps: a numbered procedure ─────────────────────────────────────────────
+   A LINE, not a flow chart. `:::diagram flow` is for a decision that branches;
+   this is for the far commoner case where the answer is "do these, in order".
+   The numeral is set in the display face at the size of a heading because on a
+   procedure page the number IS the navigation — someone reading at arm's length
+   with their other hand on a valve needs to find step four without reading. */
+.steps { display: flex; flex-direction: column; gap: var(--sp-3); }
+.steps ol { list-style: none; counter-reset: step; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: var(--sp-4); }
+.steps li {
+  counter-increment: step;
+  display: grid; grid-template-columns: 3.2rem 1fr; gap: var(--sp-3);
+  align-items: baseline;
+  font-size: var(--t-body); line-height: var(--lh-body);
+}
+.steps li::before {
+  content: counter(step);
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 2.4rem; line-height: .9;
+  color: var(--accent-ink);
+}
+
+/* ── do / don't: one rule, both halves, one page ─────────────────────────────
+   `:::compare` puts before and after on a SPREAD, which is right for a change
+   over time and wrong for a rule: a reader who meets "DO" and turns the page to
+   find "DON'T" has already formed the habit. Both halves belong in one glance.
+
+   The rule between them is the whole design. No boxes, no red and green — a
+   workbook printed in one colour still has to work, and colour-blind readers
+   are a third of a site crew away. The mark and the label carry the meaning. */
+.dodont { display: grid; grid-template-columns: 1fr 1fr; gap: 0; height: 100%; }
+.dodont > .block-title { grid-column: 1 / -1; }
+.dodont-half { display: flex; flex-direction: column; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4); }
+.dodont-yes { border-right: 1px solid color-mix(in srgb, var(--ink) 22%, transparent); }
+.dodont-label {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+  letter-spacing: .04em; font-size: var(--t-hand);
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.dodont-yes .dodont-label { color: var(--accent-ink); }
+.dodont-yes .dodont-label::before { content: "\2713"; font-size: 1.4em; line-height: 1; }
+.dodont-no .dodont-label::before { content: "\2717"; font-size: 1.4em; line-height: 1; }
+.dodont-half ul { list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: var(--sp-2); }
+.dodont-half li { font-size: var(--t-body); line-height: var(--lh-body); }
+.dodont-no li { color: color-mix(in srgb, var(--ink) 78%, transparent); }
+
+/* ── anatomy: a drawing with numbered pins and a key ─────────────────────────
+   The pins are positioned in PER CENT of the picture, given by the author, so
+   they stay on their part at every page size. Drawing the labels into the
+   artwork instead — the obvious alternative — freezes them to one size and one
+   language, and a book that gets rebranded or translated then has artwork that
+   lies. */
+.anatomy { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: var(--sp-4);
+  height: 100%; padding-bottom: calc(clamp(.7rem, 1.4vw, 1.2rem) + 1.9rem); }
+.anatomy > .block-title { grid-row: 1; align-self: start; }
+.anatomy-plate { position: relative; display: grid; place-items: center; min-height: 0; }
+.anatomy-plate img {
+  max-width: 100%; max-height: 100%; width: auto; height: auto;
+  object-fit: contain; display: block;
+}
+.anatomy-pin {
+  position: absolute; transform: translate(-50%, -50%);
+  width: 2rem; height: 2rem; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 1.15rem;
+  background: var(--accent-ink); color: var(--paper);
+  /* A ring in the paper colour, so a pin stays legible over the darkest part
+     of a drawing as well as over bare page. */
+  box-shadow: 0 0 0 2px var(--paper), 0 2px 6px -1px color-mix(in srgb, var(--ink) 45%, transparent);
+}
+.anatomy-key { list-style: none; padding: 0; margin: 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2) var(--sp-4); }
+.anatomy-key li { display: grid; grid-template-columns: 1.6rem 1fr; gap: var(--sp-2);
+  font-size: var(--t-body); line-height: 1.3; }
+.anatomy-n { font-family: var(--font-display); font-weight: 700; color: var(--accent-ink); }
+
 /* ── the plate PAGE: a drawing laid on the paper, with the copy beneath ──────
    A drawing is not a photograph and wants none of the bleed's shape. It is
    usually landscape, it carries transparent margins, and the paper is meant to

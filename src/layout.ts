@@ -32,11 +32,12 @@ import { parseHTML } from 'linkedom'
  *
  * Layouts are never combined on one page — that is a design rule, not a
  * limitation, and it is why selection below is ordered rather than additive.
- * A nineteenth layout is a design decision, not an authoring one.
+ * A twenty-third layout is a design decision, not an authoring one.
  */
 export const LAYOUTS = [
   'cover', 'contents', 'divider', 'opener', 'prose', 'has-sticky', 'marginalia',
   'plate', 'half-bleed', 'full-bleed', 'ptable', 'barchart', 'timeline', 'compare',
+  'checklist', 'steps', 'dodont', 'anatomy',
   'statement', 'quote-page', 'takeaway', 'colophon',
 ] as const
 export type Layout = (typeof LAYOUTS)[number]
@@ -109,6 +110,13 @@ export function pickLayout(html: string, kind: 'cover' | 'content' | 'hard'): La
   // A PLATE BEFORE A BLEED. Both are "one picture and a little copy", so the
   // order is what separates them, and the order follows the artwork: a bleed
   // runs a PHOTOGRAPH off the fore-edge, a plate lays a DRAWING on the paper.
+  // The workbook instruments. Ahead of the picture layouts because `anatomy`
+  // CONTAINS a picture — it is a labelled drawing, not a page with art on it,
+  // and the half bleed would take it on the strength of the image alone.
+  if (has(/class="[^"]*\banatomy\b/)) return 'anatomy'
+  if (has(/class="[^"]*\bchecklist\b/)) return 'checklist'
+  if (has(/class="[^"]*\bsteps\b/)) return 'steps'
+  if (has(/class="[^"]*\bdodont\b/)) return 'dodont'
   if (has(/class="[^"]*\bplate-page\b/)) return 'plate'
   if (has(/class="[^"]*\bhalf-bleed\b/)) return 'half-bleed'
 
@@ -209,7 +217,14 @@ export function renderLayouts(html: string): string {
   // unimplemented, and nothing fails. It has happened twice — the half-bleed
   // grid was never built because a plain image page matched nothing, and the
   // quote attribution never ran for the same reason.
-  if (!/timeline|compare|marginalia|colophon|opener|bleed-out|pullquote|<img/.test(html)) return html
+  //
+  // IT HAS NOW HAPPENED THREE TIMES. The workbook blocks were added, none of
+  // them named here, and every one returned untouched: a checklist with no
+  // ticks to draw, and a do/don't page still holding two raw `###` headings
+  // instead of its two halves. `check.ts` now derives the list of shapes this
+  // function touches from the selectors below and refuses a guard that misses
+  // one, because a comment saying "do not forget" has failed twice.
+  if (!/timeline|compare|marginalia|colophon|opener|bleed-out|pullquote|checklist|steps|dodont|anatomy|<img/.test(html)) return html
   const { document } = parseHTML(`<!doctype html><html><body>${html}</body></html>`)
 
   /**
@@ -371,6 +386,91 @@ export function renderLayouts(html: string): string {
         `<div class="half-bleed-copy">${rest}</div>` +
         `</div>`
     }
+  }
+
+  // ── checklist: a real box, and a real tick to go in it ────────────────
+  //
+  // The box used to be `li::before`, which cannot hold a stroke that draws
+  // itself — a pseudo-element has no children and GSAP has nothing to tween.
+  // So the box becomes a real element with the tick nested inside it, unticked
+  // until the page reveals it.
+  //
+  // `pathLength="1"` is the trick that makes the stroke-on work at any size:
+  // it tells the browser to treat the path as one unit long, so dasharray and
+  // dashoffset are 0..1 and the runtime never has to measure the geometry with
+  // getTotalLength() — which returns 0 for a path that has not been laid out
+  // yet, and a checklist on page nine has not been laid out yet.
+  //
+  // Two segments with round caps, the short one down and the long one up, is
+  // what a pen actually does. A single smooth curve reads as a logo.
+  for (const list of [...document.querySelectorAll('.checklist ul, .checklist ol')] as Element[]) {
+    for (const li of [...(list.children as unknown as Iterable<Element>)]) {
+      if (li.querySelector('.tick')) continue
+      li.insertAdjacentHTML('afterbegin',
+        '<span class="box" aria-hidden="true">' +
+        '<svg class="tick" viewBox="0 0 24 24" fill="none">' +
+        '<path pathLength="1" d="M4.6 12.9 L9.7 18.6 L20.4 4.9" ' +
+        'stroke="currentColor" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '</svg></span>')
+    }
+  }
+
+  // ── do / don't: one rule, both halves, one page ───────────────────────
+  //
+  // Split on the two `###` headings the author writes. Explicit on purpose:
+  // "the first list is DO and the second is DON'T" is the kind of rule that
+  // reads fine in documentation and produces a silently inverted safety page
+  // the first time somebody writes them the other way round.
+  for (const el of [...document.querySelectorAll('.dodont')] as Element[]) {
+    const kids = [...(el.children as unknown as Iterable<Element>)]
+    const heads = kids.filter((k) => /^H[1-6]$/.test(k.tagName) && !k.classList.contains('block-title'))
+    if (heads.length !== 2) continue      // not the shape: leave it alone
+    const halves = heads.map((h, i) => {
+      const until = heads[i + 1]
+      const body: Element[] = []
+      for (let n = h.nextElementSibling; n && n !== until; n = n.nextElementSibling) body.push(n)
+      return { label: h.textContent ?? '', body }
+    })
+    const title = el.querySelector('.block-title')
+    el.innerHTML =
+      (title ? title.outerHTML : '') +
+      halves.map((h, i) =>
+        `<div class="dodont-half dodont-${i === 0 ? 'yes' : 'no'}">` +
+        `<div class="dodont-label">${h.label}</div>` +
+        h.body.map((b) => b.outerHTML).join('') +
+        `</div>`).join('')
+  }
+
+  // ── anatomy: a drawing with numbered pins on it ───────────────────────
+  //
+  // The author gives each label a position, written `1. Burst disk | 32 20` —
+  // per cent across, per cent down, measured on the picture. THE AUTHOR KNOWS
+  // WHERE THE PARTS ARE and a script does not; asking a browser to find "the
+  // handwheel" is a research project, and asking for two numbers is a sentence.
+  //
+  // Percentages rather than pixels so a pin stays on its part at every page
+  // size — the whole reason the labels are not simply drawn into the artwork,
+  // which is what an author would otherwise have to do by hand in an editor.
+  for (const el of [...document.querySelectorAll('.anatomy')] as Element[]) {
+    const img = el.querySelector('img')
+    const list = el.querySelector('ol')
+    if (!img || !list) continue
+    const items = [...(list.children as unknown as Iterable<Element>)].map((li, i) => {
+      const raw = (li.textContent ?? '').trim()
+      const m = /^(.*?)\s*\|\s*([\d.]+)\s+([\d.]+)\s*$/.exec(raw)
+      return { n: i + 1, label: m ? m[1]!.trim() : raw, x: m ? m[2]! : null, y: m ? m[3]! : null }
+    })
+    const title = el.querySelector('.block-title')
+    el.innerHTML =
+      (title ? title.outerHTML : '') +
+      `<div class="anatomy-plate">${img.outerHTML}` +
+      items.filter((it) => it.x !== null)
+        .map((it) => `<span class="anatomy-pin" style="left:${it.x}%;top:${it.y}%">${it.n}</span>`)
+        .join('') +
+      `</div>` +
+      `<ol class="anatomy-key">` +
+      items.map((it) => `<li><span class="anatomy-n">${it.n}</span>${it.label}</li>`).join('') +
+      `</ol>`
   }
 
   // ── full bleed ────────────────────────────────────────────────────────

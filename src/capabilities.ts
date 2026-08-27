@@ -75,6 +75,29 @@ export const CAPABILITIES: CapabilityGroup[] = [
              'drawing, so the ruled lines stop where the ink covers them and the paper matches ' +
              'at any position and in any theme. Tune with --plate-blur and --plate-fade.',
         example: '![A technician checking a cylinder](artwork.ink.webp){.plate}' },
+      { id: ':::checklist', what: 'Tick boxes the reader marks, sized for a real pen',
+        use: 'A list the reader has to CONFIRM, not just read — a pre-start check, a handover, ' +
+             'kit to bring. Use it when the point is that each line gets done and signed off. ' +
+             'A plain bullet list when they only need to know the items.',
+        example: ':::checklist Before you go up\n- Permit signed and in date\n- Anchor point rated for the load\n:::' },
+      { id: ':::steps', what: 'A numbered procedure, the numeral set big enough to find',
+        use: 'Do these, in this order. Distinct from `:::diagram flow`, which is for a decision ' +
+             'that BRANCHES — most training is linear and a flow chart of a straight line is ' +
+             'harder to follow than a numbered list, not easier.',
+        example: ':::steps Isolating a line\n1. Close the upstream valve\n2. Watch the gauge fall\n3. Tag it\n:::' },
+      { id: ':::dodont', what: 'Both halves of a rule side by side on ONE page',
+        use: 'A rule with a wrong way and a right way. Write two `###` headings inside it — the ' +
+             'first is the DO half, the second the DON\'T. Reach for `:::compare` instead when ' +
+             'the two things are separated by TIME rather than by judgement, and you have a ' +
+             'facing pair to give it.',
+        example: ':::dodont Ladders\n### Do\n- Tie it off\n### Don\'t\n- Stand on the top two rungs\n:::' },
+      { id: ':::anatomy', what: 'A drawing with numbered pins on it and a key beneath',
+        use: 'Naming the parts of a thing. Each key line carries the pin position as per cent ' +
+             'across and down the picture — `1. Burst disk | 32 20` — because you know where the ' +
+             'parts are and the software does not. Percentages, so a pin stays on its part at ' +
+             'every page size; labels drawn into the artwork instead cannot survive a resize, a ' +
+             'rebrand or a translation.',
+        example: ':::anatomy The cylinder valve\n![A valve, drawn](valve.ink.png){.plate}\n1. Burst disk | 32 20\n2. Handwheel | 60 45\n:::' },
       { id: ':::timeline', what: 'A rail across the gutter with dated stops on it',
         use: 'A sequence with real times or dates. One line per stop, written `when | what`. ' +
              'Use it on BOTH pages of a spread and the rail reads as one line crossing the fold. ' +

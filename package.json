@@ -1,6 +1,6 @@
 {
   "name": "tell-your-story",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Markdown -> one standalone HTML presentation. Pictures go inside the file or in a folder beside it, switched by one setting.",

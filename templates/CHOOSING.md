@@ -24,6 +24,10 @@ Work down it. The first row that genuinely fits is the answer.
 | **someone else's words**, given room | `:::quote` | an indented blockquote in prose |
 | text a reader would **annotate** | `:::marginalia` | prose with parenthetical asides |
 | **the one thing to remember** | `:::takeaway` | a bolded last paragraph |
+| a **list they must confirm, not just read** | `:::checklist` — boxes sized for a pen | a plain bullet list when they only need to know the items |
+| a **procedure in a fixed order** | `:::steps` — big numerals, findable at arm's length | `:::diagram flow`, which is for a decision that BRANCHES |
+| a **rule with a right and a wrong way** | `:::dodont` — both halves, one page, one glance | `:::compare`, which is a spread and is about time, not judgement |
+| **naming the parts of a thing** | `:::anatomy` — numbered pins on the drawing, key beneath | a picture with the labels drawn into it, which cannot be resized or translated |
 | a **photograph that is the point** | an image alone (half bleed) or `:::bleed` | a picture inside prose |
 | a **drawing you treated with `ink.mjs`** | the image with `{.plate}` — that is the plate layout, wide with the words beneath | a photograph; treat it first, then it is a drawing |
 | **how the book was made** | `:::colophon` | a credits paragraph |

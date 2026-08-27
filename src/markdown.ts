@@ -61,6 +61,22 @@ const BLOCKS: Array<{ name: string; className: string; hasTitle?: boolean }> = [
   { name: 'colophon', className: 'colophon' },
   { name: 'opener', className: 'opener', hasTitle: true },
   { name: 'bleed', className: 'bleed-out', hasTitle: true },
+  // ── the workbook instruments ────────────────────────────────────────────
+  // What a TRAINING book does that a book does not: it is followed, ticked and
+  // filled in. The kit had eighteen ways to present a page and no way to hand
+  // the reader a job, which for a workbook is the wrong gap to have.
+  //
+  //   checklist  boxes to tick, sized for a real pen
+  //   steps      a numbered procedure — linear, unlike a flow diagram, which
+  //              is for a decision that branches
+  //   dodont     the two halves of a rule, side by side on ONE page. `compare`
+  //              does this across a SPREAD, which is a different argument and
+  //              breaks if the partner page is a turn away.
+  //   anatomy    a picture with numbered pins on it and a key beneath
+  { name: 'checklist', className: 'checklist', hasTitle: true },
+  { name: 'steps', className: 'steps', hasTitle: true },
+  { name: 'dodont', className: 'dodont', hasTitle: true },
+  { name: 'anatomy', className: 'anatomy', hasTitle: true },
 ]
 
 /**

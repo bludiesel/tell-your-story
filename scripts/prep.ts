@@ -65,6 +65,8 @@ interface PageStat {
   steps: Step[]
   /** What the author's own reveal markers will do to the order, if anything. */
   moves: string[]
+  /** The page's own Markdown, for checks that read the source rather than the counts. */
+  raw: string
 }
 
 /** One beat of a page: what arrives, when, and why it goes there. */
@@ -278,6 +280,7 @@ function analyse(body: string): { pages: PageStat[]; findings: Finding[] } {
       n: i + 1, section, eyebrow, heading, words: w, budget, images, tableRows, blocks,
       steps: sequence(chunk),
       moves: moves(chunk),
+      raw: chunk,
     })
   })
 
@@ -315,6 +318,24 @@ function analyse(body: string): { pages: PageStat[]; findings: Finding[] } {
 //                CHOOSING.md says nothing else goes on the page. Flagging it
 //                contradicted the skill's own instructions, which is the worst
 //                kind of advice: following the docs produced a warning.
+    // TWO SECTION MARKERS ON ONE PAGE. A page opens exactly one section — the
+    // first `>>` becomes the divider board and the fore-edge tab, and every one
+    // after it is left with nowhere to go, so it PRINTS AS BODY TEXT in the
+    // middle of the page. It looks like a stray word nobody typed.
+    //
+    // Found in this kit's own catalogue: `>> Pictures` and `>> Workbook` ended
+    // up on the same page and the reader saw the word "Workbook" sitting in the
+    // margin of a checklist. Nothing failed; the book just had a word in it.
+    const marks = (p.raw.match(/^>>\s*\S/gm) ?? []).length
+    if (marks > 1) {
+      findings.push({
+        where: `page ${p.n}${p.heading ? ` — "${p.heading}"` : ''}`,
+        severity: 'fix',
+        what: `${marks} section markers on one page`,
+        do: 'A page opens ONE section. The extra `>>` lines have nowhere to go and print as ' +
+            'body text. Put a `---` before each one so it gets its own page, or delete it.',
+      })
+    }
     const headless = new Set(['bleed', 'colophon', 'big', 'quote'])
     const wantsNoBand = p.blocks.some((b: string) => headless.has(b))
     if (!p.heading && !wantsNoBand) {

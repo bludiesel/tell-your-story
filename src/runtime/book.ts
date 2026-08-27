@@ -745,6 +745,56 @@ function boot(): void {
   }
 
   /**
+   * A TICK IS WRITTEN, NOT SWITCHED ON.
+   *
+   * The boxes exist to be marked, so the page should show them being marked.
+   * Each tick strokes itself in — short stroke down, long stroke up, the way a
+   * pen goes — and they come down the list in order, so the page reads as
+   * somebody working through it rather than as a state that changed.
+   *
+   * The list lands first and the ticks follow. 0.42s of daylight after the
+   * block arrives, because a tick that appears WITH the line it is ticking has
+   * not confirmed anything — the reader has to see the item before they see it
+   * satisfied, or the sequence makes no argument.
+   *
+   * 0.17s apart. Faster and they read as one event; slower and a page of eight
+   * boxes outlasts the presenter's sentence.
+   *
+   * `pathLength="1"` (set in the markup) means the dash geometry is 0..1 units
+   * whatever the size, so nothing here has to call getTotalLength() — which
+   * returns 0 for a path on a page the browser has not laid out yet, and every
+   * page but the current one is exactly that.
+   */
+  function strokeTicks(root: HTMLElement, tl: gsap.core.Timeline, at: number): void {
+    const ticks = [...root.querySelectorAll<SVGPathElement>('.checklist .tick path')]
+    if (ticks.length === 0) return
+    if (reducedMotion) {
+      gsap.set(ticks, { strokeDashoffset: 0, opacity: 1 })
+      return
+    }
+    ticks.forEach((tick, i) => {
+      const start = at + 0.42 + i * 0.17
+      // Hidden HERE and not in the stylesheet: a book whose scripting failed
+      // must show ticked boxes, not a page of empty ones that reads as a bug.
+      tl.set(tick, { strokeDashoffset: 1, opacity: 1 }, start)
+      tl.to(tick, {
+        strokeDashoffset: 0,
+        duration: 0.26,
+        // A pen accelerates into the down-stroke and runs out of the up-stroke.
+        ease: 'power2.inOut',
+      }, start)
+      // The box notices. A hair of scale on the box itself is what stops the
+      // tick reading as a sticker laid on top of an unrelated square.
+      const box = tick.closest<HTMLElement>('.box')
+      if (box) {
+        tl.fromTo(box, { scale: 1 },
+          { scale: 1.09, duration: 0.11, ease: 'power2.out', yoyo: true, repeat: 1 },
+          start + 0.06)
+      }
+    })
+  }
+
+  /**
    * The timeline rail draws outward from the gutter, then stops — DESIGN.md.
    * The end it grows from is the page's own business (`.page.pl` grows right to
    * left, `.page.pr` left to right), so the origin is read off the element
@@ -782,6 +832,7 @@ function boot(): void {
     animateDiagrams(el, tl, at)
     pressStickies(el, tl, at)
     drawRails(el, tl, at)
+    strokeTicks(el, tl, at)
   }
 
   /** Reveal the next block. Returns false when the spread has nothing left. */
@@ -1019,10 +1070,23 @@ function boot(): void {
     // constructed and the book rendered as 26 stacked pages with no engine at
     // all. Nothing logged it: the throw happened before any error listener.
     //
-    // Corners first — overlapping the block is the intended look. `under` and
-    // `under-l` are the fallback for a page with no white space to overlap
-    // into, and win only when every corner is measurably worse.
-    const CORNERS = ['right', 'br', 'left', 'bl', 'under', 'under-l'] as const
+    // UNDER FIRST. This used to try the four corners first and fall back to
+    // `under` only when every one of them buried more text — so a note sat
+    // below its host on a crowded page and overlapped the corner of it on a
+    // sparse one. Same book, same note, two different looks decided by how much
+    // the author happened to write.
+    //
+    // The fallback is the better one. Under the host, clipping the last line by
+    // a centimetre or two and tilted 6deg, a note reads as paper pressed onto
+    // paper and hides nothing. A corner note lands across the column and, even
+    // when it buries little, competes with the sentence it is annotating.
+    // Mohammad picked the `under` one out of a real book and asked for it
+    // everywhere, which settles it.
+    //
+    // A corner still wins when `under` genuinely cannot work — a host near the
+    // foot of the page, where `under` would push the note off the sheet and the
+    // reader would never learn it existed.
+    const CORNERS = ['under', 'under-l', 'right', 'br', 'left', 'bl'] as const
     for (const note of document.querySelectorAll<HTMLElement>('.has-sticky > .sticky')) {
       const host = note.parentElement
       if (!host || getComputedStyle(note).display === 'none') continue
@@ -1055,13 +1119,30 @@ function boot(): void {
         return buried + spilled * n.width * 4
       }
 
-      let best = note.dataset.at ?? 'right'
+      // Seeded from the PREFERRED placement, not from whatever the builder's
+      // counter happened to assign, so `under` is what a note has to be argued
+      // out of rather than argued into.
+      let best = 'under'
+      note.dataset.at = best
       let bestCost = cost()
+
+      // AND A CORNER HAS TO WIN BY SOMETHING WORTH HAVING. `under` clips the
+      // host's own last line by design — that couple of centimetres is what
+      // makes it read as stuck on rather than laid out in a slot — so its cost
+      // is never quite zero, and a corner sitting in white space would take the
+      // note away on a rounding error. The margin is one line of body text
+      // across the note's width: below that, the reader gains nothing and the
+      // book loses a consistent look.
+      const lineH = lines.length > 0
+        ? lines.map((r) => r.height).sort((a, b) => a - b)[Math.floor(lines.length / 2)]!
+        : 0
+      const worthMoving = lineH * note.getBoundingClientRect().width
+
       for (const corner of CORNERS) {
         if (corner === best) continue
         note.dataset.at = corner
         const c = cost()
-        if (c < bestCost) { bestCost = c; best = corner }
+        if (c < bestCost - worthMoving) { bestCost = c; best = corner }
       }
       note.dataset.at = best
     }
@@ -1281,16 +1362,28 @@ function boot(): void {
    * RIFFLE back to the front — the thumb-flick you give a book to get back to
    * the beginning.
    *
-   * Deliberately NOT `flip.flip(0)`, which is a single 850ms turn and reads as
-   * a jump cut: the reader loses all sense of how far they had come. And not a
-   * queue of normal turns either — page-flip cancels an in-flight animation when
-   * the next is requested, so chaining them just drops frames.
+   * WHAT WAS WRONG. This used `flip.turnToPage()` for every step but the last.
+   * `turnToPage` does not animate — it SETS the position. So a control called
+   * "riffle" was four instant cuts and one turn at the end: the pages never
+   * turned, they teleported, and only the final leaf moved like paper.
+   * Recorded at 16ms from spread 6 of 11 — 10|11 -> 8|9 -> 6|7 -> 4|5 -> 2|3,
+   * each arriving in a single frame, then one 850ms flip.
    *
-   * Instead each spread is placed INSTANTLY, in quick succession, which is
-   * exactly what riffling looks like: pages flashing past too fast to read. The
-   * interval eases out, so it tears away from where you were and settles onto
-   * the first page rather than stopping dead — a real riffle loses momentum
-   * against the thumb.
+   * Deliberately NOT `flip.flip(0)` either: a single 850ms turn from wherever
+   * you were is a jump cut, and the reader loses all sense of how far they had
+   * come.
+   *
+   * SO EVERY STEP IS A REAL TURN NOW. `flipPrev()` is StPageFlip's own
+   * one-leaf-back animation, and firing the next one before the last has
+   * finished is not a bug to avoid — it is the effect. The library cancels the
+   * in-flight turn and starts the next from where the paper actually is, which
+   * is exactly what a riffle looks like: pages caught part-way over, each one
+   * overtaken by the one behind it.
+   *
+   * The cadence decelerates, so it tears away from where you were and settles
+   * onto the front rather than stopping dead — a real riffle loses momentum
+   * against the thumb. The last turn is left alone to finish, because the one
+   * page you actually see land should land properly.
    */
   let riffling = false
   async function riffle(): Promise<void> {
@@ -1308,26 +1401,29 @@ function boot(): void {
     }
 
     // Spreads, not pages: a two-page leaf turns as one.
-    const stops: number[] = []
-    for (let i = from - (from % 2); i >= 0; i -= 2) stops.push(i)
+    const leaps = Math.ceil((from - (from % 2)) / 2) || 1
 
-    // 26ms between jumps was roughly 38 spreads a second — far past the rate the
-    // eye resolves as motion, so it read as a strobe rather than a riffle. A
-    // thumb releases pages at closer to 8-12 a second. Everything below the last
-    // leaf is placed instantly at that rate; the FINAL turn is a real animated
-    // flip, so the book settles onto page one instead of snapping to it.
-    const settle = stops.pop()
-    for (const [n, target] of stops.entries()) {
-      flip.turnToPage(target)
+    // 110ms is well inside a turn's own 850ms, so each page is overtaken while
+    // it is still moving — pages part-way over, stacking up, which is the whole
+    // look. Opening out to 320 lets the last two read as separate turns so the
+    // eye can follow the book back onto its cover instead of being dumped there.
+    for (let n = 0; n < leaps - 1; n++) {
+      flip.flipPrev('bottom')
       updateStacks()
-      const t = stops.length > 1 ? n / (stops.length - 1) : 1
-      await new Promise((r) => setTimeout(r, 88 + 150 * t * t))
+      const t = leaps > 2 ? n / (leaps - 2) : 1
+      await new Promise((r) => setTimeout(r, 110 + 210 * t * t))
     }
-    if (settle !== undefined) {
-      await new Promise((r) => setTimeout(r, 90))
-      turnTo(settle)                          // animated, not placed
-      await new Promise((r) => setTimeout(r, 900))
-    }
+
+    // The last one is not interrupted. Everything before it was a blur on the
+    // way past; this is the page the reader is left looking at.
+    flip.flipPrev('bottom')
+    await new Promise((r) => setTimeout(r, 900))
+    updateStacks()
+
+    // A cancelled turn can leave the engine a leaf short of the front — the
+    // cost of interrupting on purpose. Placing the last leaf costs nothing
+    // visually here, because the book is already showing the front spread.
+    if (index() > 0) flip.turnToPage(0)
 
     document.body.classList.remove('riffling')
     riffling = false

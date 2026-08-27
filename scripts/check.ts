@@ -1523,6 +1523,16 @@ check('book: shipped grain filter resolves',
     /changes nothing/.test(dead.out),
     'a no-op marker passed unremarked — it reads as intent and gets copied')
 
+  // TWO `>>` ON ONE PAGE. Only the first opens a section; the rest print as
+  // body text in the middle of the page. It happened in this kit's own
+  // catalogue and the reader saw the word "Workbook" loose on a checklist.
+  const twoSections = join(dir, 'two-sections.md')
+  await writeFile(twoSections, ['# A page', '', '>> One', '', '>> Two', '', 'Some words.'].join('\n'))
+  const sect = await runScript('scripts/prep.ts', [twoSections])
+  check('prep: two section markers on one page are reported',
+    /section markers on one page/.test(sect.out),
+    'a second `>>` on a page passed unremarked — it prints as body text and looks like a typo')
+
   // AND THE SHIPPED CONTENT OBEYS ITS OWN ADVICE. A kit whose sample lessons
   // carry no-op markers is teaching by example the thing it warns about.
   for (const name of ['sample-book.md', 'reference-lesson.md', 'every-layout.md', 'audit-lesson.md']) {
@@ -1619,6 +1629,115 @@ check('book: shipped grain filter resolves',
   check('plate: the picker reaches a plate before a half bleed',
     plateAt > 0 && bleedAt > 0 && plateAt < bleedAt,
     'half-bleed is tested first, so a treated drawing lands in the photograph layout again')
+}
+
+// ── renderLayouts must reach every shape it handles ─────────────────────────
+//
+// It starts with a bail-out: a page whose HTML matches none of a list of names
+// is returned untouched. Miss a name and the layout is silently never built —
+// the page renders, nothing throws, and the feature simply is not there.
+//
+// Three times now. The half-bleed grid, the quote attribution, and then all
+// four workbook blocks at once. The function's own comment says "every shape
+// this function touches has to appear here"; that comment has now failed twice,
+// so the list is checked against the selectors the function actually uses.
+{
+  const layoutTs = await readFile(join(ROOT, 'src', 'layout.ts'), 'utf8')
+  const fn = /export function renderLayouts[\s\S]*?\n\}/.exec(layoutTs)?.[0] ?? ''
+  const guard = /if \(!\/([^/]+)\/\.test\(html\)\) return html/.exec(fn)?.[1] ?? ''
+  const handled = new Set(
+    [...fn.matchAll(/querySelectorAll\('([^']+)'\)/g)]
+      .flatMap((m) => m[1]!.split(','))
+      .map((sel) => /\.([a-z][a-z0-9-]*)/.exec(sel.trim())?.[1])
+      .filter((c): c is string => Boolean(c)))
+  const missing = [...handled].filter((c) => !guard.includes(c))
+  check(`design: renderLayouts reaches all ${handled.size} shapes it handles`,
+    missing.length === 0,
+    `${missing.join(' ')} — handled inside renderLayouts but absent from its bail-out, ` +
+    'so those pages are returned untouched and the layout silently never happens')
+}
+
+// ── the tick is written, and it fails visible ───────────────────────────────
+{
+  const layoutTs = await readFile(join(ROOT, 'src', 'layout.ts'), 'utf8')
+  const css = await readFile(join(ROOT, 'src', 'runtime', 'layouts.css'), 'utf8')
+  const runtime = await readFile(join(ROOT, 'src', 'runtime', 'book.ts'), 'utf8')
+
+  // pathLength="1" is what lets the stroke draw at any size without measuring.
+  // getTotalLength() returns 0 for a path the browser has not laid out, and
+  // every page except the one on screen is exactly that — so a measured version
+  // would draw nothing on every page but the first and look like dead code.
+  // MATCHED ON THE EMITTED MARKUP, not anywhere in the file. The first version
+  // tested for `pathLength="1"` loose, and the COMMENT above the code explaining
+  // why pathLength is needed satisfied it — so deleting the attribute left the
+  // check green. Same trap as a `.step` check that matched the note explaining
+  // why `.step` had been removed.
+  check('checklist: the tick is drawn in unit length',
+    /'<path pathLength="1"/.test(layoutTs),
+    'the tick has no pathLength, so its stroke-on has to measure geometry that ' +
+    'does not exist yet on an unrendered page')
+
+  // FAIL VISIBLE. Hiding the stroke in the stylesheet means a book with broken
+  // scripting shows a page of empty boxes — which reads as a bug, not as a
+  // checklist. The hide belongs to the code that also un-hides it.
+  const tickRule = /\.checklist \.tick path \{([^}]*)\}/.exec(css)?.[1] ?? ''
+  check('checklist: an unticked box is never the CSS default',
+    !/stroke-dashoffset/.test(tickRule),
+    'the stylesheet hides the tick, so a book whose JavaScript failed shows ' +
+    'empty boxes for ever instead of ticked ones')
+  check('checklist: the runtime is what hides the tick before writing it',
+    /strokeDashoffset: 1/.test(runtime),
+    'nothing parks the stroke, so the ticks are already drawn when the page arrives')
+}
+
+// ── a sticky note lands under its host, not across it ───────────────────────
+//
+// The placement used to try the four corners first and drop to `under` only
+// when every corner buried more text. The result was that the SAME note looked
+// different in two books for no reason a reader could see — below the host on a
+// crowded page, across its corner on a sparse one. `under` is the preferred
+// placement now, and a corner has to beat it by a full line of body text before
+// it takes the note away.
+{
+  const runtime = await readFile(join(ROOT, 'src', 'runtime', 'book.ts'), 'utf8')
+  const place = /function placeStickies\(\)[\s\S]*?\n  \}/.exec(runtime)?.[0] ?? ''
+  const order = /const CORNERS = \[([^\]]*)\]/.exec(place)?.[1] ?? ''
+  check('sticky: under is the first placement tried',
+    /^\s*'under'/.test(order),
+    `CORNERS starts ${order.trim().slice(0, 24)} — a corner wins ties, so notes go back to `
+    + 'landing across the text on any page with room')
+  check('sticky: a corner has to be measurably better to take the note',
+    /bestCost - worthMoving/.test(place),
+    'any cheaper corner displaces the preferred placement, so a rounding error decides the look')
+}
+
+// ── the riffle has to actually turn pages ───────────────────────────────────
+//
+// `turnToPage` SETS the position; `flip`/`flipPrev` ANIMATE it. The riffle
+// shipped using turnToPage for every step but the last, so a control whose
+// whole purpose is motion was a run of instant cuts. Recorded at 16ms from
+// spread 6 of 11: 10|11 -> 8|9 -> 6|7 -> 4|5 -> 2|3, each landing in one frame.
+//
+// The only turnToPage a riffle may contain is the reduced-motion path, which is
+// SUPPOSED to place the page without animating, and a final position tidy-up.
+{
+  const runtime = await readFile(join(ROOT, 'src', 'runtime', 'book.ts'), 'utf8')
+  const body = /async function riffle\(\)[\s\S]*?\n  \}/.exec(runtime)?.[0] ?? ''
+  check('riffle: every step of the riffle is a real page turn',
+    /flipPrev\(/.test(body),
+    'the riffle animates nothing — it places pages, so the pages cut instead of turning')
+  // TWO of them: the stepping loop and the uninterrupted final turn. One would
+  // mean the loop still places its pages and only the last leaf moves — which
+  // is exactly the bug, wearing a flipPrev as a disguise. The paired ceiling on
+  // turnToPage keeps the reduced-motion path and the end-position tidy legal
+  // and nothing else. (Written this way because the first draft, `turnToPage
+  // <= 2` alone, PASSED on the broken code — it had exactly two.)
+  const places = (body.match(/turnToPage\(/g) ?? []).length
+  const turns = (body.match(/flipPrev\(/g) ?? []).length
+  check('riffle: it turns pages rather than placing them',
+    turns >= 2 && places <= 2,
+    `${turns} animated turns and ${places} instant placements in riffle() — ` +
+    'a riffle wants a turn per step, not a run of cuts')
 }
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`)

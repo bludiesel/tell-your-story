@@ -231,6 +231,65 @@ Right-hand column, the same weight as the first.
 
 ---
 
+>> Workbook
+
+> confirm it
+
+## Checklist
+
+:::checklist Before you go up
+- Permit signed and in date
+- Anchor point rated for the load
+- Harness inspected this month
+- Second person on site
+:::
+
+---
+
+> in this order
+
+## Steps
+
+:::steps Isolating a line
+1. Close the upstream valve
+2. Watch the gauge fall — do not assume
+3. Prove the line is dead downstream
+4. Tag it so nobody reopens behind you
+:::
+
+---
+
+> both halves
+
+## Do and don't
+
+:::dodont Ladders
+### Do
+- Tie it off at the top
+- Keep three points of contact
+- Set it at one in four
+### Don't
+- Stand on the top two rungs
+- Lean out past your belt
+- Use it as a workbench
+:::
+
+---
+
+> name the parts
+
+## Anatomy
+
+:::anatomy The cylinder valve
+![A cylinder valve and its burst disk, drawn](img/valve.ink.png){.plate}
+1. Burst disk | 30 34
+2. Outlet | 62 52
+3. Handwheel | 44 26
+4. Guard | 24 62
+:::
+
+---
+
 >> Pictures
 
 > images on paper
