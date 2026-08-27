@@ -202,6 +202,11 @@ export const CAPABILITIES: CapabilityGroup[] = [
       { id: 'node scripts/check.ts', what: 'The check suite',
         use: 'After any change to the kit. Each check is a bug that once shipped looking fine. ' +
              'The count is not quoted anywhere on purpose — it only ever drifts.' },
+      { id: 'node dist/ink.mjs', what: 'The ink treatment, headless — for an assistant',
+        use: 'The one command to run before putting any supplied picture in a book. Same operator ' +
+             'as the studio with no browser and no install: reads JPEG or PNG, writes a ' +
+             'transparent PNG to use with {.plate}. Presets --soft --drawn --engraved, and every ' +
+             'number is a flag. Reach for the studio instead when a PERSON is choosing the look.' },
       { id: 'node dist/studio.mjs', what: 'The Ink Studio — makes artwork look drawn on the page',
         use: 'Before putting any supplied picture in a book. Writes output/ink-studio.html, ' +
              'one self-contained page needing no install: drop the artwork in, turn Line, Tone ' +

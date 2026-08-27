@@ -168,6 +168,10 @@ if (runDirectly) {
     // The studio generator is an AUTHOR's tool, like motion — it is how the
     // pictures in a book get made, so it cannot be install-only.
     { entry: 'scripts/build_studio.ts', out: 'dist/studio.mjs' },
+    // And the headless one, for an assistant with no screen to drag a slider
+    // on. Its two image codecs are pure JavaScript precisely so they can be
+    // compiled in here and cost a user nothing.
+    { entry: 'scripts/ink.ts', out: 'dist/ink.mjs' },
   ]
 
   await mkdir(join(ROOT, 'dist'), { recursive: true })

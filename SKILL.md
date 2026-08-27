@@ -200,6 +200,7 @@ skill, not an application — nothing here is a user-facing program.
 | `node dist/motion.mjs` | `dist/motion.mjs` | **What moves on every page**, and whether it obeys the rules. Prints turn behaviour and step count per page for a built book, and fails if a section board starts bending or eating presses. Run it on any book before presenting from it. |
 | `node scripts/verify.ts` | `scripts/verify.ts` | Copies each snippet out of `templates/LAYOUTS.md`, builds it, and checks the page comes back as the layout the template promised. Catches a layout that is documented but unreachable — `pickLayout` is first-match-wins, so an earlier test can shadow a later one with nothing failing. Writes `VERIFICATION.md`. |
 | `node dist/build.mjs content/every-layout.md output/every-layout.html` | — | **The catalogue.** All 17 layouts rendered in one book. Open it before choosing a layout, and after any change to `layouts.css` — it is the fastest way to see what actually broke. |
+| `node dist/ink.mjs <picture>` | `scripts/ink.ts` | **The treatment, headless.** Same operator as the studio, no browser, no install — for an assistant with no screen to drag a slider on. Writes `<name>.ink.png`. `--soft`/`--drawn`/`--engraved`, or `--nib --line --threshold --body --fade --width --theme`. |
 | `node dist/studio.mjs` | `scripts/build_studio.ts` | **The Ink Studio.** Writes `output/ink-studio.html` — one self-contained page, no install — where an author turns supplied artwork into something that looks drawn on the page. Takes an optional theme path, so the preview is the book's real ink on the book's real paper. See *Artwork* below. |
 | `node scripts/gen-capabilities.ts` | `scripts/gen-capabilities.ts` | Regenerates `CAPABILITIES.md` from the manifest. Run after adding a feature. |
 | `npx tsc --noEmit` | — | `tsc --noEmit`. TypeScript 7, ~0.11s. |
@@ -267,10 +268,40 @@ A book of paper, handwriting and grain puts a photograph on a page and the
 photograph is the one thing on that spread that came from a different hand. The
 Ink Studio fixes that before the picture ever reaches a lesson.
 
+**If you are an assistant putting a picture in a book, this is the whole job:**
+
+```bash
+node dist/ink.mjs img/photo.jpg           # -> img/photo.ink.png, the "drawn" preset
+```
+
+Then reference the result with `{.plate}`:
+
+```markdown
+![A technician checking a cylinder](img/photo.ink.png){.plate}
+```
+
+That is enough. Do not skip it and drop a raw photograph onto a page — a
+photograph is the one element on a spread that came from a different hand, and
+the whole book is built to look like one.
+
+It reads JPEG and PNG and writes PNG. Presets are `--soft`, `--drawn` (default)
+and `--engraved`; every number is also a flag (`--nib --line --threshold --body
+--fade --width --theme`). The default export is 1200 px wide, which is already
+more than a 780 px page resolves.
+
+**When a person is choosing the look, give them the studio instead** — every
+picture wants its own numbers and sliders answer in seconds what flags answer in
+a dozen rebuilds:
+
 ```bash
 node dist/studio.mjs                      # -> output/ink-studio.html, using theme.json
 node dist/studio.mjs themes/slate.json    # -> the same page in that theme's ink
 ```
+
+The studio also exports **WebP, about three times smaller than the command's
+PNG** — WebP has no pure-JavaScript encoder worth bundling, and the command has
+to run without an install. If size matters and you only have the command:
+`cwebp -q 80 img/photo.ink.png -o img/photo.ink.webp`.
 
 Open the page, drop the artwork in, and turn three things:
 
@@ -323,6 +354,10 @@ where on it it sits. This cannot be wrong, because it never asks.
 Two knobs, both CSS custom properties on the picture: `--plate-blur` (18px) and
 `--plate-fade` (12%). A browser without `backdrop-filter` simply shows the
 drawing with the ruling reading through — the default look, not a broken page.
+
+**The pictures in `content/img/` are placeholders — smooth gradients, not
+photographs.** Running the treatment on them produces a smudge, correctly: there
+are no edges to find. Judge the Ink Studio on real artwork, never on those.
 
 **Three things worth knowing before you judge a result.**
 

@@ -98,11 +98,16 @@ check('both modes produce the same book apart from picture refs',
   strip(inlineHtml) === strip(folderHtml))
 
 // ── dedup ───────────────────────────────────────────────────────────────────
-// The sample references 4 images, two of which are byte-identical.
+// ASSERT THE PROPERTY, NOT A COUNT. This used to require exactly three files,
+// which meant adding one picture to the sample failed a check about
+// DEDUPLICATION for reasons that had nothing to do with it. A hard-coded total
+// tests the content; what is worth testing is that identical bytes collapse to
+// one file and that the collapsing actually happened.
 const uniqueFiles = new Set(referenced)
 check('dedup: identical pictures stored once',
-  written.length === uniqueFiles.size && written.length === 3,
-  `stored ${written.length}, referenced ${referenced.length} times`)
+  written.length === uniqueFiles.size && referenced.length > written.length,
+  `stored ${written.length}, referenced ${referenced.length} times` +
+  (referenced.length <= written.length ? ' — no picture is reused, so dedup was never exercised' : ''))
 
 // ── failure paths ───────────────────────────────────────────────────────────
 const brokenMd = join(TMP, 'broken.md')
@@ -276,6 +281,26 @@ const inkLiterals = [...inkSource.matchAll(/#[0-9a-f]{3,8}\b/gi)].map((m) => m[0
 check('studio: the treatment itself holds no colour',
   inkLiterals.length === 0,
   inkLiterals.length ? `hard-coded: ${inkLiterals.join(', ')}` : 'every colour arrives as an argument')
+
+// A CONTROL MUST OPEN ON THE VALUE IT IS ACTUALLY DRAWING WITH.
+//
+// It did not. The studio shipped for an hour marked "drawn" while nib, line and
+// body showed numbers from an earlier tuning — the presets were re-tuned off a
+// sweep and the slider attributes, written down separately, were not. The
+// picture was correct because it reads the preset; the READOUT lied, which is
+// worse, because a number on screen is what an author writes down and reuses.
+// The values are generated from the preset now, and this is what stops anyone
+// helpfully hard-coding them back.
+const { DEFAULT_INK: studioDefaults } = await import(join(ROOT, 'src/studio/ink.ts'))
+const sliderValues = Object.fromEntries(
+  [...studioHtml.matchAll(/<input[^>]*id="([a-z]+)"[^>]*value="([^"]*)"/g)].map((m) => [m[1]!, m[2]!]),
+)
+const drifted = Object.entries(studioDefaults as Record<string, number>)
+  .filter(([k, v]) => sliderValues[k] !== undefined && Number(sliderValues[k]) !== v)
+  .map(([k, v]) => `${k}: slider ${sliderValues[k]}, preset ${v}`)
+check('studio: every control opens on the value it is drawing with',
+  drifted.length === 0,
+  drifted.length ? drifted.join(' · ') : `${Object.keys(studioDefaults).length} controls agree with the default preset`)
 
 // THE DEFAULT EXPORT HAS TO BE THE SMALL ONE.
 //

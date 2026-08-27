@@ -39,6 +39,4245 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
+// node_modules/jpeg-js/lib/encoder.js
+var require_encoder = __commonJS({
+  "node_modules/jpeg-js/lib/encoder.js"(exports, module) {
+    var btoa = btoa || function(buf) {
+      return Buffer.from(buf).toString("base64");
+    };
+    function JPEGEncoder(quality) {
+      var self2 = this;
+      var fround = Math.round;
+      var ffloor = Math.floor;
+      var YTable = new Array(64);
+      var UVTable = new Array(64);
+      var fdtbl_Y = new Array(64);
+      var fdtbl_UV = new Array(64);
+      var YDC_HT;
+      var UVDC_HT;
+      var YAC_HT;
+      var UVAC_HT;
+      var bitcode = new Array(65535);
+      var category = new Array(65535);
+      var outputfDCTQuant = new Array(64);
+      var DU = new Array(64);
+      var byteout = [];
+      var bytenew = 0;
+      var bytepos = 7;
+      var YDU = new Array(64);
+      var UDU = new Array(64);
+      var VDU = new Array(64);
+      var clt = new Array(256);
+      var RGB_YUV_TABLE = new Array(2048);
+      var currentQuality;
+      var ZigZag = [
+        0,
+        1,
+        5,
+        6,
+        14,
+        15,
+        27,
+        28,
+        2,
+        4,
+        7,
+        13,
+        16,
+        26,
+        29,
+        42,
+        3,
+        8,
+        12,
+        17,
+        25,
+        30,
+        41,
+        43,
+        9,
+        11,
+        18,
+        24,
+        31,
+        40,
+        44,
+        53,
+        10,
+        19,
+        23,
+        32,
+        39,
+        45,
+        52,
+        54,
+        20,
+        22,
+        33,
+        38,
+        46,
+        51,
+        55,
+        60,
+        21,
+        34,
+        37,
+        47,
+        50,
+        56,
+        59,
+        61,
+        35,
+        36,
+        48,
+        49,
+        57,
+        58,
+        62,
+        63
+      ];
+      var std_dc_luminance_nrcodes = [0, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0];
+      var std_dc_luminance_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+      var std_ac_luminance_nrcodes = [0, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125];
+      var std_ac_luminance_values = [
+        1,
+        2,
+        3,
+        0,
+        4,
+        17,
+        5,
+        18,
+        33,
+        49,
+        65,
+        6,
+        19,
+        81,
+        97,
+        7,
+        34,
+        113,
+        20,
+        50,
+        129,
+        145,
+        161,
+        8,
+        35,
+        66,
+        177,
+        193,
+        21,
+        82,
+        209,
+        240,
+        36,
+        51,
+        98,
+        114,
+        130,
+        9,
+        10,
+        22,
+        23,
+        24,
+        25,
+        26,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169,
+        170,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217,
+        218,
+        225,
+        226,
+        227,
+        228,
+        229,
+        230,
+        231,
+        232,
+        233,
+        234,
+        241,
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250
+      ];
+      var std_dc_chrominance_nrcodes = [0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0];
+      var std_dc_chrominance_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+      var std_ac_chrominance_nrcodes = [0, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119];
+      var std_ac_chrominance_values = [
+        0,
+        1,
+        2,
+        3,
+        17,
+        4,
+        5,
+        33,
+        49,
+        6,
+        18,
+        65,
+        81,
+        7,
+        97,
+        113,
+        19,
+        34,
+        50,
+        129,
+        8,
+        20,
+        66,
+        145,
+        161,
+        177,
+        193,
+        9,
+        35,
+        51,
+        82,
+        240,
+        21,
+        98,
+        114,
+        209,
+        10,
+        22,
+        36,
+        52,
+        225,
+        37,
+        241,
+        23,
+        24,
+        25,
+        26,
+        38,
+        39,
+        40,
+        41,
+        42,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169,
+        170,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217,
+        218,
+        226,
+        227,
+        228,
+        229,
+        230,
+        231,
+        232,
+        233,
+        234,
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250
+      ];
+      function initQuantTables(sf) {
+        var YQT = [
+          16,
+          11,
+          10,
+          16,
+          24,
+          40,
+          51,
+          61,
+          12,
+          12,
+          14,
+          19,
+          26,
+          58,
+          60,
+          55,
+          14,
+          13,
+          16,
+          24,
+          40,
+          57,
+          69,
+          56,
+          14,
+          17,
+          22,
+          29,
+          51,
+          87,
+          80,
+          62,
+          18,
+          22,
+          37,
+          56,
+          68,
+          109,
+          103,
+          77,
+          24,
+          35,
+          55,
+          64,
+          81,
+          104,
+          113,
+          92,
+          49,
+          64,
+          78,
+          87,
+          103,
+          121,
+          120,
+          101,
+          72,
+          92,
+          95,
+          98,
+          112,
+          100,
+          103,
+          99
+        ];
+        for (var i = 0; i < 64; i++) {
+          var t = ffloor((YQT[i] * sf + 50) / 100);
+          if (t < 1) {
+            t = 1;
+          } else if (t > 255) {
+            t = 255;
+          }
+          YTable[ZigZag[i]] = t;
+        }
+        var UVQT = [
+          17,
+          18,
+          24,
+          47,
+          99,
+          99,
+          99,
+          99,
+          18,
+          21,
+          26,
+          66,
+          99,
+          99,
+          99,
+          99,
+          24,
+          26,
+          56,
+          99,
+          99,
+          99,
+          99,
+          99,
+          47,
+          66,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99,
+          99
+        ];
+        for (var j = 0; j < 64; j++) {
+          var u = ffloor((UVQT[j] * sf + 50) / 100);
+          if (u < 1) {
+            u = 1;
+          } else if (u > 255) {
+            u = 255;
+          }
+          UVTable[ZigZag[j]] = u;
+        }
+        var aasf = [
+          1,
+          1.387039845,
+          1.306562965,
+          1.175875602,
+          1,
+          0.785694958,
+          0.5411961,
+          0.275899379
+        ];
+        var k = 0;
+        for (var row = 0; row < 8; row++) {
+          for (var col = 0; col < 8; col++) {
+            fdtbl_Y[k] = 1 / (YTable[ZigZag[k]] * aasf[row] * aasf[col] * 8);
+            fdtbl_UV[k] = 1 / (UVTable[ZigZag[k]] * aasf[row] * aasf[col] * 8);
+            k++;
+          }
+        }
+      }
+      function computeHuffmanTbl(nrcodes, std_table) {
+        var codevalue = 0;
+        var pos_in_table = 0;
+        var HT = new Array();
+        for (var k = 1; k <= 16; k++) {
+          for (var j = 1; j <= nrcodes[k]; j++) {
+            HT[std_table[pos_in_table]] = [];
+            HT[std_table[pos_in_table]][0] = codevalue;
+            HT[std_table[pos_in_table]][1] = k;
+            pos_in_table++;
+            codevalue++;
+          }
+          codevalue *= 2;
+        }
+        return HT;
+      }
+      function initHuffmanTbl() {
+        YDC_HT = computeHuffmanTbl(std_dc_luminance_nrcodes, std_dc_luminance_values);
+        UVDC_HT = computeHuffmanTbl(std_dc_chrominance_nrcodes, std_dc_chrominance_values);
+        YAC_HT = computeHuffmanTbl(std_ac_luminance_nrcodes, std_ac_luminance_values);
+        UVAC_HT = computeHuffmanTbl(std_ac_chrominance_nrcodes, std_ac_chrominance_values);
+      }
+      function initCategoryNumber() {
+        var nrlower = 1;
+        var nrupper = 2;
+        for (var cat = 1; cat <= 15; cat++) {
+          for (var nr = nrlower; nr < nrupper; nr++) {
+            category[32767 + nr] = cat;
+            bitcode[32767 + nr] = [];
+            bitcode[32767 + nr][1] = cat;
+            bitcode[32767 + nr][0] = nr;
+          }
+          for (var nrneg = -(nrupper - 1); nrneg <= -nrlower; nrneg++) {
+            category[32767 + nrneg] = cat;
+            bitcode[32767 + nrneg] = [];
+            bitcode[32767 + nrneg][1] = cat;
+            bitcode[32767 + nrneg][0] = nrupper - 1 + nrneg;
+          }
+          nrlower <<= 1;
+          nrupper <<= 1;
+        }
+      }
+      function initRGBYUVTable() {
+        for (var i = 0; i < 256; i++) {
+          RGB_YUV_TABLE[i] = 19595 * i;
+          RGB_YUV_TABLE[i + 256 >> 0] = 38470 * i;
+          RGB_YUV_TABLE[i + 512 >> 0] = 7471 * i + 32768;
+          RGB_YUV_TABLE[i + 768 >> 0] = -11059 * i;
+          RGB_YUV_TABLE[i + 1024 >> 0] = -21709 * i;
+          RGB_YUV_TABLE[i + 1280 >> 0] = 32768 * i + 8421375;
+          RGB_YUV_TABLE[i + 1536 >> 0] = -27439 * i;
+          RGB_YUV_TABLE[i + 1792 >> 0] = -5329 * i;
+        }
+      }
+      function writeBits(bs) {
+        var value = bs[0];
+        var posval = bs[1] - 1;
+        while (posval >= 0) {
+          if (value & 1 << posval) {
+            bytenew |= 1 << bytepos;
+          }
+          posval--;
+          bytepos--;
+          if (bytepos < 0) {
+            if (bytenew == 255) {
+              writeByte(255);
+              writeByte(0);
+            } else {
+              writeByte(bytenew);
+            }
+            bytepos = 7;
+            bytenew = 0;
+          }
+        }
+      }
+      function writeByte(value) {
+        byteout.push(value);
+      }
+      function writeWord(value) {
+        writeByte(value >> 8 & 255);
+        writeByte(value & 255);
+      }
+      function fDCTQuant(data2, fdtbl) {
+        var d0, d1, d2, d3, d4, d5, d6, d7;
+        var dataOff = 0;
+        var i;
+        var I8 = 8;
+        var I64 = 64;
+        for (i = 0; i < I8; ++i) {
+          d0 = data2[dataOff];
+          d1 = data2[dataOff + 1];
+          d2 = data2[dataOff + 2];
+          d3 = data2[dataOff + 3];
+          d4 = data2[dataOff + 4];
+          d5 = data2[dataOff + 5];
+          d6 = data2[dataOff + 6];
+          d7 = data2[dataOff + 7];
+          var tmp0 = d0 + d7;
+          var tmp7 = d0 - d7;
+          var tmp1 = d1 + d6;
+          var tmp6 = d1 - d6;
+          var tmp2 = d2 + d5;
+          var tmp5 = d2 - d5;
+          var tmp3 = d3 + d4;
+          var tmp4 = d3 - d4;
+          var tmp10 = tmp0 + tmp3;
+          var tmp13 = tmp0 - tmp3;
+          var tmp11 = tmp1 + tmp2;
+          var tmp12 = tmp1 - tmp2;
+          data2[dataOff] = tmp10 + tmp11;
+          data2[dataOff + 4] = tmp10 - tmp11;
+          var z1 = (tmp12 + tmp13) * 0.707106781;
+          data2[dataOff + 2] = tmp13 + z1;
+          data2[dataOff + 6] = tmp13 - z1;
+          tmp10 = tmp4 + tmp5;
+          tmp11 = tmp5 + tmp6;
+          tmp12 = tmp6 + tmp7;
+          var z5 = (tmp10 - tmp12) * 0.382683433;
+          var z2 = 0.5411961 * tmp10 + z5;
+          var z4 = 1.306562965 * tmp12 + z5;
+          var z3 = tmp11 * 0.707106781;
+          var z11 = tmp7 + z3;
+          var z13 = tmp7 - z3;
+          data2[dataOff + 5] = z13 + z2;
+          data2[dataOff + 3] = z13 - z2;
+          data2[dataOff + 1] = z11 + z4;
+          data2[dataOff + 7] = z11 - z4;
+          dataOff += 8;
+        }
+        dataOff = 0;
+        for (i = 0; i < I8; ++i) {
+          d0 = data2[dataOff];
+          d1 = data2[dataOff + 8];
+          d2 = data2[dataOff + 16];
+          d3 = data2[dataOff + 24];
+          d4 = data2[dataOff + 32];
+          d5 = data2[dataOff + 40];
+          d6 = data2[dataOff + 48];
+          d7 = data2[dataOff + 56];
+          var tmp0p2 = d0 + d7;
+          var tmp7p2 = d0 - d7;
+          var tmp1p2 = d1 + d6;
+          var tmp6p2 = d1 - d6;
+          var tmp2p2 = d2 + d5;
+          var tmp5p2 = d2 - d5;
+          var tmp3p2 = d3 + d4;
+          var tmp4p2 = d3 - d4;
+          var tmp10p2 = tmp0p2 + tmp3p2;
+          var tmp13p2 = tmp0p2 - tmp3p2;
+          var tmp11p2 = tmp1p2 + tmp2p2;
+          var tmp12p2 = tmp1p2 - tmp2p2;
+          data2[dataOff] = tmp10p2 + tmp11p2;
+          data2[dataOff + 32] = tmp10p2 - tmp11p2;
+          var z1p2 = (tmp12p2 + tmp13p2) * 0.707106781;
+          data2[dataOff + 16] = tmp13p2 + z1p2;
+          data2[dataOff + 48] = tmp13p2 - z1p2;
+          tmp10p2 = tmp4p2 + tmp5p2;
+          tmp11p2 = tmp5p2 + tmp6p2;
+          tmp12p2 = tmp6p2 + tmp7p2;
+          var z5p2 = (tmp10p2 - tmp12p2) * 0.382683433;
+          var z2p2 = 0.5411961 * tmp10p2 + z5p2;
+          var z4p2 = 1.306562965 * tmp12p2 + z5p2;
+          var z3p2 = tmp11p2 * 0.707106781;
+          var z11p2 = tmp7p2 + z3p2;
+          var z13p2 = tmp7p2 - z3p2;
+          data2[dataOff + 40] = z13p2 + z2p2;
+          data2[dataOff + 24] = z13p2 - z2p2;
+          data2[dataOff + 8] = z11p2 + z4p2;
+          data2[dataOff + 56] = z11p2 - z4p2;
+          dataOff++;
+        }
+        var fDCTQuant2;
+        for (i = 0; i < I64; ++i) {
+          fDCTQuant2 = data2[i] * fdtbl[i];
+          outputfDCTQuant[i] = fDCTQuant2 > 0 ? fDCTQuant2 + 0.5 | 0 : fDCTQuant2 - 0.5 | 0;
+        }
+        return outputfDCTQuant;
+      }
+      function writeAPP0() {
+        writeWord(65504);
+        writeWord(16);
+        writeByte(74);
+        writeByte(70);
+        writeByte(73);
+        writeByte(70);
+        writeByte(0);
+        writeByte(1);
+        writeByte(1);
+        writeByte(0);
+        writeWord(1);
+        writeWord(1);
+        writeByte(0);
+        writeByte(0);
+      }
+      function writeAPP1(exifBuffer) {
+        if (!exifBuffer) return;
+        writeWord(65505);
+        if (exifBuffer[0] === 69 && exifBuffer[1] === 120 && exifBuffer[2] === 105 && exifBuffer[3] === 102) {
+          writeWord(exifBuffer.length + 2);
+        } else {
+          writeWord(exifBuffer.length + 5 + 2);
+          writeByte(69);
+          writeByte(120);
+          writeByte(105);
+          writeByte(102);
+          writeByte(0);
+        }
+        for (var i = 0; i < exifBuffer.length; i++) {
+          writeByte(exifBuffer[i]);
+        }
+      }
+      function writeSOF0(width2, height2) {
+        writeWord(65472);
+        writeWord(17);
+        writeByte(8);
+        writeWord(height2);
+        writeWord(width2);
+        writeByte(3);
+        writeByte(1);
+        writeByte(17);
+        writeByte(0);
+        writeByte(2);
+        writeByte(17);
+        writeByte(1);
+        writeByte(3);
+        writeByte(17);
+        writeByte(1);
+      }
+      function writeDQT() {
+        writeWord(65499);
+        writeWord(132);
+        writeByte(0);
+        for (var i = 0; i < 64; i++) {
+          writeByte(YTable[i]);
+        }
+        writeByte(1);
+        for (var j = 0; j < 64; j++) {
+          writeByte(UVTable[j]);
+        }
+      }
+      function writeDHT() {
+        writeWord(65476);
+        writeWord(418);
+        writeByte(0);
+        for (var i = 0; i < 16; i++) {
+          writeByte(std_dc_luminance_nrcodes[i + 1]);
+        }
+        for (var j = 0; j <= 11; j++) {
+          writeByte(std_dc_luminance_values[j]);
+        }
+        writeByte(16);
+        for (var k = 0; k < 16; k++) {
+          writeByte(std_ac_luminance_nrcodes[k + 1]);
+        }
+        for (var l = 0; l <= 161; l++) {
+          writeByte(std_ac_luminance_values[l]);
+        }
+        writeByte(1);
+        for (var m = 0; m < 16; m++) {
+          writeByte(std_dc_chrominance_nrcodes[m + 1]);
+        }
+        for (var n = 0; n <= 11; n++) {
+          writeByte(std_dc_chrominance_values[n]);
+        }
+        writeByte(17);
+        for (var o = 0; o < 16; o++) {
+          writeByte(std_ac_chrominance_nrcodes[o + 1]);
+        }
+        for (var p = 0; p <= 161; p++) {
+          writeByte(std_ac_chrominance_values[p]);
+        }
+      }
+      function writeCOM(comments) {
+        if (typeof comments === "undefined" || comments.constructor !== Array) return;
+        comments.forEach((e) => {
+          if (typeof e !== "string") return;
+          writeWord(65534);
+          var l = e.length;
+          writeWord(l + 2);
+          var i;
+          for (i = 0; i < l; i++)
+            writeByte(e.charCodeAt(i));
+        });
+      }
+      function writeSOS() {
+        writeWord(65498);
+        writeWord(12);
+        writeByte(3);
+        writeByte(1);
+        writeByte(0);
+        writeByte(2);
+        writeByte(17);
+        writeByte(3);
+        writeByte(17);
+        writeByte(0);
+        writeByte(63);
+        writeByte(0);
+      }
+      function processDU(CDU, fdtbl, DC, HTDC, HTAC) {
+        var EOB = HTAC[0];
+        var M16zeroes = HTAC[240];
+        var pos;
+        var I16 = 16;
+        var I63 = 63;
+        var I64 = 64;
+        var DU_DCT = fDCTQuant(CDU, fdtbl);
+        for (var j = 0; j < I64; ++j) {
+          DU[ZigZag[j]] = DU_DCT[j];
+        }
+        var Diff = DU[0] - DC;
+        DC = DU[0];
+        if (Diff == 0) {
+          writeBits(HTDC[0]);
+        } else {
+          pos = 32767 + Diff;
+          writeBits(HTDC[category[pos]]);
+          writeBits(bitcode[pos]);
+        }
+        var end0pos = 63;
+        for (; end0pos > 0 && DU[end0pos] == 0; end0pos--) {
+        }
+        ;
+        if (end0pos == 0) {
+          writeBits(EOB);
+          return DC;
+        }
+        var i = 1;
+        var lng;
+        while (i <= end0pos) {
+          var startpos = i;
+          for (; DU[i] == 0 && i <= end0pos; ++i) {
+          }
+          var nrzeroes = i - startpos;
+          if (nrzeroes >= I16) {
+            lng = nrzeroes >> 4;
+            for (var nrmarker = 1; nrmarker <= lng; ++nrmarker)
+              writeBits(M16zeroes);
+            nrzeroes = nrzeroes & 15;
+          }
+          pos = 32767 + DU[i];
+          writeBits(HTAC[(nrzeroes << 4) + category[pos]]);
+          writeBits(bitcode[pos]);
+          i++;
+        }
+        if (end0pos != I63) {
+          writeBits(EOB);
+        }
+        return DC;
+      }
+      function initCharLookupTable() {
+        var sfcc = String.fromCharCode;
+        for (var i = 0; i < 256; i++) {
+          clt[i] = sfcc(i);
+        }
+      }
+      this.encode = function(image, quality2) {
+        var time_start = (/* @__PURE__ */ new Date()).getTime();
+        if (quality2) setQuality(quality2);
+        byteout = new Array();
+        bytenew = 0;
+        bytepos = 7;
+        writeWord(65496);
+        writeAPP0();
+        writeCOM(image.comments);
+        writeAPP1(image.exifBuffer);
+        writeDQT();
+        writeSOF0(image.width, image.height);
+        writeDHT();
+        writeSOS();
+        var DCY = 0;
+        var DCU = 0;
+        var DCV = 0;
+        bytenew = 0;
+        bytepos = 7;
+        this.encode.displayName = "_encode_";
+        var imageData = image.data;
+        var width2 = image.width;
+        var height2 = image.height;
+        var quadWidth = width2 * 4;
+        var tripleWidth = width2 * 3;
+        var x2, y2 = 0;
+        var r, g, b;
+        var start, p, col, row, pos;
+        while (y2 < height2) {
+          x2 = 0;
+          while (x2 < quadWidth) {
+            start = quadWidth * y2 + x2;
+            p = start;
+            col = -1;
+            row = 0;
+            for (pos = 0; pos < 64; pos++) {
+              row = pos >> 3;
+              col = (pos & 7) * 4;
+              p = start + row * quadWidth + col;
+              if (y2 + row >= height2) {
+                p -= quadWidth * (y2 + 1 + row - height2);
+              }
+              if (x2 + col >= quadWidth) {
+                p -= x2 + col - quadWidth + 4;
+              }
+              r = imageData[p++];
+              g = imageData[p++];
+              b = imageData[p++];
+              YDU[pos] = (RGB_YUV_TABLE[r] + RGB_YUV_TABLE[g + 256 >> 0] + RGB_YUV_TABLE[b + 512 >> 0] >> 16) - 128;
+              UDU[pos] = (RGB_YUV_TABLE[r + 768 >> 0] + RGB_YUV_TABLE[g + 1024 >> 0] + RGB_YUV_TABLE[b + 1280 >> 0] >> 16) - 128;
+              VDU[pos] = (RGB_YUV_TABLE[r + 1280 >> 0] + RGB_YUV_TABLE[g + 1536 >> 0] + RGB_YUV_TABLE[b + 1792 >> 0] >> 16) - 128;
+            }
+            DCY = processDU(YDU, fdtbl_Y, DCY, YDC_HT, YAC_HT);
+            DCU = processDU(UDU, fdtbl_UV, DCU, UVDC_HT, UVAC_HT);
+            DCV = processDU(VDU, fdtbl_UV, DCV, UVDC_HT, UVAC_HT);
+            x2 += 32;
+          }
+          y2 += 8;
+        }
+        if (bytepos >= 0) {
+          var fillbits = [];
+          fillbits[1] = bytepos + 1;
+          fillbits[0] = (1 << bytepos + 1) - 1;
+          writeBits(fillbits);
+        }
+        writeWord(65497);
+        if (typeof module === "undefined") return new Uint8Array(byteout);
+        return Buffer.from(byteout);
+        var jpegDataUri = "data:image/jpeg;base64," + btoa(byteout.join(""));
+        byteout = [];
+        var duration = (/* @__PURE__ */ new Date()).getTime() - time_start;
+        return jpegDataUri;
+      };
+      function setQuality(quality2) {
+        if (quality2 <= 0) {
+          quality2 = 1;
+        }
+        if (quality2 > 100) {
+          quality2 = 100;
+        }
+        if (currentQuality == quality2) return;
+        var sf = 0;
+        if (quality2 < 50) {
+          sf = Math.floor(5e3 / quality2);
+        } else {
+          sf = Math.floor(200 - quality2 * 2);
+        }
+        initQuantTables(sf);
+        currentQuality = quality2;
+      }
+      function init() {
+        var time_start = (/* @__PURE__ */ new Date()).getTime();
+        if (!quality) quality = 50;
+        initCharLookupTable();
+        initHuffmanTbl();
+        initCategoryNumber();
+        initRGBYUVTable();
+        setQuality(quality);
+        var duration = (/* @__PURE__ */ new Date()).getTime() - time_start;
+      }
+      init();
+    }
+    if (typeof module !== "undefined") {
+      module.exports = encode;
+    } else if (typeof window !== "undefined") {
+      window["jpeg-js"] = window["jpeg-js"] || {};
+      window["jpeg-js"].encode = encode;
+    }
+    function encode(imgData, qu) {
+      if (typeof qu === "undefined") qu = 50;
+      var encoder = new JPEGEncoder(qu);
+      var data2 = encoder.encode(imgData, qu);
+      return {
+        data: data2,
+        width: imgData.width,
+        height: imgData.height
+      };
+    }
+  }
+});
+
+// node_modules/jpeg-js/lib/decoder.js
+var require_decoder = __commonJS({
+  "node_modules/jpeg-js/lib/decoder.js"(exports, module) {
+    var JpegImage = (function jpegImage() {
+      "use strict";
+      var dctZigZag = new Int32Array([
+        0,
+        1,
+        8,
+        16,
+        9,
+        2,
+        3,
+        10,
+        17,
+        24,
+        32,
+        25,
+        18,
+        11,
+        4,
+        5,
+        12,
+        19,
+        26,
+        33,
+        40,
+        48,
+        41,
+        34,
+        27,
+        20,
+        13,
+        6,
+        7,
+        14,
+        21,
+        28,
+        35,
+        42,
+        49,
+        56,
+        57,
+        50,
+        43,
+        36,
+        29,
+        22,
+        15,
+        23,
+        30,
+        37,
+        44,
+        51,
+        58,
+        59,
+        52,
+        45,
+        38,
+        31,
+        39,
+        46,
+        53,
+        60,
+        61,
+        54,
+        47,
+        55,
+        62,
+        63
+      ]);
+      var dctCos1 = 4017;
+      var dctSin1 = 799;
+      var dctCos3 = 3406;
+      var dctSin3 = 2276;
+      var dctCos6 = 1567;
+      var dctSin6 = 3784;
+      var dctSqrt2 = 5793;
+      var dctSqrt1d2 = 2896;
+      function constructor() {
+      }
+      function buildHuffmanTable(codeLengths, values) {
+        var k = 0, code = [], i, j, length2 = 16;
+        while (length2 > 0 && !codeLengths[length2 - 1])
+          length2--;
+        code.push({ children: [], index: 0 });
+        var p = code[0], q;
+        for (i = 0; i < length2; i++) {
+          for (j = 0; j < codeLengths[i]; j++) {
+            p = code.pop();
+            p.children[p.index] = values[k];
+            while (p.index > 0) {
+              if (code.length === 0)
+                throw new Error("Could not recreate Huffman Table");
+              p = code.pop();
+            }
+            p.index++;
+            code.push(p);
+            while (code.length <= i) {
+              code.push(q = { children: [], index: 0 });
+              p.children[p.index] = q.children;
+              p = q;
+            }
+            k++;
+          }
+          if (i + 1 < length2) {
+            code.push(q = { children: [], index: 0 });
+            p.children[p.index] = q.children;
+            p = q;
+          }
+        }
+        return code[0].children;
+      }
+      function decodeScan(data2, offset, frame, components, resetInterval, spectralStart, spectralEnd, successivePrev, successive, opts) {
+        var precision = frame.precision;
+        var samplesPerLine = frame.samplesPerLine;
+        var scanLines = frame.scanLines;
+        var mcusPerLine = frame.mcusPerLine;
+        var progressive = frame.progressive;
+        var maxH = frame.maxH, maxV = frame.maxV;
+        var startOffset = offset, bitsData = 0, bitsCount = 0;
+        function readBit() {
+          if (bitsCount > 0) {
+            bitsCount--;
+            return bitsData >> bitsCount & 1;
+          }
+          bitsData = data2[offset++];
+          if (bitsData == 255) {
+            var nextByte = data2[offset++];
+            if (nextByte) {
+              throw new Error("unexpected marker: " + (bitsData << 8 | nextByte).toString(16));
+            }
+          }
+          bitsCount = 7;
+          return bitsData >>> 7;
+        }
+        function decodeHuffman(tree) {
+          var node = tree, bit;
+          while ((bit = readBit()) !== null) {
+            node = node[bit];
+            if (typeof node === "number")
+              return node;
+            if (typeof node !== "object")
+              throw new Error("invalid huffman sequence");
+          }
+          return null;
+        }
+        function receive(length2) {
+          var n2 = 0;
+          while (length2 > 0) {
+            var bit = readBit();
+            if (bit === null) return;
+            n2 = n2 << 1 | bit;
+            length2--;
+          }
+          return n2;
+        }
+        function receiveAndExtend(length2) {
+          var n2 = receive(length2);
+          if (n2 >= 1 << length2 - 1)
+            return n2;
+          return n2 + (-1 << length2) + 1;
+        }
+        function decodeBaseline(component2, zz) {
+          var t = decodeHuffman(component2.huffmanTableDC);
+          var diff = t === 0 ? 0 : receiveAndExtend(t);
+          zz[0] = component2.pred += diff;
+          var k2 = 1;
+          while (k2 < 64) {
+            var rs = decodeHuffman(component2.huffmanTableAC);
+            var s = rs & 15, r = rs >> 4;
+            if (s === 0) {
+              if (r < 15)
+                break;
+              k2 += 16;
+              continue;
+            }
+            k2 += r;
+            var z = dctZigZag[k2];
+            zz[z] = receiveAndExtend(s);
+            k2++;
+          }
+        }
+        function decodeDCFirst(component2, zz) {
+          var t = decodeHuffman(component2.huffmanTableDC);
+          var diff = t === 0 ? 0 : receiveAndExtend(t) << successive;
+          zz[0] = component2.pred += diff;
+        }
+        function decodeDCSuccessive(component2, zz) {
+          zz[0] |= readBit() << successive;
+        }
+        var eobrun = 0;
+        function decodeACFirst(component2, zz) {
+          if (eobrun > 0) {
+            eobrun--;
+            return;
+          }
+          var k2 = spectralStart, e = spectralEnd;
+          while (k2 <= e) {
+            var rs = decodeHuffman(component2.huffmanTableAC);
+            var s = rs & 15, r = rs >> 4;
+            if (s === 0) {
+              if (r < 15) {
+                eobrun = receive(r) + (1 << r) - 1;
+                break;
+              }
+              k2 += 16;
+              continue;
+            }
+            k2 += r;
+            var z = dctZigZag[k2];
+            zz[z] = receiveAndExtend(s) * (1 << successive);
+            k2++;
+          }
+        }
+        var successiveACState = 0, successiveACNextValue;
+        function decodeACSuccessive(component2, zz) {
+          var k2 = spectralStart, e = spectralEnd, r = 0;
+          while (k2 <= e) {
+            var z = dctZigZag[k2];
+            var direction = zz[z] < 0 ? -1 : 1;
+            switch (successiveACState) {
+              case 0:
+                var rs = decodeHuffman(component2.huffmanTableAC);
+                var s = rs & 15, r = rs >> 4;
+                if (s === 0) {
+                  if (r < 15) {
+                    eobrun = receive(r) + (1 << r);
+                    successiveACState = 4;
+                  } else {
+                    r = 16;
+                    successiveACState = 1;
+                  }
+                } else {
+                  if (s !== 1)
+                    throw new Error("invalid ACn encoding");
+                  successiveACNextValue = receiveAndExtend(s);
+                  successiveACState = r ? 2 : 3;
+                }
+                continue;
+              case 1:
+              // skipping r zero items
+              case 2:
+                if (zz[z])
+                  zz[z] += (readBit() << successive) * direction;
+                else {
+                  r--;
+                  if (r === 0)
+                    successiveACState = successiveACState == 2 ? 3 : 0;
+                }
+                break;
+              case 3:
+                if (zz[z])
+                  zz[z] += (readBit() << successive) * direction;
+                else {
+                  zz[z] = successiveACNextValue << successive;
+                  successiveACState = 0;
+                }
+                break;
+              case 4:
+                if (zz[z])
+                  zz[z] += (readBit() << successive) * direction;
+                break;
+            }
+            k2++;
+          }
+          if (successiveACState === 4) {
+            eobrun--;
+            if (eobrun === 0)
+              successiveACState = 0;
+          }
+        }
+        function decodeMcu(component2, decode3, mcu2, row, col) {
+          var mcuRow = mcu2 / mcusPerLine | 0;
+          var mcuCol = mcu2 % mcusPerLine;
+          var blockRow = mcuRow * component2.v + row;
+          var blockCol = mcuCol * component2.h + col;
+          if (component2.blocks[blockRow] === void 0 && opts.tolerantDecoding)
+            return;
+          decode3(component2, component2.blocks[blockRow][blockCol]);
+        }
+        function decodeBlock(component2, decode3, mcu2) {
+          var blockRow = mcu2 / component2.blocksPerLine | 0;
+          var blockCol = mcu2 % component2.blocksPerLine;
+          if (component2.blocks[blockRow] === void 0 && opts.tolerantDecoding)
+            return;
+          decode3(component2, component2.blocks[blockRow][blockCol]);
+        }
+        var componentsLength = components.length;
+        var component, i, j, k, n;
+        var decodeFn;
+        if (progressive) {
+          if (spectralStart === 0)
+            decodeFn = successivePrev === 0 ? decodeDCFirst : decodeDCSuccessive;
+          else
+            decodeFn = successivePrev === 0 ? decodeACFirst : decodeACSuccessive;
+        } else {
+          decodeFn = decodeBaseline;
+        }
+        var mcu = 0, marker;
+        var mcuExpected;
+        if (componentsLength == 1) {
+          mcuExpected = components[0].blocksPerLine * components[0].blocksPerColumn;
+        } else {
+          mcuExpected = mcusPerLine * frame.mcusPerColumn;
+        }
+        if (!resetInterval) resetInterval = mcuExpected;
+        var h, v;
+        while (mcu < mcuExpected) {
+          for (i = 0; i < componentsLength; i++)
+            components[i].pred = 0;
+          eobrun = 0;
+          if (componentsLength == 1) {
+            component = components[0];
+            for (n = 0; n < resetInterval; n++) {
+              decodeBlock(component, decodeFn, mcu);
+              mcu++;
+            }
+          } else {
+            for (n = 0; n < resetInterval; n++) {
+              for (i = 0; i < componentsLength; i++) {
+                component = components[i];
+                h = component.h;
+                v = component.v;
+                for (j = 0; j < v; j++) {
+                  for (k = 0; k < h; k++) {
+                    decodeMcu(component, decodeFn, mcu, j, k);
+                  }
+                }
+              }
+              mcu++;
+              if (mcu === mcuExpected) break;
+            }
+          }
+          if (mcu === mcuExpected) {
+            do {
+              if (data2[offset] === 255) {
+                if (data2[offset + 1] !== 0) {
+                  break;
+                }
+              }
+              offset += 1;
+            } while (offset < data2.length - 2);
+          }
+          bitsCount = 0;
+          marker = data2[offset] << 8 | data2[offset + 1];
+          if (marker < 65280) {
+            throw new Error("marker was not found");
+          }
+          if (marker >= 65488 && marker <= 65495) {
+            offset += 2;
+          } else
+            break;
+        }
+        return offset - startOffset;
+      }
+      function buildComponentData(frame, component) {
+        var lines = [];
+        var blocksPerLine = component.blocksPerLine;
+        var blocksPerColumn = component.blocksPerColumn;
+        var samplesPerLine = blocksPerLine << 3;
+        var R = new Int32Array(64), r = new Uint8Array(64);
+        function quantizeAndInverse(zz, dataOut, dataIn) {
+          var qt = component.quantizationTable;
+          var v0, v1, v2, v3, v4, v5, v6, v7, t;
+          var p = dataIn;
+          var i2;
+          for (i2 = 0; i2 < 64; i2++)
+            p[i2] = zz[i2] * qt[i2];
+          for (i2 = 0; i2 < 8; ++i2) {
+            var row = 8 * i2;
+            if (p[1 + row] == 0 && p[2 + row] == 0 && p[3 + row] == 0 && p[4 + row] == 0 && p[5 + row] == 0 && p[6 + row] == 0 && p[7 + row] == 0) {
+              t = dctSqrt2 * p[0 + row] + 512 >> 10;
+              p[0 + row] = t;
+              p[1 + row] = t;
+              p[2 + row] = t;
+              p[3 + row] = t;
+              p[4 + row] = t;
+              p[5 + row] = t;
+              p[6 + row] = t;
+              p[7 + row] = t;
+              continue;
+            }
+            v0 = dctSqrt2 * p[0 + row] + 128 >> 8;
+            v1 = dctSqrt2 * p[4 + row] + 128 >> 8;
+            v2 = p[2 + row];
+            v3 = p[6 + row];
+            v4 = dctSqrt1d2 * (p[1 + row] - p[7 + row]) + 128 >> 8;
+            v7 = dctSqrt1d2 * (p[1 + row] + p[7 + row]) + 128 >> 8;
+            v5 = p[3 + row] << 4;
+            v6 = p[5 + row] << 4;
+            t = v0 - v1 + 1 >> 1;
+            v0 = v0 + v1 + 1 >> 1;
+            v1 = t;
+            t = v2 * dctSin6 + v3 * dctCos6 + 128 >> 8;
+            v2 = v2 * dctCos6 - v3 * dctSin6 + 128 >> 8;
+            v3 = t;
+            t = v4 - v6 + 1 >> 1;
+            v4 = v4 + v6 + 1 >> 1;
+            v6 = t;
+            t = v7 + v5 + 1 >> 1;
+            v5 = v7 - v5 + 1 >> 1;
+            v7 = t;
+            t = v0 - v3 + 1 >> 1;
+            v0 = v0 + v3 + 1 >> 1;
+            v3 = t;
+            t = v1 - v2 + 1 >> 1;
+            v1 = v1 + v2 + 1 >> 1;
+            v2 = t;
+            t = v4 * dctSin3 + v7 * dctCos3 + 2048 >> 12;
+            v4 = v4 * dctCos3 - v7 * dctSin3 + 2048 >> 12;
+            v7 = t;
+            t = v5 * dctSin1 + v6 * dctCos1 + 2048 >> 12;
+            v5 = v5 * dctCos1 - v6 * dctSin1 + 2048 >> 12;
+            v6 = t;
+            p[0 + row] = v0 + v7;
+            p[7 + row] = v0 - v7;
+            p[1 + row] = v1 + v6;
+            p[6 + row] = v1 - v6;
+            p[2 + row] = v2 + v5;
+            p[5 + row] = v2 - v5;
+            p[3 + row] = v3 + v4;
+            p[4 + row] = v3 - v4;
+          }
+          for (i2 = 0; i2 < 8; ++i2) {
+            var col = i2;
+            if (p[1 * 8 + col] == 0 && p[2 * 8 + col] == 0 && p[3 * 8 + col] == 0 && p[4 * 8 + col] == 0 && p[5 * 8 + col] == 0 && p[6 * 8 + col] == 0 && p[7 * 8 + col] == 0) {
+              t = dctSqrt2 * dataIn[i2 + 0] + 8192 >> 14;
+              p[0 * 8 + col] = t;
+              p[1 * 8 + col] = t;
+              p[2 * 8 + col] = t;
+              p[3 * 8 + col] = t;
+              p[4 * 8 + col] = t;
+              p[5 * 8 + col] = t;
+              p[6 * 8 + col] = t;
+              p[7 * 8 + col] = t;
+              continue;
+            }
+            v0 = dctSqrt2 * p[0 * 8 + col] + 2048 >> 12;
+            v1 = dctSqrt2 * p[4 * 8 + col] + 2048 >> 12;
+            v2 = p[2 * 8 + col];
+            v3 = p[6 * 8 + col];
+            v4 = dctSqrt1d2 * (p[1 * 8 + col] - p[7 * 8 + col]) + 2048 >> 12;
+            v7 = dctSqrt1d2 * (p[1 * 8 + col] + p[7 * 8 + col]) + 2048 >> 12;
+            v5 = p[3 * 8 + col];
+            v6 = p[5 * 8 + col];
+            t = v0 - v1 + 1 >> 1;
+            v0 = v0 + v1 + 1 >> 1;
+            v1 = t;
+            t = v2 * dctSin6 + v3 * dctCos6 + 2048 >> 12;
+            v2 = v2 * dctCos6 - v3 * dctSin6 + 2048 >> 12;
+            v3 = t;
+            t = v4 - v6 + 1 >> 1;
+            v4 = v4 + v6 + 1 >> 1;
+            v6 = t;
+            t = v7 + v5 + 1 >> 1;
+            v5 = v7 - v5 + 1 >> 1;
+            v7 = t;
+            t = v0 - v3 + 1 >> 1;
+            v0 = v0 + v3 + 1 >> 1;
+            v3 = t;
+            t = v1 - v2 + 1 >> 1;
+            v1 = v1 + v2 + 1 >> 1;
+            v2 = t;
+            t = v4 * dctSin3 + v7 * dctCos3 + 2048 >> 12;
+            v4 = v4 * dctCos3 - v7 * dctSin3 + 2048 >> 12;
+            v7 = t;
+            t = v5 * dctSin1 + v6 * dctCos1 + 2048 >> 12;
+            v5 = v5 * dctCos1 - v6 * dctSin1 + 2048 >> 12;
+            v6 = t;
+            p[0 * 8 + col] = v0 + v7;
+            p[7 * 8 + col] = v0 - v7;
+            p[1 * 8 + col] = v1 + v6;
+            p[6 * 8 + col] = v1 - v6;
+            p[2 * 8 + col] = v2 + v5;
+            p[5 * 8 + col] = v2 - v5;
+            p[3 * 8 + col] = v3 + v4;
+            p[4 * 8 + col] = v3 - v4;
+          }
+          for (i2 = 0; i2 < 64; ++i2) {
+            var sample2 = 128 + (p[i2] + 8 >> 4);
+            dataOut[i2] = sample2 < 0 ? 0 : sample2 > 255 ? 255 : sample2;
+          }
+        }
+        requestMemoryAllocation(samplesPerLine * blocksPerColumn * 8);
+        var i, j;
+        for (var blockRow = 0; blockRow < blocksPerColumn; blockRow++) {
+          var scanLine = blockRow << 3;
+          for (i = 0; i < 8; i++)
+            lines.push(new Uint8Array(samplesPerLine));
+          for (var blockCol = 0; blockCol < blocksPerLine; blockCol++) {
+            quantizeAndInverse(component.blocks[blockRow][blockCol], r, R);
+            var offset = 0, sample = blockCol << 3;
+            for (j = 0; j < 8; j++) {
+              var line = lines[scanLine + j];
+              for (i = 0; i < 8; i++)
+                line[sample + i] = r[offset++];
+            }
+          }
+        }
+        return lines;
+      }
+      function clampTo8bit(a) {
+        return a < 0 ? 0 : a > 255 ? 255 : a;
+      }
+      constructor.prototype = {
+        load: function load(path) {
+          var xhr = new XMLHttpRequest();
+          xhr.open("GET", path, true);
+          xhr.responseType = "arraybuffer";
+          xhr.onload = (function() {
+            var data2 = new Uint8Array(xhr.response || xhr.mozResponseArrayBuffer);
+            this.parse(data2);
+            if (this.onload)
+              this.onload();
+          }).bind(this);
+          xhr.send(null);
+        },
+        parse: function parse6(data2) {
+          var maxResolutionInPixels = this.opts.maxResolutionInMP * 1e3 * 1e3;
+          var offset = 0, length2 = data2.length;
+          function readUint16() {
+            var value = data2[offset] << 8 | data2[offset + 1];
+            offset += 2;
+            return value;
+          }
+          function readDataBlock() {
+            var length3 = readUint16();
+            var array2 = data2.subarray(offset, offset + length3 - 2);
+            offset += array2.length;
+            return array2;
+          }
+          function prepareComponents(frame2) {
+            var maxH2 = 1, maxV2 = 1;
+            var component2, componentId2;
+            for (componentId2 in frame2.components) {
+              if (frame2.components.hasOwnProperty(componentId2)) {
+                component2 = frame2.components[componentId2];
+                if (maxH2 < component2.h) maxH2 = component2.h;
+                if (maxV2 < component2.v) maxV2 = component2.v;
+              }
+            }
+            var mcusPerLine = Math.ceil(frame2.samplesPerLine / 8 / maxH2);
+            var mcusPerColumn = Math.ceil(frame2.scanLines / 8 / maxV2);
+            for (componentId2 in frame2.components) {
+              if (frame2.components.hasOwnProperty(componentId2)) {
+                component2 = frame2.components[componentId2];
+                var blocksPerLine = Math.ceil(Math.ceil(frame2.samplesPerLine / 8) * component2.h / maxH2);
+                var blocksPerColumn = Math.ceil(Math.ceil(frame2.scanLines / 8) * component2.v / maxV2);
+                var blocksPerLineForMcu = mcusPerLine * component2.h;
+                var blocksPerColumnForMcu = mcusPerColumn * component2.v;
+                var blocksToAllocate = blocksPerColumnForMcu * blocksPerLineForMcu;
+                var blocks = [];
+                requestMemoryAllocation(blocksToAllocate * 256);
+                for (var i2 = 0; i2 < blocksPerColumnForMcu; i2++) {
+                  var row = [];
+                  for (var j2 = 0; j2 < blocksPerLineForMcu; j2++)
+                    row.push(new Int32Array(64));
+                  blocks.push(row);
+                }
+                component2.blocksPerLine = blocksPerLine;
+                component2.blocksPerColumn = blocksPerColumn;
+                component2.blocks = blocks;
+              }
+            }
+            frame2.maxH = maxH2;
+            frame2.maxV = maxV2;
+            frame2.mcusPerLine = mcusPerLine;
+            frame2.mcusPerColumn = mcusPerColumn;
+          }
+          var jfif = null;
+          var adobe = null;
+          var pixels = null;
+          var frame, resetInterval;
+          var quantizationTables = [], frames = [];
+          var huffmanTablesAC = [], huffmanTablesDC = [];
+          var fileMarker = readUint16();
+          var malformedDataOffset = -1;
+          this.comments = [];
+          if (fileMarker != 65496) {
+            throw new Error("SOI not found");
+          }
+          fileMarker = readUint16();
+          while (fileMarker != 65497) {
+            var i, j, l;
+            switch (fileMarker) {
+              case 65280:
+                break;
+              case 65504:
+              // APP0 (Application Specific)
+              case 65505:
+              // APP1
+              case 65506:
+              // APP2
+              case 65507:
+              // APP3
+              case 65508:
+              // APP4
+              case 65509:
+              // APP5
+              case 65510:
+              // APP6
+              case 65511:
+              // APP7
+              case 65512:
+              // APP8
+              case 65513:
+              // APP9
+              case 65514:
+              // APP10
+              case 65515:
+              // APP11
+              case 65516:
+              // APP12
+              case 65517:
+              // APP13
+              case 65518:
+              // APP14
+              case 65519:
+              // APP15
+              case 65534:
+                var appData = readDataBlock();
+                if (fileMarker === 65534) {
+                  var comment = String.fromCharCode.apply(null, appData);
+                  this.comments.push(comment);
+                }
+                if (fileMarker === 65504) {
+                  if (appData[0] === 74 && appData[1] === 70 && appData[2] === 73 && appData[3] === 70 && appData[4] === 0) {
+                    jfif = {
+                      version: { major: appData[5], minor: appData[6] },
+                      densityUnits: appData[7],
+                      xDensity: appData[8] << 8 | appData[9],
+                      yDensity: appData[10] << 8 | appData[11],
+                      thumbWidth: appData[12],
+                      thumbHeight: appData[13],
+                      thumbData: appData.subarray(14, 14 + 3 * appData[12] * appData[13])
+                    };
+                  }
+                }
+                if (fileMarker === 65505) {
+                  if (appData[0] === 69 && appData[1] === 120 && appData[2] === 105 && appData[3] === 102 && appData[4] === 0) {
+                    this.exifBuffer = appData.subarray(5, appData.length);
+                  }
+                }
+                if (fileMarker === 65518) {
+                  if (appData[0] === 65 && appData[1] === 100 && appData[2] === 111 && appData[3] === 98 && appData[4] === 101 && appData[5] === 0) {
+                    adobe = {
+                      version: appData[6],
+                      flags0: appData[7] << 8 | appData[8],
+                      flags1: appData[9] << 8 | appData[10],
+                      transformCode: appData[11]
+                    };
+                  }
+                }
+                break;
+              case 65499:
+                var quantizationTablesLength = readUint16();
+                var quantizationTablesEnd = quantizationTablesLength + offset - 2;
+                while (offset < quantizationTablesEnd) {
+                  var quantizationTableSpec = data2[offset++];
+                  requestMemoryAllocation(64 * 4);
+                  var tableData = new Int32Array(64);
+                  if (quantizationTableSpec >> 4 === 0) {
+                    for (j = 0; j < 64; j++) {
+                      var z = dctZigZag[j];
+                      tableData[z] = data2[offset++];
+                    }
+                  } else if (quantizationTableSpec >> 4 === 1) {
+                    for (j = 0; j < 64; j++) {
+                      var z = dctZigZag[j];
+                      tableData[z] = readUint16();
+                    }
+                  } else
+                    throw new Error("DQT: invalid table spec");
+                  quantizationTables[quantizationTableSpec & 15] = tableData;
+                }
+                break;
+              case 65472:
+              // SOF0 (Start of Frame, Baseline DCT)
+              case 65473:
+              // SOF1 (Start of Frame, Extended DCT)
+              case 65474:
+                readUint16();
+                frame = {};
+                frame.extended = fileMarker === 65473;
+                frame.progressive = fileMarker === 65474;
+                frame.precision = data2[offset++];
+                frame.scanLines = readUint16();
+                frame.samplesPerLine = readUint16();
+                frame.components = {};
+                frame.componentsOrder = [];
+                var pixelsInFrame = frame.scanLines * frame.samplesPerLine;
+                if (pixelsInFrame > maxResolutionInPixels) {
+                  var exceededAmount = Math.ceil((pixelsInFrame - maxResolutionInPixels) / 1e6);
+                  throw new Error(`maxResolutionInMP limit exceeded by ${exceededAmount}MP`);
+                }
+                var componentsCount = data2[offset++], componentId;
+                var maxH = 0, maxV = 0;
+                for (i = 0; i < componentsCount; i++) {
+                  componentId = data2[offset];
+                  var h = data2[offset + 1] >> 4;
+                  var v = data2[offset + 1] & 15;
+                  var qId = data2[offset + 2];
+                  if (h <= 0 || v <= 0) {
+                    throw new Error("Invalid sampling factor, expected values above 0");
+                  }
+                  frame.componentsOrder.push(componentId);
+                  frame.components[componentId] = {
+                    h,
+                    v,
+                    quantizationIdx: qId
+                  };
+                  offset += 3;
+                }
+                prepareComponents(frame);
+                frames.push(frame);
+                break;
+              case 65476:
+                var huffmanLength = readUint16();
+                for (i = 2; i < huffmanLength; ) {
+                  var huffmanTableSpec = data2[offset++];
+                  var codeLengths = new Uint8Array(16);
+                  var codeLengthSum = 0;
+                  for (j = 0; j < 16; j++, offset++) {
+                    codeLengthSum += codeLengths[j] = data2[offset];
+                  }
+                  requestMemoryAllocation(16 + codeLengthSum);
+                  var huffmanValues = new Uint8Array(codeLengthSum);
+                  for (j = 0; j < codeLengthSum; j++, offset++)
+                    huffmanValues[j] = data2[offset];
+                  i += 17 + codeLengthSum;
+                  (huffmanTableSpec >> 4 === 0 ? huffmanTablesDC : huffmanTablesAC)[huffmanTableSpec & 15] = buildHuffmanTable(codeLengths, huffmanValues);
+                }
+                break;
+              case 65501:
+                readUint16();
+                resetInterval = readUint16();
+                break;
+              case 65500:
+                readUint16();
+                readUint16();
+                break;
+              case 65498:
+                var scanLength = readUint16();
+                var selectorsCount = data2[offset++];
+                var components = [], component;
+                for (i = 0; i < selectorsCount; i++) {
+                  component = frame.components[data2[offset++]];
+                  var tableSpec = data2[offset++];
+                  component.huffmanTableDC = huffmanTablesDC[tableSpec >> 4];
+                  component.huffmanTableAC = huffmanTablesAC[tableSpec & 15];
+                  components.push(component);
+                }
+                var spectralStart = data2[offset++];
+                var spectralEnd = data2[offset++];
+                var successiveApproximation = data2[offset++];
+                var processed = decodeScan(
+                  data2,
+                  offset,
+                  frame,
+                  components,
+                  resetInterval,
+                  spectralStart,
+                  spectralEnd,
+                  successiveApproximation >> 4,
+                  successiveApproximation & 15,
+                  this.opts
+                );
+                offset += processed;
+                break;
+              case 65535:
+                if (data2[offset] !== 255) {
+                  offset--;
+                }
+                break;
+              default:
+                if (data2[offset - 3] == 255 && data2[offset - 2] >= 192 && data2[offset - 2] <= 254) {
+                  offset -= 3;
+                  break;
+                } else if (fileMarker === 224 || fileMarker == 225) {
+                  if (malformedDataOffset !== -1) {
+                    throw new Error(`first unknown JPEG marker at offset ${malformedDataOffset.toString(16)}, second unknown JPEG marker ${fileMarker.toString(16)} at offset ${(offset - 1).toString(16)}`);
+                  }
+                  malformedDataOffset = offset - 1;
+                  const nextOffset = readUint16();
+                  if (data2[offset + nextOffset - 2] === 255) {
+                    offset += nextOffset - 2;
+                    break;
+                  }
+                }
+                throw new Error("unknown JPEG marker " + fileMarker.toString(16));
+            }
+            fileMarker = readUint16();
+          }
+          if (frames.length != 1)
+            throw new Error("only single frame JPEGs supported");
+          for (var i = 0; i < frames.length; i++) {
+            var cp = frames[i].components;
+            for (var j in cp) {
+              cp[j].quantizationTable = quantizationTables[cp[j].quantizationIdx];
+              delete cp[j].quantizationIdx;
+            }
+          }
+          this.width = frame.samplesPerLine;
+          this.height = frame.scanLines;
+          this.jfif = jfif;
+          this.adobe = adobe;
+          this.components = [];
+          for (var i = 0; i < frame.componentsOrder.length; i++) {
+            var component = frame.components[frame.componentsOrder[i]];
+            this.components.push({
+              lines: buildComponentData(frame, component),
+              scaleX: component.h / frame.maxH,
+              scaleY: component.v / frame.maxV
+            });
+          }
+        },
+        getData: function getData(width2, height2) {
+          var scaleX = this.width / width2, scaleY = this.height / height2;
+          var component1, component2, component3, component4;
+          var component1Line, component2Line, component3Line, component4Line;
+          var x2, y2;
+          var offset = 0;
+          var Y, Cb, Cr, K2, C, M, Ye, R, G2, B;
+          var colorTransform;
+          var dataLength = width2 * height2 * this.components.length;
+          requestMemoryAllocation(dataLength);
+          var data2 = new Uint8Array(dataLength);
+          switch (this.components.length) {
+            case 1:
+              component1 = this.components[0];
+              for (y2 = 0; y2 < height2; y2++) {
+                component1Line = component1.lines[0 | y2 * component1.scaleY * scaleY];
+                for (x2 = 0; x2 < width2; x2++) {
+                  Y = component1Line[0 | x2 * component1.scaleX * scaleX];
+                  data2[offset++] = Y;
+                }
+              }
+              break;
+            case 2:
+              component1 = this.components[0];
+              component2 = this.components[1];
+              for (y2 = 0; y2 < height2; y2++) {
+                component1Line = component1.lines[0 | y2 * component1.scaleY * scaleY];
+                component2Line = component2.lines[0 | y2 * component2.scaleY * scaleY];
+                for (x2 = 0; x2 < width2; x2++) {
+                  Y = component1Line[0 | x2 * component1.scaleX * scaleX];
+                  data2[offset++] = Y;
+                  Y = component2Line[0 | x2 * component2.scaleX * scaleX];
+                  data2[offset++] = Y;
+                }
+              }
+              break;
+            case 3:
+              colorTransform = true;
+              if (this.adobe && this.adobe.transformCode)
+                colorTransform = true;
+              else if (typeof this.opts.colorTransform !== "undefined")
+                colorTransform = !!this.opts.colorTransform;
+              component1 = this.components[0];
+              component2 = this.components[1];
+              component3 = this.components[2];
+              for (y2 = 0; y2 < height2; y2++) {
+                component1Line = component1.lines[0 | y2 * component1.scaleY * scaleY];
+                component2Line = component2.lines[0 | y2 * component2.scaleY * scaleY];
+                component3Line = component3.lines[0 | y2 * component3.scaleY * scaleY];
+                for (x2 = 0; x2 < width2; x2++) {
+                  if (!colorTransform) {
+                    R = component1Line[0 | x2 * component1.scaleX * scaleX];
+                    G2 = component2Line[0 | x2 * component2.scaleX * scaleX];
+                    B = component3Line[0 | x2 * component3.scaleX * scaleX];
+                  } else {
+                    Y = component1Line[0 | x2 * component1.scaleX * scaleX];
+                    Cb = component2Line[0 | x2 * component2.scaleX * scaleX];
+                    Cr = component3Line[0 | x2 * component3.scaleX * scaleX];
+                    R = clampTo8bit(Y + 1.402 * (Cr - 128));
+                    G2 = clampTo8bit(Y - 0.3441363 * (Cb - 128) - 0.71413636 * (Cr - 128));
+                    B = clampTo8bit(Y + 1.772 * (Cb - 128));
+                  }
+                  data2[offset++] = R;
+                  data2[offset++] = G2;
+                  data2[offset++] = B;
+                }
+              }
+              break;
+            case 4:
+              if (!this.adobe)
+                throw new Error("Unsupported color mode (4 components)");
+              colorTransform = false;
+              if (this.adobe && this.adobe.transformCode)
+                colorTransform = true;
+              else if (typeof this.opts.colorTransform !== "undefined")
+                colorTransform = !!this.opts.colorTransform;
+              component1 = this.components[0];
+              component2 = this.components[1];
+              component3 = this.components[2];
+              component4 = this.components[3];
+              for (y2 = 0; y2 < height2; y2++) {
+                component1Line = component1.lines[0 | y2 * component1.scaleY * scaleY];
+                component2Line = component2.lines[0 | y2 * component2.scaleY * scaleY];
+                component3Line = component3.lines[0 | y2 * component3.scaleY * scaleY];
+                component4Line = component4.lines[0 | y2 * component4.scaleY * scaleY];
+                for (x2 = 0; x2 < width2; x2++) {
+                  if (!colorTransform) {
+                    C = component1Line[0 | x2 * component1.scaleX * scaleX];
+                    M = component2Line[0 | x2 * component2.scaleX * scaleX];
+                    Ye = component3Line[0 | x2 * component3.scaleX * scaleX];
+                    K2 = component4Line[0 | x2 * component4.scaleX * scaleX];
+                  } else {
+                    Y = component1Line[0 | x2 * component1.scaleX * scaleX];
+                    Cb = component2Line[0 | x2 * component2.scaleX * scaleX];
+                    Cr = component3Line[0 | x2 * component3.scaleX * scaleX];
+                    K2 = component4Line[0 | x2 * component4.scaleX * scaleX];
+                    C = 255 - clampTo8bit(Y + 1.402 * (Cr - 128));
+                    M = 255 - clampTo8bit(Y - 0.3441363 * (Cb - 128) - 0.71413636 * (Cr - 128));
+                    Ye = 255 - clampTo8bit(Y + 1.772 * (Cb - 128));
+                  }
+                  data2[offset++] = 255 - C;
+                  data2[offset++] = 255 - M;
+                  data2[offset++] = 255 - Ye;
+                  data2[offset++] = 255 - K2;
+                }
+              }
+              break;
+            default:
+              throw new Error("Unsupported color mode");
+          }
+          return data2;
+        },
+        copyToImageData: function copyToImageData(imageData, formatAsRGBA) {
+          var width2 = imageData.width, height2 = imageData.height;
+          var imageDataArray = imageData.data;
+          var data2 = this.getData(width2, height2);
+          var i = 0, j = 0, x2, y2;
+          var Y, K2, C, M, R, G2, B;
+          switch (this.components.length) {
+            case 1:
+              for (y2 = 0; y2 < height2; y2++) {
+                for (x2 = 0; x2 < width2; x2++) {
+                  Y = data2[i++];
+                  imageDataArray[j++] = Y;
+                  imageDataArray[j++] = Y;
+                  imageDataArray[j++] = Y;
+                  if (formatAsRGBA) {
+                    imageDataArray[j++] = 255;
+                  }
+                }
+              }
+              break;
+            case 3:
+              for (y2 = 0; y2 < height2; y2++) {
+                for (x2 = 0; x2 < width2; x2++) {
+                  R = data2[i++];
+                  G2 = data2[i++];
+                  B = data2[i++];
+                  imageDataArray[j++] = R;
+                  imageDataArray[j++] = G2;
+                  imageDataArray[j++] = B;
+                  if (formatAsRGBA) {
+                    imageDataArray[j++] = 255;
+                  }
+                }
+              }
+              break;
+            case 4:
+              for (y2 = 0; y2 < height2; y2++) {
+                for (x2 = 0; x2 < width2; x2++) {
+                  C = data2[i++];
+                  M = data2[i++];
+                  Y = data2[i++];
+                  K2 = data2[i++];
+                  R = 255 - clampTo8bit(C * (1 - K2 / 255) + K2);
+                  G2 = 255 - clampTo8bit(M * (1 - K2 / 255) + K2);
+                  B = 255 - clampTo8bit(Y * (1 - K2 / 255) + K2);
+                  imageDataArray[j++] = R;
+                  imageDataArray[j++] = G2;
+                  imageDataArray[j++] = B;
+                  if (formatAsRGBA) {
+                    imageDataArray[j++] = 255;
+                  }
+                }
+              }
+              break;
+            default:
+              throw new Error("Unsupported color mode");
+          }
+        }
+      };
+      var totalBytesAllocated = 0;
+      var maxMemoryUsageBytes = 0;
+      function requestMemoryAllocation(increaseAmount = 0) {
+        var totalMemoryImpactBytes = totalBytesAllocated + increaseAmount;
+        if (totalMemoryImpactBytes > maxMemoryUsageBytes) {
+          var exceededAmount = Math.ceil((totalMemoryImpactBytes - maxMemoryUsageBytes) / 1024 / 1024);
+          throw new Error(`maxMemoryUsageInMB limit exceeded by at least ${exceededAmount}MB`);
+        }
+        totalBytesAllocated = totalMemoryImpactBytes;
+      }
+      constructor.resetMaxMemoryUsage = function(maxMemoryUsageBytes_) {
+        totalBytesAllocated = 0;
+        maxMemoryUsageBytes = maxMemoryUsageBytes_;
+      };
+      constructor.getBytesAllocated = function() {
+        return totalBytesAllocated;
+      };
+      constructor.requestMemoryAllocation = requestMemoryAllocation;
+      return constructor;
+    })();
+    if (typeof module !== "undefined") {
+      module.exports = decode2;
+    } else if (typeof window !== "undefined") {
+      window["jpeg-js"] = window["jpeg-js"] || {};
+      window["jpeg-js"].decode = decode2;
+    }
+    function decode2(jpegData, userOpts = {}) {
+      var defaultOpts2 = {
+        // "undefined" means "Choose whether to transform colors based on the image’s color model."
+        colorTransform: void 0,
+        useTArray: false,
+        formatAsRGBA: true,
+        tolerantDecoding: true,
+        maxResolutionInMP: 100,
+        // Don't decode more than 100 megapixels
+        maxMemoryUsageInMB: 512
+        // Don't decode if memory footprint is more than 512MB
+      };
+      var opts = { ...defaultOpts2, ...userOpts };
+      var arr = new Uint8Array(jpegData);
+      var decoder = new JpegImage();
+      decoder.opts = opts;
+      JpegImage.resetMaxMemoryUsage(opts.maxMemoryUsageInMB * 1024 * 1024);
+      decoder.parse(arr);
+      var channels = opts.formatAsRGBA ? 4 : 3;
+      var bytesNeeded = decoder.width * decoder.height * channels;
+      try {
+        JpegImage.requestMemoryAllocation(bytesNeeded);
+        var image = {
+          width: decoder.width,
+          height: decoder.height,
+          exifBuffer: decoder.exifBuffer,
+          data: opts.useTArray ? new Uint8Array(bytesNeeded) : Buffer.alloc(bytesNeeded)
+        };
+        if (decoder.comments.length > 0) {
+          image["comments"] = decoder.comments;
+        }
+      } catch (err) {
+        if (err instanceof RangeError) {
+          throw new Error("Could not allocate enough memory for the image. Required: " + bytesNeeded);
+        }
+        if (err instanceof ReferenceError) {
+          if (err.message === "Buffer is not defined") {
+            throw new Error("Buffer is not globally defined in this environment. Consider setting useTArray to true");
+          }
+        }
+        throw err;
+      }
+      decoder.copyToImageData(image, opts.formatAsRGBA);
+      return image;
+    }
+  }
+});
+
+// node_modules/jpeg-js/index.js
+var require_jpeg_js = __commonJS({
+  "node_modules/jpeg-js/index.js"(exports, module) {
+    var encode = require_encoder();
+    var decode2 = require_decoder();
+    module.exports = {
+      encode,
+      decode: decode2
+    };
+  }
+});
+
+// node_modules/pngjs/lib/chunkstream.js
+var require_chunkstream = __commonJS({
+  "node_modules/pngjs/lib/chunkstream.js"(exports, module) {
+    "use strict";
+    var util = __require("util");
+    var Stream = __require("stream");
+    var ChunkStream = module.exports = function() {
+      Stream.call(this);
+      this._buffers = [];
+      this._buffered = 0;
+      this._reads = [];
+      this._paused = false;
+      this._encoding = "utf8";
+      this.writable = true;
+    };
+    util.inherits(ChunkStream, Stream);
+    ChunkStream.prototype.read = function(length2, callback) {
+      this._reads.push({
+        length: Math.abs(length2),
+        // if length < 0 then at most this length
+        allowLess: length2 < 0,
+        func: callback
+      });
+      process.nextTick(
+        function() {
+          this._process();
+          if (this._paused && this._reads && this._reads.length > 0) {
+            this._paused = false;
+            this.emit("drain");
+          }
+        }.bind(this)
+      );
+    };
+    ChunkStream.prototype.write = function(data2, encoding) {
+      if (!this.writable) {
+        this.emit("error", new Error("Stream not writable"));
+        return false;
+      }
+      let dataBuffer;
+      if (Buffer.isBuffer(data2)) {
+        dataBuffer = data2;
+      } else {
+        dataBuffer = Buffer.from(data2, encoding || this._encoding);
+      }
+      this._buffers.push(dataBuffer);
+      this._buffered += dataBuffer.length;
+      this._process();
+      if (this._reads && this._reads.length === 0) {
+        this._paused = true;
+      }
+      return this.writable && !this._paused;
+    };
+    ChunkStream.prototype.end = function(data2, encoding) {
+      if (data2) {
+        this.write(data2, encoding);
+      }
+      this.writable = false;
+      if (!this._buffers) {
+        return;
+      }
+      if (this._buffers.length === 0) {
+        this._end();
+      } else {
+        this._buffers.push(null);
+        this._process();
+      }
+    };
+    ChunkStream.prototype.destroySoon = ChunkStream.prototype.end;
+    ChunkStream.prototype._end = function() {
+      if (this._reads.length > 0) {
+        this.emit("error", new Error("Unexpected end of input"));
+      }
+      this.destroy();
+    };
+    ChunkStream.prototype.destroy = function() {
+      if (!this._buffers) {
+        return;
+      }
+      this.writable = false;
+      this._reads = null;
+      this._buffers = null;
+      this.emit("close");
+    };
+    ChunkStream.prototype._processReadAllowingLess = function(read) {
+      this._reads.shift();
+      let smallerBuf = this._buffers[0];
+      if (smallerBuf.length > read.length) {
+        this._buffered -= read.length;
+        this._buffers[0] = smallerBuf.slice(read.length);
+        read.func.call(this, smallerBuf.slice(0, read.length));
+      } else {
+        this._buffered -= smallerBuf.length;
+        this._buffers.shift();
+        read.func.call(this, smallerBuf);
+      }
+    };
+    ChunkStream.prototype._processRead = function(read) {
+      this._reads.shift();
+      let pos = 0;
+      let count = 0;
+      let data2 = Buffer.alloc(read.length);
+      while (pos < read.length) {
+        let buf = this._buffers[count++];
+        let len = Math.min(buf.length, read.length - pos);
+        buf.copy(data2, pos, 0, len);
+        pos += len;
+        if (len !== buf.length) {
+          this._buffers[--count] = buf.slice(len);
+        }
+      }
+      if (count > 0) {
+        this._buffers.splice(0, count);
+      }
+      this._buffered -= read.length;
+      read.func.call(this, data2);
+    };
+    ChunkStream.prototype._process = function() {
+      try {
+        while (this._buffered > 0 && this._reads && this._reads.length > 0) {
+          let read = this._reads[0];
+          if (read.allowLess) {
+            this._processReadAllowingLess(read);
+          } else if (this._buffered >= read.length) {
+            this._processRead(read);
+          } else {
+            break;
+          }
+        }
+        if (this._buffers && !this.writable) {
+          this._end();
+        }
+      } catch (ex) {
+        this.emit("error", ex);
+      }
+    };
+  }
+});
+
+// node_modules/pngjs/lib/interlace.js
+var require_interlace = __commonJS({
+  "node_modules/pngjs/lib/interlace.js"(exports) {
+    "use strict";
+    var imagePasses = [
+      {
+        // pass 1 - 1px
+        x: [0],
+        y: [0]
+      },
+      {
+        // pass 2 - 1px
+        x: [4],
+        y: [0]
+      },
+      {
+        // pass 3 - 2px
+        x: [0, 4],
+        y: [4]
+      },
+      {
+        // pass 4 - 4px
+        x: [2, 6],
+        y: [0, 4]
+      },
+      {
+        // pass 5 - 8px
+        x: [0, 2, 4, 6],
+        y: [2, 6]
+      },
+      {
+        // pass 6 - 16px
+        x: [1, 3, 5, 7],
+        y: [0, 2, 4, 6]
+      },
+      {
+        // pass 7 - 32px
+        x: [0, 1, 2, 3, 4, 5, 6, 7],
+        y: [1, 3, 5, 7]
+      }
+    ];
+    exports.getImagePasses = function(width2, height2) {
+      let images = [];
+      let xLeftOver = width2 % 8;
+      let yLeftOver = height2 % 8;
+      let xRepeats = (width2 - xLeftOver) / 8;
+      let yRepeats = (height2 - yLeftOver) / 8;
+      for (let i = 0; i < imagePasses.length; i++) {
+        let pass = imagePasses[i];
+        let passWidth = xRepeats * pass.x.length;
+        let passHeight = yRepeats * pass.y.length;
+        for (let j = 0; j < pass.x.length; j++) {
+          if (pass.x[j] < xLeftOver) {
+            passWidth++;
+          } else {
+            break;
+          }
+        }
+        for (let j = 0; j < pass.y.length; j++) {
+          if (pass.y[j] < yLeftOver) {
+            passHeight++;
+          } else {
+            break;
+          }
+        }
+        if (passWidth > 0 && passHeight > 0) {
+          images.push({ width: passWidth, height: passHeight, index: i });
+        }
+      }
+      return images;
+    };
+    exports.getInterlaceIterator = function(width2) {
+      return function(x2, y2, pass) {
+        let outerXLeftOver = x2 % imagePasses[pass].x.length;
+        let outerX = (x2 - outerXLeftOver) / imagePasses[pass].x.length * 8 + imagePasses[pass].x[outerXLeftOver];
+        let outerYLeftOver = y2 % imagePasses[pass].y.length;
+        let outerY = (y2 - outerYLeftOver) / imagePasses[pass].y.length * 8 + imagePasses[pass].y[outerYLeftOver];
+        return outerX * 4 + outerY * width2 * 4;
+      };
+    };
+  }
+});
+
+// node_modules/pngjs/lib/paeth-predictor.js
+var require_paeth_predictor = __commonJS({
+  "node_modules/pngjs/lib/paeth-predictor.js"(exports, module) {
+    "use strict";
+    module.exports = function paethPredictor(left, above, upLeft) {
+      let paeth = left + above - upLeft;
+      let pLeft = Math.abs(paeth - left);
+      let pAbove = Math.abs(paeth - above);
+      let pUpLeft = Math.abs(paeth - upLeft);
+      if (pLeft <= pAbove && pLeft <= pUpLeft) {
+        return left;
+      }
+      if (pAbove <= pUpLeft) {
+        return above;
+      }
+      return upLeft;
+    };
+  }
+});
+
+// node_modules/pngjs/lib/filter-parse.js
+var require_filter_parse = __commonJS({
+  "node_modules/pngjs/lib/filter-parse.js"(exports, module) {
+    "use strict";
+    var interlaceUtils = require_interlace();
+    var paethPredictor = require_paeth_predictor();
+    function getByteWidth(width2, bpp, depth) {
+      let byteWidth = width2 * bpp;
+      if (depth !== 8) {
+        byteWidth = Math.ceil(byteWidth / (8 / depth));
+      }
+      return byteWidth;
+    }
+    var Filter = module.exports = function(bitmapInfo, dependencies) {
+      let width2 = bitmapInfo.width;
+      let height2 = bitmapInfo.height;
+      let interlace = bitmapInfo.interlace;
+      let bpp = bitmapInfo.bpp;
+      let depth = bitmapInfo.depth;
+      this.read = dependencies.read;
+      this.write = dependencies.write;
+      this.complete = dependencies.complete;
+      this._imageIndex = 0;
+      this._images = [];
+      if (interlace) {
+        let passes = interlaceUtils.getImagePasses(width2, height2);
+        for (let i = 0; i < passes.length; i++) {
+          this._images.push({
+            byteWidth: getByteWidth(passes[i].width, bpp, depth),
+            height: passes[i].height,
+            lineIndex: 0
+          });
+        }
+      } else {
+        this._images.push({
+          byteWidth: getByteWidth(width2, bpp, depth),
+          height: height2,
+          lineIndex: 0
+        });
+      }
+      if (depth === 8) {
+        this._xComparison = bpp;
+      } else if (depth === 16) {
+        this._xComparison = bpp * 2;
+      } else {
+        this._xComparison = 1;
+      }
+    };
+    Filter.prototype.start = function() {
+      this.read(
+        this._images[this._imageIndex].byteWidth + 1,
+        this._reverseFilterLine.bind(this)
+      );
+    };
+    Filter.prototype._unFilterType1 = function(rawData, unfilteredLine, byteWidth) {
+      let xComparison = this._xComparison;
+      let xBiggerThan = xComparison - 1;
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        let rawByte = rawData[1 + x2];
+        let f1Left = x2 > xBiggerThan ? unfilteredLine[x2 - xComparison] : 0;
+        unfilteredLine[x2] = rawByte + f1Left;
+      }
+    };
+    Filter.prototype._unFilterType2 = function(rawData, unfilteredLine, byteWidth) {
+      let lastLine = this._lastLine;
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        let rawByte = rawData[1 + x2];
+        let f2Up = lastLine ? lastLine[x2] : 0;
+        unfilteredLine[x2] = rawByte + f2Up;
+      }
+    };
+    Filter.prototype._unFilterType3 = function(rawData, unfilteredLine, byteWidth) {
+      let xComparison = this._xComparison;
+      let xBiggerThan = xComparison - 1;
+      let lastLine = this._lastLine;
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        let rawByte = rawData[1 + x2];
+        let f3Up = lastLine ? lastLine[x2] : 0;
+        let f3Left = x2 > xBiggerThan ? unfilteredLine[x2 - xComparison] : 0;
+        let f3Add = Math.floor((f3Left + f3Up) / 2);
+        unfilteredLine[x2] = rawByte + f3Add;
+      }
+    };
+    Filter.prototype._unFilterType4 = function(rawData, unfilteredLine, byteWidth) {
+      let xComparison = this._xComparison;
+      let xBiggerThan = xComparison - 1;
+      let lastLine = this._lastLine;
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        let rawByte = rawData[1 + x2];
+        let f4Up = lastLine ? lastLine[x2] : 0;
+        let f4Left = x2 > xBiggerThan ? unfilteredLine[x2 - xComparison] : 0;
+        let f4UpLeft = x2 > xBiggerThan && lastLine ? lastLine[x2 - xComparison] : 0;
+        let f4Add = paethPredictor(f4Left, f4Up, f4UpLeft);
+        unfilteredLine[x2] = rawByte + f4Add;
+      }
+    };
+    Filter.prototype._reverseFilterLine = function(rawData) {
+      let filter4 = rawData[0];
+      let unfilteredLine;
+      let currentImage = this._images[this._imageIndex];
+      let byteWidth = currentImage.byteWidth;
+      if (filter4 === 0) {
+        unfilteredLine = rawData.slice(1, byteWidth + 1);
+      } else {
+        unfilteredLine = Buffer.alloc(byteWidth);
+        switch (filter4) {
+          case 1:
+            this._unFilterType1(rawData, unfilteredLine, byteWidth);
+            break;
+          case 2:
+            this._unFilterType2(rawData, unfilteredLine, byteWidth);
+            break;
+          case 3:
+            this._unFilterType3(rawData, unfilteredLine, byteWidth);
+            break;
+          case 4:
+            this._unFilterType4(rawData, unfilteredLine, byteWidth);
+            break;
+          default:
+            throw new Error("Unrecognised filter type - " + filter4);
+        }
+      }
+      this.write(unfilteredLine);
+      currentImage.lineIndex++;
+      if (currentImage.lineIndex >= currentImage.height) {
+        this._lastLine = null;
+        this._imageIndex++;
+        currentImage = this._images[this._imageIndex];
+      } else {
+        this._lastLine = unfilteredLine;
+      }
+      if (currentImage) {
+        this.read(currentImage.byteWidth + 1, this._reverseFilterLine.bind(this));
+      } else {
+        this._lastLine = null;
+        this.complete();
+      }
+    };
+  }
+});
+
+// node_modules/pngjs/lib/filter-parse-async.js
+var require_filter_parse_async = __commonJS({
+  "node_modules/pngjs/lib/filter-parse-async.js"(exports, module) {
+    "use strict";
+    var util = __require("util");
+    var ChunkStream = require_chunkstream();
+    var Filter = require_filter_parse();
+    var FilterAsync = module.exports = function(bitmapInfo) {
+      ChunkStream.call(this);
+      let buffers = [];
+      let that = this;
+      this._filter = new Filter(bitmapInfo, {
+        read: this.read.bind(this),
+        write: function(buffer) {
+          buffers.push(buffer);
+        },
+        complete: function() {
+          that.emit("complete", Buffer.concat(buffers));
+        }
+      });
+      this._filter.start();
+    };
+    util.inherits(FilterAsync, ChunkStream);
+  }
+});
+
+// node_modules/pngjs/lib/constants.js
+var require_constants = __commonJS({
+  "node_modules/pngjs/lib/constants.js"(exports, module) {
+    "use strict";
+    module.exports = {
+      PNG_SIGNATURE: [137, 80, 78, 71, 13, 10, 26, 10],
+      TYPE_IHDR: 1229472850,
+      TYPE_IEND: 1229278788,
+      TYPE_IDAT: 1229209940,
+      TYPE_PLTE: 1347179589,
+      TYPE_tRNS: 1951551059,
+      // eslint-disable-line camelcase
+      TYPE_gAMA: 1732332865,
+      // eslint-disable-line camelcase
+      // color-type bits
+      COLORTYPE_GRAYSCALE: 0,
+      COLORTYPE_PALETTE: 1,
+      COLORTYPE_COLOR: 2,
+      COLORTYPE_ALPHA: 4,
+      // e.g. grayscale and alpha
+      // color-type combinations
+      COLORTYPE_PALETTE_COLOR: 3,
+      COLORTYPE_COLOR_ALPHA: 6,
+      COLORTYPE_TO_BPP_MAP: {
+        0: 1,
+        2: 3,
+        3: 1,
+        4: 2,
+        6: 4
+      },
+      GAMMA_DIVISION: 1e5
+    };
+  }
+});
+
+// node_modules/pngjs/lib/crc.js
+var require_crc = __commonJS({
+  "node_modules/pngjs/lib/crc.js"(exports, module) {
+    "use strict";
+    var crcTable = [];
+    (function() {
+      for (let i = 0; i < 256; i++) {
+        let currentCrc = i;
+        for (let j = 0; j < 8; j++) {
+          if (currentCrc & 1) {
+            currentCrc = 3988292384 ^ currentCrc >>> 1;
+          } else {
+            currentCrc = currentCrc >>> 1;
+          }
+        }
+        crcTable[i] = currentCrc;
+      }
+    })();
+    var CrcCalculator = module.exports = function() {
+      this._crc = -1;
+    };
+    CrcCalculator.prototype.write = function(data2) {
+      for (let i = 0; i < data2.length; i++) {
+        this._crc = crcTable[(this._crc ^ data2[i]) & 255] ^ this._crc >>> 8;
+      }
+      return true;
+    };
+    CrcCalculator.prototype.crc32 = function() {
+      return this._crc ^ -1;
+    };
+    CrcCalculator.crc32 = function(buf) {
+      let crc = -1;
+      for (let i = 0; i < buf.length; i++) {
+        crc = crcTable[(crc ^ buf[i]) & 255] ^ crc >>> 8;
+      }
+      return crc ^ -1;
+    };
+  }
+});
+
+// node_modules/pngjs/lib/parser.js
+var require_parser = __commonJS({
+  "node_modules/pngjs/lib/parser.js"(exports, module) {
+    "use strict";
+    var constants = require_constants();
+    var CrcCalculator = require_crc();
+    var Parser3 = module.exports = function(options, dependencies) {
+      this._options = options;
+      options.checkCRC = options.checkCRC !== false;
+      this._hasIHDR = false;
+      this._hasIEND = false;
+      this._emittedHeadersFinished = false;
+      this._palette = [];
+      this._colorType = 0;
+      this._chunks = {};
+      this._chunks[constants.TYPE_IHDR] = this._handleIHDR.bind(this);
+      this._chunks[constants.TYPE_IEND] = this._handleIEND.bind(this);
+      this._chunks[constants.TYPE_IDAT] = this._handleIDAT.bind(this);
+      this._chunks[constants.TYPE_PLTE] = this._handlePLTE.bind(this);
+      this._chunks[constants.TYPE_tRNS] = this._handleTRNS.bind(this);
+      this._chunks[constants.TYPE_gAMA] = this._handleGAMA.bind(this);
+      this.read = dependencies.read;
+      this.error = dependencies.error;
+      this.metadata = dependencies.metadata;
+      this.gamma = dependencies.gamma;
+      this.transColor = dependencies.transColor;
+      this.palette = dependencies.palette;
+      this.parsed = dependencies.parsed;
+      this.inflateData = dependencies.inflateData;
+      this.finished = dependencies.finished;
+      this.simpleTransparency = dependencies.simpleTransparency;
+      this.headersFinished = dependencies.headersFinished || function() {
+      };
+    };
+    Parser3.prototype.start = function() {
+      this.read(constants.PNG_SIGNATURE.length, this._parseSignature.bind(this));
+    };
+    Parser3.prototype._parseSignature = function(data2) {
+      let signature = constants.PNG_SIGNATURE;
+      for (let i = 0; i < signature.length; i++) {
+        if (data2[i] !== signature[i]) {
+          this.error(new Error("Invalid file signature"));
+          return;
+        }
+      }
+      this.read(8, this._parseChunkBegin.bind(this));
+    };
+    Parser3.prototype._parseChunkBegin = function(data2) {
+      let length2 = data2.readUInt32BE(0);
+      let type = data2.readUInt32BE(4);
+      let name = "";
+      for (let i = 4; i < 8; i++) {
+        name += String.fromCharCode(data2[i]);
+      }
+      let ancillary = Boolean(data2[4] & 32);
+      if (!this._hasIHDR && type !== constants.TYPE_IHDR) {
+        this.error(new Error("Expected IHDR on beggining"));
+        return;
+      }
+      this._crc = new CrcCalculator();
+      this._crc.write(Buffer.from(name));
+      if (this._chunks[type]) {
+        return this._chunks[type](length2);
+      }
+      if (!ancillary) {
+        this.error(new Error("Unsupported critical chunk type " + name));
+        return;
+      }
+      this.read(length2 + 4, this._skipChunk.bind(this));
+    };
+    Parser3.prototype._skipChunk = function() {
+      this.read(8, this._parseChunkBegin.bind(this));
+    };
+    Parser3.prototype._handleChunkEnd = function() {
+      this.read(4, this._parseChunkEnd.bind(this));
+    };
+    Parser3.prototype._parseChunkEnd = function(data2) {
+      let fileCrc = data2.readInt32BE(0);
+      let calcCrc = this._crc.crc32();
+      if (this._options.checkCRC && calcCrc !== fileCrc) {
+        this.error(new Error("Crc error - " + fileCrc + " - " + calcCrc));
+        return;
+      }
+      if (!this._hasIEND) {
+        this.read(8, this._parseChunkBegin.bind(this));
+      }
+    };
+    Parser3.prototype._handleIHDR = function(length2) {
+      this.read(length2, this._parseIHDR.bind(this));
+    };
+    Parser3.prototype._parseIHDR = function(data2) {
+      this._crc.write(data2);
+      let width2 = data2.readUInt32BE(0);
+      let height2 = data2.readUInt32BE(4);
+      let depth = data2[8];
+      let colorType = data2[9];
+      let compr = data2[10];
+      let filter4 = data2[11];
+      let interlace = data2[12];
+      if (depth !== 8 && depth !== 4 && depth !== 2 && depth !== 1 && depth !== 16) {
+        this.error(new Error("Unsupported bit depth " + depth));
+        return;
+      }
+      if (!(colorType in constants.COLORTYPE_TO_BPP_MAP)) {
+        this.error(new Error("Unsupported color type"));
+        return;
+      }
+      if (compr !== 0) {
+        this.error(new Error("Unsupported compression method"));
+        return;
+      }
+      if (filter4 !== 0) {
+        this.error(new Error("Unsupported filter method"));
+        return;
+      }
+      if (interlace !== 0 && interlace !== 1) {
+        this.error(new Error("Unsupported interlace method"));
+        return;
+      }
+      this._colorType = colorType;
+      let bpp = constants.COLORTYPE_TO_BPP_MAP[this._colorType];
+      this._hasIHDR = true;
+      this.metadata({
+        width: width2,
+        height: height2,
+        depth,
+        interlace: Boolean(interlace),
+        palette: Boolean(colorType & constants.COLORTYPE_PALETTE),
+        color: Boolean(colorType & constants.COLORTYPE_COLOR),
+        alpha: Boolean(colorType & constants.COLORTYPE_ALPHA),
+        bpp,
+        colorType
+      });
+      this._handleChunkEnd();
+    };
+    Parser3.prototype._handlePLTE = function(length2) {
+      this.read(length2, this._parsePLTE.bind(this));
+    };
+    Parser3.prototype._parsePLTE = function(data2) {
+      this._crc.write(data2);
+      let entries2 = Math.floor(data2.length / 3);
+      for (let i = 0; i < entries2; i++) {
+        this._palette.push([data2[i * 3], data2[i * 3 + 1], data2[i * 3 + 2], 255]);
+      }
+      this.palette(this._palette);
+      this._handleChunkEnd();
+    };
+    Parser3.prototype._handleTRNS = function(length2) {
+      this.simpleTransparency();
+      this.read(length2, this._parseTRNS.bind(this));
+    };
+    Parser3.prototype._parseTRNS = function(data2) {
+      this._crc.write(data2);
+      if (this._colorType === constants.COLORTYPE_PALETTE_COLOR) {
+        if (this._palette.length === 0) {
+          this.error(new Error("Transparency chunk must be after palette"));
+          return;
+        }
+        if (data2.length > this._palette.length) {
+          this.error(new Error("More transparent colors than palette size"));
+          return;
+        }
+        for (let i = 0; i < data2.length; i++) {
+          this._palette[i][3] = data2[i];
+        }
+        this.palette(this._palette);
+      }
+      if (this._colorType === constants.COLORTYPE_GRAYSCALE) {
+        this.transColor([data2.readUInt16BE(0)]);
+      }
+      if (this._colorType === constants.COLORTYPE_COLOR) {
+        this.transColor([
+          data2.readUInt16BE(0),
+          data2.readUInt16BE(2),
+          data2.readUInt16BE(4)
+        ]);
+      }
+      this._handleChunkEnd();
+    };
+    Parser3.prototype._handleGAMA = function(length2) {
+      this.read(length2, this._parseGAMA.bind(this));
+    };
+    Parser3.prototype._parseGAMA = function(data2) {
+      this._crc.write(data2);
+      this.gamma(data2.readUInt32BE(0) / constants.GAMMA_DIVISION);
+      this._handleChunkEnd();
+    };
+    Parser3.prototype._handleIDAT = function(length2) {
+      if (!this._emittedHeadersFinished) {
+        this._emittedHeadersFinished = true;
+        this.headersFinished();
+      }
+      this.read(-length2, this._parseIDAT.bind(this, length2));
+    };
+    Parser3.prototype._parseIDAT = function(length2, data2) {
+      this._crc.write(data2);
+      if (this._colorType === constants.COLORTYPE_PALETTE_COLOR && this._palette.length === 0) {
+        throw new Error("Expected palette not found");
+      }
+      this.inflateData(data2);
+      let leftOverLength = length2 - data2.length;
+      if (leftOverLength > 0) {
+        this._handleIDAT(leftOverLength);
+      } else {
+        this._handleChunkEnd();
+      }
+    };
+    Parser3.prototype._handleIEND = function(length2) {
+      this.read(length2, this._parseIEND.bind(this));
+    };
+    Parser3.prototype._parseIEND = function(data2) {
+      this._crc.write(data2);
+      this._hasIEND = true;
+      this._handleChunkEnd();
+      if (this.finished) {
+        this.finished();
+      }
+    };
+  }
+});
+
+// node_modules/pngjs/lib/bitmapper.js
+var require_bitmapper = __commonJS({
+  "node_modules/pngjs/lib/bitmapper.js"(exports) {
+    "use strict";
+    var interlaceUtils = require_interlace();
+    var pixelBppMapper = [
+      // 0 - dummy entry
+      function() {
+      },
+      // 1 - L
+      // 0: 0, 1: 0, 2: 0, 3: 0xff
+      function(pxData, data2, pxPos, rawPos) {
+        if (rawPos === data2.length) {
+          throw new Error("Ran out of data");
+        }
+        let pixel = data2[rawPos];
+        pxData[pxPos] = pixel;
+        pxData[pxPos + 1] = pixel;
+        pxData[pxPos + 2] = pixel;
+        pxData[pxPos + 3] = 255;
+      },
+      // 2 - LA
+      // 0: 0, 1: 0, 2: 0, 3: 1
+      function(pxData, data2, pxPos, rawPos) {
+        if (rawPos + 1 >= data2.length) {
+          throw new Error("Ran out of data");
+        }
+        let pixel = data2[rawPos];
+        pxData[pxPos] = pixel;
+        pxData[pxPos + 1] = pixel;
+        pxData[pxPos + 2] = pixel;
+        pxData[pxPos + 3] = data2[rawPos + 1];
+      },
+      // 3 - RGB
+      // 0: 0, 1: 1, 2: 2, 3: 0xff
+      function(pxData, data2, pxPos, rawPos) {
+        if (rawPos + 2 >= data2.length) {
+          throw new Error("Ran out of data");
+        }
+        pxData[pxPos] = data2[rawPos];
+        pxData[pxPos + 1] = data2[rawPos + 1];
+        pxData[pxPos + 2] = data2[rawPos + 2];
+        pxData[pxPos + 3] = 255;
+      },
+      // 4 - RGBA
+      // 0: 0, 1: 1, 2: 2, 3: 3
+      function(pxData, data2, pxPos, rawPos) {
+        if (rawPos + 3 >= data2.length) {
+          throw new Error("Ran out of data");
+        }
+        pxData[pxPos] = data2[rawPos];
+        pxData[pxPos + 1] = data2[rawPos + 1];
+        pxData[pxPos + 2] = data2[rawPos + 2];
+        pxData[pxPos + 3] = data2[rawPos + 3];
+      }
+    ];
+    var pixelBppCustomMapper = [
+      // 0 - dummy entry
+      function() {
+      },
+      // 1 - L
+      // 0: 0, 1: 0, 2: 0, 3: 0xff
+      function(pxData, pixelData, pxPos, maxBit) {
+        let pixel = pixelData[0];
+        pxData[pxPos] = pixel;
+        pxData[pxPos + 1] = pixel;
+        pxData[pxPos + 2] = pixel;
+        pxData[pxPos + 3] = maxBit;
+      },
+      // 2 - LA
+      // 0: 0, 1: 0, 2: 0, 3: 1
+      function(pxData, pixelData, pxPos) {
+        let pixel = pixelData[0];
+        pxData[pxPos] = pixel;
+        pxData[pxPos + 1] = pixel;
+        pxData[pxPos + 2] = pixel;
+        pxData[pxPos + 3] = pixelData[1];
+      },
+      // 3 - RGB
+      // 0: 0, 1: 1, 2: 2, 3: 0xff
+      function(pxData, pixelData, pxPos, maxBit) {
+        pxData[pxPos] = pixelData[0];
+        pxData[pxPos + 1] = pixelData[1];
+        pxData[pxPos + 2] = pixelData[2];
+        pxData[pxPos + 3] = maxBit;
+      },
+      // 4 - RGBA
+      // 0: 0, 1: 1, 2: 2, 3: 3
+      function(pxData, pixelData, pxPos) {
+        pxData[pxPos] = pixelData[0];
+        pxData[pxPos + 1] = pixelData[1];
+        pxData[pxPos + 2] = pixelData[2];
+        pxData[pxPos + 3] = pixelData[3];
+      }
+    ];
+    function bitRetriever(data2, depth) {
+      let leftOver = [];
+      let i = 0;
+      function split() {
+        if (i === data2.length) {
+          throw new Error("Ran out of data");
+        }
+        let byte = data2[i];
+        i++;
+        let byte8, byte7, byte6, byte5, byte4, byte3, byte2, byte1;
+        switch (depth) {
+          default:
+            throw new Error("unrecognised depth");
+          case 16:
+            byte2 = data2[i];
+            i++;
+            leftOver.push((byte << 8) + byte2);
+            break;
+          case 4:
+            byte2 = byte & 15;
+            byte1 = byte >> 4;
+            leftOver.push(byte1, byte2);
+            break;
+          case 2:
+            byte4 = byte & 3;
+            byte3 = byte >> 2 & 3;
+            byte2 = byte >> 4 & 3;
+            byte1 = byte >> 6 & 3;
+            leftOver.push(byte1, byte2, byte3, byte4);
+            break;
+          case 1:
+            byte8 = byte & 1;
+            byte7 = byte >> 1 & 1;
+            byte6 = byte >> 2 & 1;
+            byte5 = byte >> 3 & 1;
+            byte4 = byte >> 4 & 1;
+            byte3 = byte >> 5 & 1;
+            byte2 = byte >> 6 & 1;
+            byte1 = byte >> 7 & 1;
+            leftOver.push(byte1, byte2, byte3, byte4, byte5, byte6, byte7, byte8);
+            break;
+        }
+      }
+      return {
+        get: function(count) {
+          while (leftOver.length < count) {
+            split();
+          }
+          let returner = leftOver.slice(0, count);
+          leftOver = leftOver.slice(count);
+          return returner;
+        },
+        resetAfterLine: function() {
+          leftOver.length = 0;
+        },
+        end: function() {
+          if (i !== data2.length) {
+            throw new Error("extra data found");
+          }
+        }
+      };
+    }
+    function mapImage8Bit(image, pxData, getPxPos, bpp, data2, rawPos) {
+      let imageWidth = image.width;
+      let imageHeight = image.height;
+      let imagePass = image.index;
+      for (let y2 = 0; y2 < imageHeight; y2++) {
+        for (let x2 = 0; x2 < imageWidth; x2++) {
+          let pxPos = getPxPos(x2, y2, imagePass);
+          pixelBppMapper[bpp](pxData, data2, pxPos, rawPos);
+          rawPos += bpp;
+        }
+      }
+      return rawPos;
+    }
+    function mapImageCustomBit(image, pxData, getPxPos, bpp, bits, maxBit) {
+      let imageWidth = image.width;
+      let imageHeight = image.height;
+      let imagePass = image.index;
+      for (let y2 = 0; y2 < imageHeight; y2++) {
+        for (let x2 = 0; x2 < imageWidth; x2++) {
+          let pixelData = bits.get(bpp);
+          let pxPos = getPxPos(x2, y2, imagePass);
+          pixelBppCustomMapper[bpp](pxData, pixelData, pxPos, maxBit);
+        }
+        bits.resetAfterLine();
+      }
+    }
+    exports.dataToBitMap = function(data2, bitmapInfo) {
+      let width2 = bitmapInfo.width;
+      let height2 = bitmapInfo.height;
+      let depth = bitmapInfo.depth;
+      let bpp = bitmapInfo.bpp;
+      let interlace = bitmapInfo.interlace;
+      let bits;
+      if (depth !== 8) {
+        bits = bitRetriever(data2, depth);
+      }
+      let pxData;
+      if (depth <= 8) {
+        pxData = Buffer.alloc(width2 * height2 * 4);
+      } else {
+        pxData = new Uint16Array(width2 * height2 * 4);
+      }
+      let maxBit = Math.pow(2, depth) - 1;
+      let rawPos = 0;
+      let images;
+      let getPxPos;
+      if (interlace) {
+        images = interlaceUtils.getImagePasses(width2, height2);
+        getPxPos = interlaceUtils.getInterlaceIterator(width2, height2);
+      } else {
+        let nonInterlacedPxPos = 0;
+        getPxPos = function() {
+          let returner = nonInterlacedPxPos;
+          nonInterlacedPxPos += 4;
+          return returner;
+        };
+        images = [{ width: width2, height: height2 }];
+      }
+      for (let imageIndex = 0; imageIndex < images.length; imageIndex++) {
+        if (depth === 8) {
+          rawPos = mapImage8Bit(
+            images[imageIndex],
+            pxData,
+            getPxPos,
+            bpp,
+            data2,
+            rawPos
+          );
+        } else {
+          mapImageCustomBit(
+            images[imageIndex],
+            pxData,
+            getPxPos,
+            bpp,
+            bits,
+            maxBit
+          );
+        }
+      }
+      if (depth === 8) {
+        if (rawPos !== data2.length) {
+          throw new Error("extra data found");
+        }
+      } else {
+        bits.end();
+      }
+      return pxData;
+    };
+  }
+});
+
+// node_modules/pngjs/lib/format-normaliser.js
+var require_format_normaliser = __commonJS({
+  "node_modules/pngjs/lib/format-normaliser.js"(exports, module) {
+    "use strict";
+    function dePalette(indata, outdata, width2, height2, palette) {
+      let pxPos = 0;
+      for (let y2 = 0; y2 < height2; y2++) {
+        for (let x2 = 0; x2 < width2; x2++) {
+          let color = palette[indata[pxPos]];
+          if (!color) {
+            throw new Error("index " + indata[pxPos] + " not in palette");
+          }
+          for (let i = 0; i < 4; i++) {
+            outdata[pxPos + i] = color[i];
+          }
+          pxPos += 4;
+        }
+      }
+    }
+    function replaceTransparentColor(indata, outdata, width2, height2, transColor) {
+      let pxPos = 0;
+      for (let y2 = 0; y2 < height2; y2++) {
+        for (let x2 = 0; x2 < width2; x2++) {
+          let makeTrans = false;
+          if (transColor.length === 1) {
+            if (transColor[0] === indata[pxPos]) {
+              makeTrans = true;
+            }
+          } else if (transColor[0] === indata[pxPos] && transColor[1] === indata[pxPos + 1] && transColor[2] === indata[pxPos + 2]) {
+            makeTrans = true;
+          }
+          if (makeTrans) {
+            for (let i = 0; i < 4; i++) {
+              outdata[pxPos + i] = 0;
+            }
+          }
+          pxPos += 4;
+        }
+      }
+    }
+    function scaleDepth(indata, outdata, width2, height2, depth) {
+      let maxOutSample = 255;
+      let maxInSample = Math.pow(2, depth) - 1;
+      let pxPos = 0;
+      for (let y2 = 0; y2 < height2; y2++) {
+        for (let x2 = 0; x2 < width2; x2++) {
+          for (let i = 0; i < 4; i++) {
+            outdata[pxPos + i] = Math.floor(
+              indata[pxPos + i] * maxOutSample / maxInSample + 0.5
+            );
+          }
+          pxPos += 4;
+        }
+      }
+    }
+    module.exports = function(indata, imageData, skipRescale = false) {
+      let depth = imageData.depth;
+      let width2 = imageData.width;
+      let height2 = imageData.height;
+      let colorType = imageData.colorType;
+      let transColor = imageData.transColor;
+      let palette = imageData.palette;
+      let outdata = indata;
+      if (colorType === 3) {
+        dePalette(indata, outdata, width2, height2, palette);
+      } else {
+        if (transColor) {
+          replaceTransparentColor(indata, outdata, width2, height2, transColor);
+        }
+        if (depth !== 8 && !skipRescale) {
+          if (depth === 16) {
+            outdata = Buffer.alloc(width2 * height2 * 4);
+          }
+          scaleDepth(indata, outdata, width2, height2, depth);
+        }
+      }
+      return outdata;
+    };
+  }
+});
+
+// node_modules/pngjs/lib/parser-async.js
+var require_parser_async = __commonJS({
+  "node_modules/pngjs/lib/parser-async.js"(exports, module) {
+    "use strict";
+    var util = __require("util");
+    var zlib = __require("zlib");
+    var ChunkStream = require_chunkstream();
+    var FilterAsync = require_filter_parse_async();
+    var Parser3 = require_parser();
+    var bitmapper = require_bitmapper();
+    var formatNormaliser = require_format_normaliser();
+    var ParserAsync = module.exports = function(options) {
+      ChunkStream.call(this);
+      this._parser = new Parser3(options, {
+        read: this.read.bind(this),
+        error: this._handleError.bind(this),
+        metadata: this._handleMetaData.bind(this),
+        gamma: this.emit.bind(this, "gamma"),
+        palette: this._handlePalette.bind(this),
+        transColor: this._handleTransColor.bind(this),
+        finished: this._finished.bind(this),
+        inflateData: this._inflateData.bind(this),
+        simpleTransparency: this._simpleTransparency.bind(this),
+        headersFinished: this._headersFinished.bind(this)
+      });
+      this._options = options;
+      this.writable = true;
+      this._parser.start();
+    };
+    util.inherits(ParserAsync, ChunkStream);
+    ParserAsync.prototype._handleError = function(err) {
+      this.emit("error", err);
+      this.writable = false;
+      this.destroy();
+      if (this._inflate && this._inflate.destroy) {
+        this._inflate.destroy();
+      }
+      if (this._filter) {
+        this._filter.destroy();
+        this._filter.on("error", function() {
+        });
+      }
+      this.errord = true;
+    };
+    ParserAsync.prototype._inflateData = function(data2) {
+      if (!this._inflate) {
+        if (this._bitmapInfo.interlace) {
+          this._inflate = zlib.createInflate();
+          this._inflate.on("error", this.emit.bind(this, "error"));
+          this._filter.on("complete", this._complete.bind(this));
+          this._inflate.pipe(this._filter);
+        } else {
+          let rowSize = (this._bitmapInfo.width * this._bitmapInfo.bpp * this._bitmapInfo.depth + 7 >> 3) + 1;
+          let imageSize = rowSize * this._bitmapInfo.height;
+          let chunkSize = Math.max(imageSize, zlib.Z_MIN_CHUNK);
+          this._inflate = zlib.createInflate({ chunkSize });
+          let leftToInflate = imageSize;
+          let emitError = this.emit.bind(this, "error");
+          this._inflate.on("error", function(err) {
+            if (!leftToInflate) {
+              return;
+            }
+            emitError(err);
+          });
+          this._filter.on("complete", this._complete.bind(this));
+          let filterWrite = this._filter.write.bind(this._filter);
+          this._inflate.on("data", function(chunk) {
+            if (!leftToInflate) {
+              return;
+            }
+            if (chunk.length > leftToInflate) {
+              chunk = chunk.slice(0, leftToInflate);
+            }
+            leftToInflate -= chunk.length;
+            filterWrite(chunk);
+          });
+          this._inflate.on("end", this._filter.end.bind(this._filter));
+        }
+      }
+      this._inflate.write(data2);
+    };
+    ParserAsync.prototype._handleMetaData = function(metaData) {
+      this._metaData = metaData;
+      this._bitmapInfo = Object.create(metaData);
+      this._filter = new FilterAsync(this._bitmapInfo);
+    };
+    ParserAsync.prototype._handleTransColor = function(transColor) {
+      this._bitmapInfo.transColor = transColor;
+    };
+    ParserAsync.prototype._handlePalette = function(palette) {
+      this._bitmapInfo.palette = palette;
+    };
+    ParserAsync.prototype._simpleTransparency = function() {
+      this._metaData.alpha = true;
+    };
+    ParserAsync.prototype._headersFinished = function() {
+      this.emit("metadata", this._metaData);
+    };
+    ParserAsync.prototype._finished = function() {
+      if (this.errord) {
+        return;
+      }
+      if (!this._inflate) {
+        this.emit("error", "No Inflate block");
+      } else {
+        this._inflate.end();
+      }
+    };
+    ParserAsync.prototype._complete = function(filteredData) {
+      if (this.errord) {
+        return;
+      }
+      let normalisedBitmapData;
+      try {
+        let bitmapData = bitmapper.dataToBitMap(filteredData, this._bitmapInfo);
+        normalisedBitmapData = formatNormaliser(
+          bitmapData,
+          this._bitmapInfo,
+          this._options.skipRescale
+        );
+        bitmapData = null;
+      } catch (ex) {
+        this._handleError(ex);
+        return;
+      }
+      this.emit("parsed", normalisedBitmapData);
+    };
+  }
+});
+
+// node_modules/pngjs/lib/bitpacker.js
+var require_bitpacker = __commonJS({
+  "node_modules/pngjs/lib/bitpacker.js"(exports, module) {
+    "use strict";
+    var constants = require_constants();
+    module.exports = function(dataIn, width2, height2, options) {
+      let outHasAlpha = [constants.COLORTYPE_COLOR_ALPHA, constants.COLORTYPE_ALPHA].indexOf(
+        options.colorType
+      ) !== -1;
+      if (options.colorType === options.inputColorType) {
+        let bigEndian = (function() {
+          let buffer = new ArrayBuffer(2);
+          new DataView(buffer).setInt16(
+            0,
+            256,
+            true
+            /* littleEndian */
+          );
+          return new Int16Array(buffer)[0] !== 256;
+        })();
+        if (options.bitDepth === 8 || options.bitDepth === 16 && bigEndian) {
+          return dataIn;
+        }
+      }
+      let data2 = options.bitDepth !== 16 ? dataIn : new Uint16Array(dataIn.buffer);
+      let maxValue = 255;
+      let inBpp = constants.COLORTYPE_TO_BPP_MAP[options.inputColorType];
+      if (inBpp === 4 && !options.inputHasAlpha) {
+        inBpp = 3;
+      }
+      let outBpp = constants.COLORTYPE_TO_BPP_MAP[options.colorType];
+      if (options.bitDepth === 16) {
+        maxValue = 65535;
+        outBpp *= 2;
+      }
+      let outData = Buffer.alloc(width2 * height2 * outBpp);
+      let inIndex = 0;
+      let outIndex = 0;
+      let bgColor = options.bgColor || {};
+      if (bgColor.red === void 0) {
+        bgColor.red = maxValue;
+      }
+      if (bgColor.green === void 0) {
+        bgColor.green = maxValue;
+      }
+      if (bgColor.blue === void 0) {
+        bgColor.blue = maxValue;
+      }
+      function getRGBA() {
+        let red;
+        let green;
+        let blue;
+        let alpha = maxValue;
+        switch (options.inputColorType) {
+          case constants.COLORTYPE_COLOR_ALPHA:
+            alpha = data2[inIndex + 3];
+            red = data2[inIndex];
+            green = data2[inIndex + 1];
+            blue = data2[inIndex + 2];
+            break;
+          case constants.COLORTYPE_COLOR:
+            red = data2[inIndex];
+            green = data2[inIndex + 1];
+            blue = data2[inIndex + 2];
+            break;
+          case constants.COLORTYPE_ALPHA:
+            alpha = data2[inIndex + 1];
+            red = data2[inIndex];
+            green = red;
+            blue = red;
+            break;
+          case constants.COLORTYPE_GRAYSCALE:
+            red = data2[inIndex];
+            green = red;
+            blue = red;
+            break;
+          default:
+            throw new Error(
+              "input color type:" + options.inputColorType + " is not supported at present"
+            );
+        }
+        if (options.inputHasAlpha) {
+          if (!outHasAlpha) {
+            alpha /= maxValue;
+            red = Math.min(
+              Math.max(Math.round((1 - alpha) * bgColor.red + alpha * red), 0),
+              maxValue
+            );
+            green = Math.min(
+              Math.max(Math.round((1 - alpha) * bgColor.green + alpha * green), 0),
+              maxValue
+            );
+            blue = Math.min(
+              Math.max(Math.round((1 - alpha) * bgColor.blue + alpha * blue), 0),
+              maxValue
+            );
+          }
+        }
+        return { red, green, blue, alpha };
+      }
+      for (let y2 = 0; y2 < height2; y2++) {
+        for (let x2 = 0; x2 < width2; x2++) {
+          let rgba = getRGBA(data2, inIndex);
+          switch (options.colorType) {
+            case constants.COLORTYPE_COLOR_ALPHA:
+            case constants.COLORTYPE_COLOR:
+              if (options.bitDepth === 8) {
+                outData[outIndex] = rgba.red;
+                outData[outIndex + 1] = rgba.green;
+                outData[outIndex + 2] = rgba.blue;
+                if (outHasAlpha) {
+                  outData[outIndex + 3] = rgba.alpha;
+                }
+              } else {
+                outData.writeUInt16BE(rgba.red, outIndex);
+                outData.writeUInt16BE(rgba.green, outIndex + 2);
+                outData.writeUInt16BE(rgba.blue, outIndex + 4);
+                if (outHasAlpha) {
+                  outData.writeUInt16BE(rgba.alpha, outIndex + 6);
+                }
+              }
+              break;
+            case constants.COLORTYPE_ALPHA:
+            case constants.COLORTYPE_GRAYSCALE: {
+              let grayscale = (rgba.red + rgba.green + rgba.blue) / 3;
+              if (options.bitDepth === 8) {
+                outData[outIndex] = grayscale;
+                if (outHasAlpha) {
+                  outData[outIndex + 1] = rgba.alpha;
+                }
+              } else {
+                outData.writeUInt16BE(grayscale, outIndex);
+                if (outHasAlpha) {
+                  outData.writeUInt16BE(rgba.alpha, outIndex + 2);
+                }
+              }
+              break;
+            }
+            default:
+              throw new Error("unrecognised color Type " + options.colorType);
+          }
+          inIndex += inBpp;
+          outIndex += outBpp;
+        }
+      }
+      return outData;
+    };
+  }
+});
+
+// node_modules/pngjs/lib/filter-pack.js
+var require_filter_pack = __commonJS({
+  "node_modules/pngjs/lib/filter-pack.js"(exports, module) {
+    "use strict";
+    var paethPredictor = require_paeth_predictor();
+    function filterNone(pxData, pxPos, byteWidth, rawData, rawPos) {
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        rawData[rawPos + x2] = pxData[pxPos + x2];
+      }
+    }
+    function filterSumNone(pxData, pxPos, byteWidth) {
+      let sum = 0;
+      let length2 = pxPos + byteWidth;
+      for (let i = pxPos; i < length2; i++) {
+        sum += Math.abs(pxData[i]);
+      }
+      return sum;
+    }
+    function filterSub(pxData, pxPos, byteWidth, rawData, rawPos, bpp) {
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        let left = x2 >= bpp ? pxData[pxPos + x2 - bpp] : 0;
+        let val = pxData[pxPos + x2] - left;
+        rawData[rawPos + x2] = val;
+      }
+    }
+    function filterSumSub(pxData, pxPos, byteWidth, bpp) {
+      let sum = 0;
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        let left = x2 >= bpp ? pxData[pxPos + x2 - bpp] : 0;
+        let val = pxData[pxPos + x2] - left;
+        sum += Math.abs(val);
+      }
+      return sum;
+    }
+    function filterUp(pxData, pxPos, byteWidth, rawData, rawPos) {
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        let up = pxPos > 0 ? pxData[pxPos + x2 - byteWidth] : 0;
+        let val = pxData[pxPos + x2] - up;
+        rawData[rawPos + x2] = val;
+      }
+    }
+    function filterSumUp(pxData, pxPos, byteWidth) {
+      let sum = 0;
+      let length2 = pxPos + byteWidth;
+      for (let x2 = pxPos; x2 < length2; x2++) {
+        let up = pxPos > 0 ? pxData[x2 - byteWidth] : 0;
+        let val = pxData[x2] - up;
+        sum += Math.abs(val);
+      }
+      return sum;
+    }
+    function filterAvg(pxData, pxPos, byteWidth, rawData, rawPos, bpp) {
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        let left = x2 >= bpp ? pxData[pxPos + x2 - bpp] : 0;
+        let up = pxPos > 0 ? pxData[pxPos + x2 - byteWidth] : 0;
+        let val = pxData[pxPos + x2] - (left + up >> 1);
+        rawData[rawPos + x2] = val;
+      }
+    }
+    function filterSumAvg(pxData, pxPos, byteWidth, bpp) {
+      let sum = 0;
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        let left = x2 >= bpp ? pxData[pxPos + x2 - bpp] : 0;
+        let up = pxPos > 0 ? pxData[pxPos + x2 - byteWidth] : 0;
+        let val = pxData[pxPos + x2] - (left + up >> 1);
+        sum += Math.abs(val);
+      }
+      return sum;
+    }
+    function filterPaeth(pxData, pxPos, byteWidth, rawData, rawPos, bpp) {
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        let left = x2 >= bpp ? pxData[pxPos + x2 - bpp] : 0;
+        let up = pxPos > 0 ? pxData[pxPos + x2 - byteWidth] : 0;
+        let upleft = pxPos > 0 && x2 >= bpp ? pxData[pxPos + x2 - (byteWidth + bpp)] : 0;
+        let val = pxData[pxPos + x2] - paethPredictor(left, up, upleft);
+        rawData[rawPos + x2] = val;
+      }
+    }
+    function filterSumPaeth(pxData, pxPos, byteWidth, bpp) {
+      let sum = 0;
+      for (let x2 = 0; x2 < byteWidth; x2++) {
+        let left = x2 >= bpp ? pxData[pxPos + x2 - bpp] : 0;
+        let up = pxPos > 0 ? pxData[pxPos + x2 - byteWidth] : 0;
+        let upleft = pxPos > 0 && x2 >= bpp ? pxData[pxPos + x2 - (byteWidth + bpp)] : 0;
+        let val = pxData[pxPos + x2] - paethPredictor(left, up, upleft);
+        sum += Math.abs(val);
+      }
+      return sum;
+    }
+    var filters2 = {
+      0: filterNone,
+      1: filterSub,
+      2: filterUp,
+      3: filterAvg,
+      4: filterPaeth
+    };
+    var filterSums = {
+      0: filterSumNone,
+      1: filterSumSub,
+      2: filterSumUp,
+      3: filterSumAvg,
+      4: filterSumPaeth
+    };
+    module.exports = function(pxData, width2, height2, options, bpp) {
+      let filterTypes;
+      if (!("filterType" in options) || options.filterType === -1) {
+        filterTypes = [0, 1, 2, 3, 4];
+      } else if (typeof options.filterType === "number") {
+        filterTypes = [options.filterType];
+      } else {
+        throw new Error("unrecognised filter types");
+      }
+      if (options.bitDepth === 16) {
+        bpp *= 2;
+      }
+      let byteWidth = width2 * bpp;
+      let rawPos = 0;
+      let pxPos = 0;
+      let rawData = Buffer.alloc((byteWidth + 1) * height2);
+      let sel = filterTypes[0];
+      for (let y2 = 0; y2 < height2; y2++) {
+        if (filterTypes.length > 1) {
+          let min = Infinity;
+          for (let i = 0; i < filterTypes.length; i++) {
+            let sum = filterSums[filterTypes[i]](pxData, pxPos, byteWidth, bpp);
+            if (sum < min) {
+              sel = filterTypes[i];
+              min = sum;
+            }
+          }
+        }
+        rawData[rawPos] = sel;
+        rawPos++;
+        filters2[sel](pxData, pxPos, byteWidth, rawData, rawPos, bpp);
+        rawPos += byteWidth;
+        pxPos += byteWidth;
+      }
+      return rawData;
+    };
+  }
+});
+
+// node_modules/pngjs/lib/packer.js
+var require_packer = __commonJS({
+  "node_modules/pngjs/lib/packer.js"(exports, module) {
+    "use strict";
+    var constants = require_constants();
+    var CrcStream = require_crc();
+    var bitPacker = require_bitpacker();
+    var filter4 = require_filter_pack();
+    var zlib = __require("zlib");
+    var Packer = module.exports = function(options) {
+      this._options = options;
+      options.deflateChunkSize = options.deflateChunkSize || 32 * 1024;
+      options.deflateLevel = options.deflateLevel != null ? options.deflateLevel : 9;
+      options.deflateStrategy = options.deflateStrategy != null ? options.deflateStrategy : 3;
+      options.inputHasAlpha = options.inputHasAlpha != null ? options.inputHasAlpha : true;
+      options.deflateFactory = options.deflateFactory || zlib.createDeflate;
+      options.bitDepth = options.bitDepth || 8;
+      options.colorType = typeof options.colorType === "number" ? options.colorType : constants.COLORTYPE_COLOR_ALPHA;
+      options.inputColorType = typeof options.inputColorType === "number" ? options.inputColorType : constants.COLORTYPE_COLOR_ALPHA;
+      if ([
+        constants.COLORTYPE_GRAYSCALE,
+        constants.COLORTYPE_COLOR,
+        constants.COLORTYPE_COLOR_ALPHA,
+        constants.COLORTYPE_ALPHA
+      ].indexOf(options.colorType) === -1) {
+        throw new Error(
+          "option color type:" + options.colorType + " is not supported at present"
+        );
+      }
+      if ([
+        constants.COLORTYPE_GRAYSCALE,
+        constants.COLORTYPE_COLOR,
+        constants.COLORTYPE_COLOR_ALPHA,
+        constants.COLORTYPE_ALPHA
+      ].indexOf(options.inputColorType) === -1) {
+        throw new Error(
+          "option input color type:" + options.inputColorType + " is not supported at present"
+        );
+      }
+      if (options.bitDepth !== 8 && options.bitDepth !== 16) {
+        throw new Error(
+          "option bit depth:" + options.bitDepth + " is not supported at present"
+        );
+      }
+    };
+    Packer.prototype.getDeflateOptions = function() {
+      return {
+        chunkSize: this._options.deflateChunkSize,
+        level: this._options.deflateLevel,
+        strategy: this._options.deflateStrategy
+      };
+    };
+    Packer.prototype.createDeflate = function() {
+      return this._options.deflateFactory(this.getDeflateOptions());
+    };
+    Packer.prototype.filterData = function(data2, width2, height2) {
+      let packedData = bitPacker(data2, width2, height2, this._options);
+      let bpp = constants.COLORTYPE_TO_BPP_MAP[this._options.colorType];
+      let filteredData = filter4(packedData, width2, height2, this._options, bpp);
+      return filteredData;
+    };
+    Packer.prototype._packChunk = function(type, data2) {
+      let len = data2 ? data2.length : 0;
+      let buf = Buffer.alloc(len + 12);
+      buf.writeUInt32BE(len, 0);
+      buf.writeUInt32BE(type, 4);
+      if (data2) {
+        data2.copy(buf, 8);
+      }
+      buf.writeInt32BE(
+        CrcStream.crc32(buf.slice(4, buf.length - 4)),
+        buf.length - 4
+      );
+      return buf;
+    };
+    Packer.prototype.packGAMA = function(gamma) {
+      let buf = Buffer.alloc(4);
+      buf.writeUInt32BE(Math.floor(gamma * constants.GAMMA_DIVISION), 0);
+      return this._packChunk(constants.TYPE_gAMA, buf);
+    };
+    Packer.prototype.packIHDR = function(width2, height2) {
+      let buf = Buffer.alloc(13);
+      buf.writeUInt32BE(width2, 0);
+      buf.writeUInt32BE(height2, 4);
+      buf[8] = this._options.bitDepth;
+      buf[9] = this._options.colorType;
+      buf[10] = 0;
+      buf[11] = 0;
+      buf[12] = 0;
+      return this._packChunk(constants.TYPE_IHDR, buf);
+    };
+    Packer.prototype.packIDAT = function(data2) {
+      return this._packChunk(constants.TYPE_IDAT, data2);
+    };
+    Packer.prototype.packIEND = function() {
+      return this._packChunk(constants.TYPE_IEND, null);
+    };
+  }
+});
+
+// node_modules/pngjs/lib/packer-async.js
+var require_packer_async = __commonJS({
+  "node_modules/pngjs/lib/packer-async.js"(exports, module) {
+    "use strict";
+    var util = __require("util");
+    var Stream = __require("stream");
+    var constants = require_constants();
+    var Packer = require_packer();
+    var PackerAsync = module.exports = function(opt) {
+      Stream.call(this);
+      let options = opt || {};
+      this._packer = new Packer(options);
+      this._deflate = this._packer.createDeflate();
+      this.readable = true;
+    };
+    util.inherits(PackerAsync, Stream);
+    PackerAsync.prototype.pack = function(data2, width2, height2, gamma) {
+      this.emit("data", Buffer.from(constants.PNG_SIGNATURE));
+      this.emit("data", this._packer.packIHDR(width2, height2));
+      if (gamma) {
+        this.emit("data", this._packer.packGAMA(gamma));
+      }
+      let filteredData = this._packer.filterData(data2, width2, height2);
+      this._deflate.on("error", this.emit.bind(this, "error"));
+      this._deflate.on(
+        "data",
+        function(compressedData) {
+          this.emit("data", this._packer.packIDAT(compressedData));
+        }.bind(this)
+      );
+      this._deflate.on(
+        "end",
+        function() {
+          this.emit("data", this._packer.packIEND());
+          this.emit("end");
+        }.bind(this)
+      );
+      this._deflate.end(filteredData);
+    };
+  }
+});
+
+// node_modules/pngjs/lib/sync-inflate.js
+var require_sync_inflate = __commonJS({
+  "node_modules/pngjs/lib/sync-inflate.js"(exports, module) {
+    "use strict";
+    var assert = __require("assert").ok;
+    var zlib = __require("zlib");
+    var util = __require("util");
+    var kMaxLength = __require("buffer").kMaxLength;
+    function Inflate(opts) {
+      if (!(this instanceof Inflate)) {
+        return new Inflate(opts);
+      }
+      if (opts && opts.chunkSize < zlib.Z_MIN_CHUNK) {
+        opts.chunkSize = zlib.Z_MIN_CHUNK;
+      }
+      zlib.Inflate.call(this, opts);
+      this._offset = this._offset === void 0 ? this._outOffset : this._offset;
+      this._buffer = this._buffer || this._outBuffer;
+      if (opts && opts.maxLength != null) {
+        this._maxLength = opts.maxLength;
+      }
+    }
+    function createInflate(opts) {
+      return new Inflate(opts);
+    }
+    function _close(engine, callback) {
+      if (callback) {
+        process.nextTick(callback);
+      }
+      if (!engine._handle) {
+        return;
+      }
+      engine._handle.close();
+      engine._handle = null;
+    }
+    Inflate.prototype._processChunk = function(chunk, flushFlag, asyncCb) {
+      if (typeof asyncCb === "function") {
+        return zlib.Inflate._processChunk.call(this, chunk, flushFlag, asyncCb);
+      }
+      let self2 = this;
+      let availInBefore = chunk && chunk.length;
+      let availOutBefore = this._chunkSize - this._offset;
+      let leftToInflate = this._maxLength;
+      let inOff = 0;
+      let buffers = [];
+      let nread = 0;
+      let error;
+      this.on("error", function(err) {
+        error = err;
+      });
+      function handleChunk(availInAfter, availOutAfter) {
+        if (self2._hadError) {
+          return;
+        }
+        let have = availOutBefore - availOutAfter;
+        assert(have >= 0, "have should not go down");
+        if (have > 0) {
+          let out = self2._buffer.slice(self2._offset, self2._offset + have);
+          self2._offset += have;
+          if (out.length > leftToInflate) {
+            out = out.slice(0, leftToInflate);
+          }
+          buffers.push(out);
+          nread += out.length;
+          leftToInflate -= out.length;
+          if (leftToInflate === 0) {
+            return false;
+          }
+        }
+        if (availOutAfter === 0 || self2._offset >= self2._chunkSize) {
+          availOutBefore = self2._chunkSize;
+          self2._offset = 0;
+          self2._buffer = Buffer.allocUnsafe(self2._chunkSize);
+        }
+        if (availOutAfter === 0) {
+          inOff += availInBefore - availInAfter;
+          availInBefore = availInAfter;
+          return true;
+        }
+        return false;
+      }
+      assert(this._handle, "zlib binding closed");
+      let res;
+      do {
+        res = this._handle.writeSync(
+          flushFlag,
+          chunk,
+          // in
+          inOff,
+          // in_off
+          availInBefore,
+          // in_len
+          this._buffer,
+          // out
+          this._offset,
+          //out_off
+          availOutBefore
+        );
+        res = res || this._writeState;
+      } while (!this._hadError && handleChunk(res[0], res[1]));
+      if (this._hadError) {
+        throw error;
+      }
+      if (nread >= kMaxLength) {
+        _close(this);
+        throw new RangeError(
+          "Cannot create final Buffer. It would be larger than 0x" + kMaxLength.toString(16) + " bytes"
+        );
+      }
+      let buf = Buffer.concat(buffers, nread);
+      _close(this);
+      return buf;
+    };
+    util.inherits(Inflate, zlib.Inflate);
+    function zlibBufferSync(engine, buffer) {
+      if (typeof buffer === "string") {
+        buffer = Buffer.from(buffer);
+      }
+      if (!(buffer instanceof Buffer)) {
+        throw new TypeError("Not a string or buffer");
+      }
+      let flushFlag = engine._finishFlushFlag;
+      if (flushFlag == null) {
+        flushFlag = zlib.Z_FINISH;
+      }
+      return engine._processChunk(buffer, flushFlag);
+    }
+    function inflateSync(buffer, opts) {
+      return zlibBufferSync(new Inflate(opts), buffer);
+    }
+    module.exports = exports = inflateSync;
+    exports.Inflate = Inflate;
+    exports.createInflate = createInflate;
+    exports.inflateSync = inflateSync;
+  }
+});
+
+// node_modules/pngjs/lib/sync-reader.js
+var require_sync_reader = __commonJS({
+  "node_modules/pngjs/lib/sync-reader.js"(exports, module) {
+    "use strict";
+    var SyncReader = module.exports = function(buffer) {
+      this._buffer = buffer;
+      this._reads = [];
+    };
+    SyncReader.prototype.read = function(length2, callback) {
+      this._reads.push({
+        length: Math.abs(length2),
+        // if length < 0 then at most this length
+        allowLess: length2 < 0,
+        func: callback
+      });
+    };
+    SyncReader.prototype.process = function() {
+      while (this._reads.length > 0 && this._buffer.length) {
+        let read = this._reads[0];
+        if (this._buffer.length && (this._buffer.length >= read.length || read.allowLess)) {
+          this._reads.shift();
+          let buf = this._buffer;
+          this._buffer = buf.slice(read.length);
+          read.func.call(this, buf.slice(0, read.length));
+        } else {
+          break;
+        }
+      }
+      if (this._reads.length > 0) {
+        throw new Error("There are some read requests waitng on finished stream");
+      }
+      if (this._buffer.length > 0) {
+        throw new Error("unrecognised content at end of stream");
+      }
+    };
+  }
+});
+
+// node_modules/pngjs/lib/filter-parse-sync.js
+var require_filter_parse_sync = __commonJS({
+  "node_modules/pngjs/lib/filter-parse-sync.js"(exports) {
+    "use strict";
+    var SyncReader = require_sync_reader();
+    var Filter = require_filter_parse();
+    exports.process = function(inBuffer, bitmapInfo) {
+      let outBuffers = [];
+      let reader = new SyncReader(inBuffer);
+      let filter4 = new Filter(bitmapInfo, {
+        read: reader.read.bind(reader),
+        write: function(bufferPart) {
+          outBuffers.push(bufferPart);
+        },
+        complete: function() {
+        }
+      });
+      filter4.start();
+      reader.process();
+      return Buffer.concat(outBuffers);
+    };
+  }
+});
+
+// node_modules/pngjs/lib/parser-sync.js
+var require_parser_sync = __commonJS({
+  "node_modules/pngjs/lib/parser-sync.js"(exports, module) {
+    "use strict";
+    var hasSyncZlib = true;
+    var zlib = __require("zlib");
+    var inflateSync = require_sync_inflate();
+    if (!zlib.deflateSync) {
+      hasSyncZlib = false;
+    }
+    var SyncReader = require_sync_reader();
+    var FilterSync = require_filter_parse_sync();
+    var Parser3 = require_parser();
+    var bitmapper = require_bitmapper();
+    var formatNormaliser = require_format_normaliser();
+    module.exports = function(buffer, options) {
+      if (!hasSyncZlib) {
+        throw new Error(
+          "To use the sync capability of this library in old node versions, please pin pngjs to v2.3.0"
+        );
+      }
+      let err;
+      function handleError(_err_) {
+        err = _err_;
+      }
+      let metaData;
+      function handleMetaData(_metaData_) {
+        metaData = _metaData_;
+      }
+      function handleTransColor(transColor) {
+        metaData.transColor = transColor;
+      }
+      function handlePalette(palette) {
+        metaData.palette = palette;
+      }
+      function handleSimpleTransparency() {
+        metaData.alpha = true;
+      }
+      let gamma;
+      function handleGamma(_gamma_) {
+        gamma = _gamma_;
+      }
+      let inflateDataList = [];
+      function handleInflateData(inflatedData2) {
+        inflateDataList.push(inflatedData2);
+      }
+      let reader = new SyncReader(buffer);
+      let parser2 = new Parser3(options, {
+        read: reader.read.bind(reader),
+        error: handleError,
+        metadata: handleMetaData,
+        gamma: handleGamma,
+        palette: handlePalette,
+        transColor: handleTransColor,
+        inflateData: handleInflateData,
+        simpleTransparency: handleSimpleTransparency
+      });
+      parser2.start();
+      reader.process();
+      if (err) {
+        throw err;
+      }
+      let inflateData = Buffer.concat(inflateDataList);
+      inflateDataList.length = 0;
+      let inflatedData;
+      if (metaData.interlace) {
+        inflatedData = zlib.inflateSync(inflateData);
+      } else {
+        let rowSize = (metaData.width * metaData.bpp * metaData.depth + 7 >> 3) + 1;
+        let imageSize = rowSize * metaData.height;
+        inflatedData = inflateSync(inflateData, {
+          chunkSize: imageSize,
+          maxLength: imageSize
+        });
+      }
+      inflateData = null;
+      if (!inflatedData || !inflatedData.length) {
+        throw new Error("bad png - invalid inflate data response");
+      }
+      let unfilteredData = FilterSync.process(inflatedData, metaData);
+      inflateData = null;
+      let bitmapData = bitmapper.dataToBitMap(unfilteredData, metaData);
+      unfilteredData = null;
+      let normalisedBitmapData = formatNormaliser(
+        bitmapData,
+        metaData,
+        options.skipRescale
+      );
+      metaData.data = normalisedBitmapData;
+      metaData.gamma = gamma || 0;
+      return metaData;
+    };
+  }
+});
+
+// node_modules/pngjs/lib/packer-sync.js
+var require_packer_sync = __commonJS({
+  "node_modules/pngjs/lib/packer-sync.js"(exports, module) {
+    "use strict";
+    var hasSyncZlib = true;
+    var zlib = __require("zlib");
+    if (!zlib.deflateSync) {
+      hasSyncZlib = false;
+    }
+    var constants = require_constants();
+    var Packer = require_packer();
+    module.exports = function(metaData, opt) {
+      if (!hasSyncZlib) {
+        throw new Error(
+          "To use the sync capability of this library in old node versions, please pin pngjs to v2.3.0"
+        );
+      }
+      let options = opt || {};
+      let packer = new Packer(options);
+      let chunks = [];
+      chunks.push(Buffer.from(constants.PNG_SIGNATURE));
+      chunks.push(packer.packIHDR(metaData.width, metaData.height));
+      if (metaData.gamma) {
+        chunks.push(packer.packGAMA(metaData.gamma));
+      }
+      let filteredData = packer.filterData(
+        metaData.data,
+        metaData.width,
+        metaData.height
+      );
+      let compressedData = zlib.deflateSync(
+        filteredData,
+        packer.getDeflateOptions()
+      );
+      filteredData = null;
+      if (!compressedData || !compressedData.length) {
+        throw new Error("bad png - invalid compressed data response");
+      }
+      chunks.push(packer.packIDAT(compressedData));
+      chunks.push(packer.packIEND());
+      return Buffer.concat(chunks);
+    };
+  }
+});
+
+// node_modules/pngjs/lib/png-sync.js
+var require_png_sync = __commonJS({
+  "node_modules/pngjs/lib/png-sync.js"(exports) {
+    "use strict";
+    var parse6 = require_parser_sync();
+    var pack = require_packer_sync();
+    exports.read = function(buffer, options) {
+      return parse6(buffer, options || {});
+    };
+    exports.write = function(png, options) {
+      return pack(png, options);
+    };
+  }
+});
+
+// node_modules/pngjs/lib/png.js
+var require_png = __commonJS({
+  "node_modules/pngjs/lib/png.js"(exports) {
+    "use strict";
+    var util = __require("util");
+    var Stream = __require("stream");
+    var Parser3 = require_parser_async();
+    var Packer = require_packer_async();
+    var PNGSync = require_png_sync();
+    var PNG2 = exports.PNG = function(options) {
+      Stream.call(this);
+      options = options || {};
+      this.width = options.width | 0;
+      this.height = options.height | 0;
+      this.data = this.width > 0 && this.height > 0 ? Buffer.alloc(4 * this.width * this.height) : null;
+      if (options.fill && this.data) {
+        this.data.fill(0);
+      }
+      this.gamma = 0;
+      this.readable = this.writable = true;
+      this._parser = new Parser3(options);
+      this._parser.on("error", this.emit.bind(this, "error"));
+      this._parser.on("close", this._handleClose.bind(this));
+      this._parser.on("metadata", this._metadata.bind(this));
+      this._parser.on("gamma", this._gamma.bind(this));
+      this._parser.on(
+        "parsed",
+        function(data2) {
+          this.data = data2;
+          this.emit("parsed", data2);
+        }.bind(this)
+      );
+      this._packer = new Packer(options);
+      this._packer.on("data", this.emit.bind(this, "data"));
+      this._packer.on("end", this.emit.bind(this, "end"));
+      this._parser.on("close", this._handleClose.bind(this));
+      this._packer.on("error", this.emit.bind(this, "error"));
+    };
+    util.inherits(PNG2, Stream);
+    PNG2.sync = PNGSync;
+    PNG2.prototype.pack = function() {
+      if (!this.data || !this.data.length) {
+        this.emit("error", "No data provided");
+        return this;
+      }
+      process.nextTick(
+        function() {
+          this._packer.pack(this.data, this.width, this.height, this.gamma);
+        }.bind(this)
+      );
+      return this;
+    };
+    PNG2.prototype.parse = function(data2, callback) {
+      if (callback) {
+        let onParsed, onError;
+        onParsed = function(parsedData) {
+          this.removeListener("error", onError);
+          this.data = parsedData;
+          callback(null, this);
+        }.bind(this);
+        onError = function(err) {
+          this.removeListener("parsed", onParsed);
+          callback(err, null);
+        }.bind(this);
+        this.once("parsed", onParsed);
+        this.once("error", onError);
+      }
+      this.end(data2);
+      return this;
+    };
+    PNG2.prototype.write = function(data2) {
+      this._parser.write(data2);
+      return true;
+    };
+    PNG2.prototype.end = function(data2) {
+      this._parser.end(data2);
+    };
+    PNG2.prototype._metadata = function(metadata) {
+      this.width = metadata.width;
+      this.height = metadata.height;
+      this.emit("metadata", metadata);
+    };
+    PNG2.prototype._gamma = function(gamma) {
+      this.gamma = gamma;
+    };
+    PNG2.prototype._handleClose = function() {
+      if (!this._parser.writable && !this._packer.readable) {
+        this.emit("close");
+      }
+    };
+    PNG2.bitblt = function(src, dst, srcX, srcY, width2, height2, deltaX, deltaY) {
+      srcX |= 0;
+      srcY |= 0;
+      width2 |= 0;
+      height2 |= 0;
+      deltaX |= 0;
+      deltaY |= 0;
+      if (srcX > src.width || srcY > src.height || srcX + width2 > src.width || srcY + height2 > src.height) {
+        throw new Error("bitblt reading outside image");
+      }
+      if (deltaX > dst.width || deltaY > dst.height || deltaX + width2 > dst.width || deltaY + height2 > dst.height) {
+        throw new Error("bitblt writing outside image");
+      }
+      for (let y2 = 0; y2 < height2; y2++) {
+        src.data.copy(
+          dst.data,
+          (deltaY + y2) * dst.width + deltaX << 2,
+          (srcY + y2) * src.width + srcX << 2,
+          (srcY + y2) * src.width + srcX + width2 << 2
+        );
+      }
+    };
+    PNG2.prototype.bitblt = function(dst, srcX, srcY, width2, height2, deltaX, deltaY) {
+      PNG2.bitblt(this, dst, srcX, srcY, width2, height2, deltaX, deltaY);
+      return this;
+    };
+    PNG2.adjustGamma = function(src) {
+      if (src.gamma) {
+        for (let y2 = 0; y2 < src.height; y2++) {
+          for (let x2 = 0; x2 < src.width; x2++) {
+            let idx = src.width * y2 + x2 << 2;
+            for (let i = 0; i < 3; i++) {
+              let sample = src.data[idx + i] / 255;
+              sample = Math.pow(sample, 1 / 2.2 / src.gamma);
+              src.data[idx + i] = Math.round(sample * 255);
+            }
+          }
+        }
+        src.gamma = 0;
+      }
+    };
+    PNG2.prototype.adjustGamma = function() {
+      PNG2.adjustGamma(this);
+    };
+  }
+});
+
 // node_modules/cssom/lib/StyleSheet.js
 var require_StyleSheet = __commonJS({
   "node_modules/cssom/lib/StyleSheet.js"(exports) {
@@ -943,7 +5182,7 @@ var require_CSSDocumentRule = __commonJS({
 var require_parse = __commonJS({
   "node_modules/cssom/lib/parse.js"(exports) {
     var CSSOM = {};
-    CSSOM.parse = function parse5(token) {
+    CSSOM.parse = function parse6(token) {
       var i = 0;
       var state = "before-selector";
       var index;
@@ -1567,9 +5806,11 @@ var require_canvas = __commonJS({
   }
 });
 
-// scripts/build_studio.ts
-import { readFile as readFile2, mkdir, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+// scripts/ink.ts
+var import_jpeg_js = __toESM(require_jpeg_js(), 1);
+var import_pngjs = __toESM(require_png(), 1);
+import { readFile as readFile2, writeFile } from "node:fs/promises";
+import { basename, dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/theme.ts
@@ -13591,8 +17832,8 @@ var Point = class Point2 {
 function point(x2, y2) {
   return new Point(x2, y2).transformO(this.screenCTM().inverseO());
 }
-function closeEnough(a, b, threshold) {
-  return Math.abs(b - a) < (threshold || 1e-6);
+function closeEnough(a, b, threshold2) {
+  return Math.abs(b - a) < (threshold2 || 1e-6);
 }
 var Matrix = class Matrix2 {
   constructor(...args) {
@@ -17932,6 +22173,7 @@ async function loadTheme(path) {
 }
 
 // src/studio/ink.ts
+var K = 1.6;
 var INK_PRESETS = {
   /** Pencil shading: a gentle ramp, so most of the picture survives as tone. */
   soft: { nib: 0.9, line: 20, threshold: 0.7, body: 2, vignette: 0.28 },
@@ -17941,257 +22183,274 @@ var INK_PRESETS = {
   engraved: { nib: 1.1, line: 60, threshold: 0.56, body: 16, vignette: 0.22 }
 };
 var DEFAULT_INK = INK_PRESETS.drawn;
-
-// scripts/build_studio.ts
-var ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-var exit = (msg) => {
-  console.error(`build_studio: ${msg}`);
-  process.exit(1);
-};
-var SCRIPT_CLOSE = "</script>";
-var escapeForScriptTag = (js) => js.replaceAll(SCRIPT_CLOSE, "<\\/script>");
-async function studioBundle() {
-  const shelf = join(ROOT, "assets", "studio.bundle.js");
-  try {
-    return await readFile2(shelf, "utf8");
-  } catch {
-    return exit(
-      `the studio bundle is missing.
-  expected: ${shelf}
-  fix:      run "node scripts/prebundle.ts" and commit the result.`
-    );
+function hexToRgb2(hex2) {
+  const h = hex2.trim().replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  return [
+    parseInt(full.slice(0, 2), 16) || 0,
+    parseInt(full.slice(2, 4), 16) || 0,
+    parseInt(full.slice(4, 6), 16) || 0
+  ];
+}
+function kernel(sigma) {
+  const radius = Math.max(1, Math.ceil(sigma * 3));
+  const k = new Float32Array(radius * 2 + 1);
+  const denom = 2 * sigma * sigma;
+  let sum = 0;
+  for (let i = -radius; i <= radius; i++) {
+    const v = Math.exp(-(i * i) / denom);
+    k[i + radius] = v;
+    sum += v;
   }
+  for (let i = 0; i < k.length; i++) k[i] = k[i] / sum;
+  return k;
 }
-var startAt = (key2) => String(DEFAULT_INK[key2]);
-function page(js, theme) {
-  return `<!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ink Studio \u2014 ${theme.name}</title>
-<style>
-:root {
-  --paper: ${theme.paper};
-  --paper-2: ${theme.paper2};
-  --ink: ${theme.ink};
-  --shell: #14202a;
-  --shell-2: #1b2c38;
-  --edge: #2b4150;
-  --on-shell: #e8eef2;
-  --on-shell-dim: #9db0bd;
+function gaussian(plane, w, h, sigma) {
+  if (sigma <= 0.05) return plane.slice();
+  const k = kernel(sigma);
+  const r = (k.length - 1) / 2;
+  const tmp = new Float32Array(plane.length);
+  const out = new Float32Array(plane.length);
+  for (let y2 = 0; y2 < h; y2++) {
+    const row = y2 * w;
+    for (let x2 = 0; x2 < w; x2++) {
+      let acc = 0;
+      for (let i = -r; i <= r; i++) {
+        const xx = x2 + i < 0 ? 0 : x2 + i > w - 1 ? w - 1 : x2 + i;
+        acc += plane[row + xx] * k[i + r];
+      }
+      tmp[row + x2] = acc;
+    }
+  }
+  for (let x2 = 0; x2 < w; x2++) {
+    for (let y2 = 0; y2 < h; y2++) {
+      let acc = 0;
+      for (let i = -r; i <= r; i++) {
+        const yy = y2 + i < 0 ? 0 : y2 + i > h - 1 ? h - 1 : y2 + i;
+        acc += tmp[yy * w + x2] * k[i + r];
+      }
+      out[y2 * w + x2] = acc;
+    }
+  }
+  return out;
 }
-* { box-sizing: border-box; }
-body {
-  margin: 0; min-height: 100vh; background: var(--shell); color: var(--on-shell);
-  font: 15px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  padding: 26px clamp(16px, 4vw, 44px) 60px;
+function hash2(x2, y2) {
+  const n = Math.sin(x2 * 127.1 + y2 * 311.7) * 43758.5453;
+  return n - Math.floor(n);
 }
-h1 { font-size: 20px; font-weight: 600; margin: 0 0 2px; letter-spacing: -.01em; }
-.lede { color: var(--on-shell-dim); margin: 0 0 22px; max-width: 62ch; font-size: 14px; }
-.lede code { background: var(--shell-2); padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
-.layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 26px; align-items: start; }
-@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
-
-.panel { background: var(--shell-2); border: 1px solid var(--edge); border-radius: 10px; padding: 16px 18px; }
-.panel + .panel { margin-top: 14px; }
-.panel h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
-            color: var(--on-shell-dim); margin: 0 0 12px; }
-
-#drop { border: 1.5px dashed var(--edge); border-radius: 10px; padding: 26px 18px; text-align: center;
-        cursor: pointer; transition: border-color .15s, background .15s; background: transparent; }
-#drop:hover, #drop.over, #drop:focus-visible { border-color: var(--paper); background: rgba(255,255,255,.04); outline: none; }
-#drop strong { display: block; font-size: 14px; margin-bottom: 3px; }
-#drop span { font-size: 12.5px; color: var(--on-shell-dim); }
-#drop.loaded { padding: 14px; }
-#file { display: none; }
-
-.control { margin-bottom: 15px; }
-.control:last-child { margin-bottom: 0; }
-.control label { display: flex; justify-content: space-between; align-items: baseline;
-                 font-size: 13px; margin-bottom: 5px; }
-.control .name { font-weight: 500; }
-.control .name em { font-style: normal; opacity: .55; font-size: 12px; }
-.control output { font-variant-numeric: tabular-nums; color: var(--on-shell-dim); font-size: 12.5px; }
-.control .hint { display: block; font-size: 11.5px; color: var(--on-shell-dim); margin-top: 4px; line-height: 1.45; }
-input[type=range] { width: 100%; accent-color: var(--paper); }
-select { width: 100%; background: var(--shell); color: var(--on-shell); font: inherit; font-size: 13px;
-         border: 1px solid var(--edge); border-radius: 7px; padding: 7px 9px; }
-
-.presets { display: flex; gap: 7px; flex-wrap: wrap; }
-.presets button { flex: 1 1 auto; background: transparent; color: var(--on-shell); font: inherit; font-size: 13px;
-                  border: 1px solid var(--edge); border-radius: 7px; padding: 7px 10px; cursor: pointer; }
-.presets button:hover { background: rgba(255,255,255,.05); }
-.presets button[aria-current] { border-color: var(--paper); background: rgba(255,255,255,.09); }
-
-#export { width: 100%; margin-top: 4px; background: var(--paper); color: var(--ink); font: inherit; font-weight: 600;
-          border: 0; border-radius: 8px; padding: 11px; cursor: pointer; }
-#export:disabled { opacity: .4; cursor: not-allowed; }
-.check { display: flex; align-items: center; gap: 9px; font-size: 13px; margin-top: 12px; }
-
-/* THE SHEET IS THE POINT. The drawing is previewed on the book's real paper,
-   with the book's real grain over it, because a picture judged against a white
-   browser background is judged against something no reader will ever see. */
-.sheet { position: relative; background: linear-gradient(var(--paper), var(--paper-2));
-         border-radius: 4px; padding: 30px;
-         /* THE PREVIEW HAS RULED LINES BECAUSE A PAGE DOES. Judging a plate
-            against blank paper is what let three baked-paper versions look
-            perfect here and wrong in a book. */
-         background-image: linear-gradient(var(--paper), var(--paper-2)),
-           repeating-linear-gradient(to bottom, transparent 0 26px, color-mix(in srgb, var(--ink) 12%, transparent) 26px 27px);
-         box-shadow: 0 1px 2px rgba(0,0,0,.35), 0 24px 60px -26px rgba(0,0,0,.75); }
-body.on-dark .sheet { background: #16242e; }
-.sheet::after {
-  content: ''; position: absolute; inset: 0; border-radius: 4px; pointer-events: none;
-  opacity: .5; mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23g)' opacity='.055'/%3E%3C/svg%3E");
+function valueNoise(x2, y2) {
+  const xi = Math.floor(x2);
+  const yi = Math.floor(y2);
+  const xf = x2 - xi;
+  const yf = y2 - yi;
+  const u = xf * xf * (3 - 2 * xf);
+  const v = yf * yf * (3 - 2 * yf);
+  const a = hash2(xi, yi);
+  const b = hash2(xi + 1, yi);
+  const c = hash2(xi, yi + 1);
+  const d = hash2(xi + 1, yi + 1);
+  return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
 }
-body.on-dark .sheet::after { mix-blend-mode: screen; opacity: .28; }
-/* The SAME rule the book applies to a .plate picture, so the preview IS the
-   page. A backtick here would have closed the template literal this lives in. */
-#preview {
-  display: block; width: 100%; height: auto; border-radius: 2px;
-  --plate-blur: 18px; --plate-fade: 12%;
-  -webkit-backdrop-filter: blur(var(--plate-blur));
-  backdrop-filter: blur(var(--plate-blur));
-  -webkit-mask-image:
-    linear-gradient(to right, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%);
-  mask-image:
-    linear-gradient(to right, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 var(--plate-fade), #000 calc(100% - var(--plate-fade)), transparent 100%);
-  -webkit-mask-composite: source-in; mask-composite: intersect;
+var smoothstep = (t) => {
+  const c = t < 0 ? 0 : t > 1 ? 1 : t;
+  return c * c * (3 - 2 * c);
+};
+function edgeMask(x2, y2, w, h, vignette) {
+  if (vignette <= 0) return 1;
+  const spanX = Math.max(1, w * vignette);
+  const spanY = Math.max(1, h * vignette);
+  const dx2 = Math.min(x2, w - 1 - x2) / spanX;
+  const dy2 = Math.min(y2, h - 1 - y2) / spanY;
+  let d = Math.min(dx2, dy2);
+  if (d < 1.4) {
+    const grain = Math.max(spanX, spanY) / 3;
+    d += (valueNoise(x2 / grain, y2 / grain) - 0.5) * 0.5;
+  }
+  return smoothstep(d);
 }
-#status { font-size: 12.5px; color: var(--on-shell-dim); margin-top: 12px; min-height: 1.5em; }
-[hidden] { display: none !important; }
-</style>
-</head><body>
+function threshold(u, epsilon, phi) {
+  return u >= epsilon ? 1 : 1 + Math.tanh(phi * (u - epsilon));
+}
+function inkWash(src, ink, settings = DEFAULT_INK) {
+  const { width: w, height: h } = src;
+  const px = src.data;
+  const { nib, line, threshold: epsilon, body: phi, vignette } = settings;
+  const lum = new Float32Array(w * h);
+  for (let i = 0, p = 0; p < lum.length; i += 4, p++) {
+    lum[p] = (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]) / 255;
+  }
+  const sigma = Math.max(0.3, nib);
+  const near = gaussian(lum, w, h, sigma);
+  const far = gaussian(lum, w, h, sigma * K);
+  const out = new Uint8ClampedArray(new ArrayBuffer(px.length));
+  for (let p = 0, i = 0; p < lum.length; p++, i += 4) {
+    const x2 = p % w;
+    const y2 = (p - x2) / w;
+    const s = (1 + line) * near[p] - line * far[p];
+    const coverage = 1 - Math.min(1, Math.max(0, threshold(s, epsilon, phi)));
+    const mask = edgeMask(x2, y2, w, h, vignette);
+    const alpha = coverage * mask;
+    out[i] = ink[0];
+    out[i + 1] = ink[1];
+    out[i + 2] = ink[2];
+    out[i + 3] = Math.round(alpha * 255);
+  }
+  return { data: out, width: w, height: h };
+}
 
-<h1>Ink Studio</h1>
-<p class="lede">Turn a supplied picture into something that looks <em>drawn on the page</em>, using
-<strong>XDoG</strong> (Winnem\xF6ller, Kyprianidis &amp; Olsen, 2012). The preview sits on this book's
-real paper, in its real ink \u2014 theme <code id="theme-name"></code>. Export carries only ink coverage,
-so the page's own paper and grain read through it. Drop the result into a lesson like any other
-picture.</p>
+// scripts/ink.ts
+var ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+function exit(msg) {
+  console.error(`ink: ${msg}`);
+  process.exit(1);
+}
+var USAGE = `
+  node dist/ink.mjs <picture> [out.png] [options]
 
-<div class="layout">
-  <div>
-    <div class="panel">
-      <h2>Artwork</h2>
-      <div id="drop" tabindex="0" role="button" aria-label="Choose a picture">
-        <strong>Drop a picture</strong>
-        <span>or click to choose \xB7 paste also works</span>
-      </div>
-      <input type="file" id="file" accept="image/*">
-    </div>
+  Turns a picture into something that looks drawn on the page, in the book's
+  own ink. Writes a transparent PNG: it carries only ink coverage, so the
+  page reads through it. Add {.plate} in your lesson if the page's ruled
+  lines should not run through the picture.
 
-    <div class="panel">
-      <h2>Starting points</h2>
-      <div class="presets">
-        <button type="button" data-preset="soft">Soft</button>
-        <button type="button" data-preset="drawn" aria-current="true">Drawn</button>
-        <button type="button" data-preset="engraved">Engraved</button>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>The hand</h2>
-      <div class="control">
-        <label for="nib"><span class="name">Nib &nbsp;<em>\u03C3</em></span><output id="nib-val"></output></label>
-        <input type="range" id="nib" min="0.4" max="4" step="0.1" value="${startAt("nib")}">
-        <span class="hint">The smallest mark the pen can make, in pixels. Broad loses detail on purpose.</span>
-      </div>
-      <div class="control">
-        <label for="line"><span class="name">Line &nbsp;<em>p</em></span><output id="line-val"></output></label>
-        <input type="range" id="line" min="0" max="60" step="1" value="${startAt("line")}">
-        <span class="hint">Sharpness \u2014 how hard an edge is pushed away from what surrounds it.</span>
-      </div>
-      <div class="control">
-        <label for="threshold"><span class="name">Threshold &nbsp;<em>\u03B5</em></span><output id="threshold-val"></output></label>
-        <input type="range" id="threshold" min="0.30" max="0.95" step="0.01" value="${startAt("threshold")}">
-        <span class="hint">Where ink begins. Above this the sheet is left bare, which is what keeps
-        the drawing off the empty page instead of tinting a rectangle.</span>
-      </div>
-      <div class="control">
-        <label for="body"><span class="name">Body &nbsp;<em>\u03C6</em></span><output id="body-val"></output></label>
-        <input type="range" id="body" min="0.5" max="100" step="0.5" value="${startAt("body")}">
-        <span class="hint">How hard the ink commits once it has begun. Low is a wash you can read
-        the page through; high is a woodcut that covers it.</span>
-      </div>
-      <label class="check"><input type="checkbox" id="ground"> Check it on a dark page</label>
-    </div>
-
-    <div class="panel">
-      <h2>The plate</h2>
-      <p style="font-size:11.5px;color:var(--on-shell-dim);margin:-6px 0 12px">The page's ruled lines
-      are hidden by the book, not by this export \u2014 add <code>&#123;.plate&#125;</code> to the picture in your
-      lesson. The preview below already shows it.</p>
-      <div class="control">
-        <label for="vignette"><span class="name">Edge fade</span><output id="vignette-val"></output></label>
-        <input type="range" id="vignette" min="0" max="0.45" step="0.01" value="${startAt("vignette")}">
-        <span class="hint">How far the drawing dissolves into bare page. Zero leaves a hard
-        rectangle; this is what stops it looking pasted on.</span>
-      </div>
-
-    </div>
-
-    <div class="panel">
-      <h2>Export</h2>
-      <div class="control">
-        <label for="format"><span class="name">Format</span></label>
-        <select id="format"></select>
-        <span class="hint">Measured on the same drawing: PNG 1,838&nbsp;KB, WebP 592&nbsp;KB.
-        Both carry transparency. Keep PNG for print.</span>
-      </div>
-      <div class="control">
-        <label for="size"><span class="name">Size</span></label>
-        <select id="size"></select>
-        <span class="hint">A page is 780&nbsp;px wide, so 1200 is already more than a screen
-        resolves. Pictures are packed inside the book, so this is the one number that decides
-        whether it stays a file you can send.</span>
-      </div>
-      <button type="button" id="export" disabled>Save transparent PNG</button>
-      <div id="status">Drop a picture to begin.</div>
-    </div>
-  </div>
-
-  <div id="stage" hidden>
-    <div class="sheet"><canvas id="preview"></canvas></div>
-  </div>
-</div>
-
-<!-- THE THEME REACHES THE SCRIPT AS DATA, NOT AS A REBUILD.
-     The bundle is compiled once and shared by every theme; baking colours into
-     it would mean a bundle per brand. This one line is the whole difference
-     between books, which is also why a rebrand costs nothing here. -->
-<script>window.__INK_THEME__ = ${JSON.stringify(theme)};</script>
-<script type="module">
-${escapeForScriptTag(js)}
-</script>
-</body></html>
+  Presets     --soft  --drawn (default)  --engraved
+  The hand    --nib <px>  --line <p>  --threshold <e>  --body <phi>
+  The plate   --fade <0..0.45>
+  Output      --width <px>   (default 1200; 0 keeps the source size)
+  Theme       --theme <path> (default theme.json)
 `;
+function parse5(argv) {
+  const positional = [];
+  let settings = { ...DEFAULT_INK };
+  let width2 = 1200;
+  let theme = "theme.json";
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    const next2 = () => {
+      const v = argv[++i];
+      if (v === void 0) exit(`${a} needs a value`);
+      return v;
+    };
+    const num = () => {
+      const v = Number(next2());
+      if (!Number.isFinite(v)) exit(`${a} needs a number`);
+      return v;
+    };
+    if (!a.startsWith("--")) {
+      positional.push(a);
+      continue;
+    }
+    const preset = INK_PRESETS[a.slice(2)];
+    if (preset) {
+      settings = { ...preset };
+      continue;
+    }
+    switch (a) {
+      case "--nib":
+        settings.nib = num();
+        break;
+      case "--line":
+        settings.line = num();
+        break;
+      case "--threshold":
+        settings.threshold = num();
+        break;
+      case "--body":
+        settings.body = num();
+        break;
+      case "--fade":
+        settings.vignette = num();
+        break;
+      case "--width":
+        width2 = num();
+        break;
+      case "--theme":
+        theme = next2();
+        break;
+      case "--help":
+      case "-h":
+        console.log(USAGE);
+        process.exit(0);
+        break;
+      default:
+        exit(`unknown option ${a}
+${USAGE}`);
+    }
+  }
+  const input = positional[0];
+  if (!input) {
+    console.error(USAGE);
+    process.exit(1);
+  }
+  const named = positional[1];
+  const output = named ?? join(dirname(input), `${basename(input, extname(input))}.ink.png`);
+  return { input, output, width: width2, theme, settings };
+}
+async function decode(path) {
+  const bytes = await readFile2(path).catch(() => exit(`cannot read ${path}`));
+  const ext = extname(path).toLowerCase();
+  if (ext === ".png") {
+    const png = import_pngjs.PNG.sync.read(bytes);
+    return { data: new Uint8ClampedArray(png.data), width: png.width, height: png.height };
+  }
+  if (ext === ".jpg" || ext === ".jpeg") {
+    const img = import_jpeg_js.default.decode(bytes, { useTArray: true });
+    return { data: new Uint8ClampedArray(img.data), width: img.width, height: img.height };
+  }
+  exit(`${ext || "that"} is not a format this can read \u2014 give it a JPEG or a PNG.
+       WebP and AVIF decode in the studio, which uses the browser's own decoders.`);
+}
+function resize(src, w) {
+  if (w >= src.width || w <= 0) return src;
+  const h = Math.max(1, Math.round(src.height * w / src.width));
+  const out = new Uint8ClampedArray(w * h * 4);
+  const sx = src.width / w;
+  const sy = src.height / h;
+  for (let y2 = 0; y2 < h; y2++) {
+    const y0 = Math.floor(y2 * sy);
+    const y1 = Math.min(src.height, Math.max(y0 + 1, Math.floor((y2 + 1) * sy)));
+    for (let x2 = 0; x2 < w; x2++) {
+      const x0 = Math.floor(x2 * sx);
+      const x1 = Math.min(src.width, Math.max(x0 + 1, Math.floor((x2 + 1) * sx)));
+      let r = 0, g = 0, b = 0, a = 0, n = 0;
+      for (let yy = y0; yy < y1; yy++) {
+        for (let xx = x0; xx < x1; xx++) {
+          const i = (yy * src.width + xx) * 4;
+          r += src.data[i];
+          g += src.data[i + 1];
+          b += src.data[i + 2];
+          a += src.data[i + 3];
+          n++;
+        }
+      }
+      const o = (y2 * w + x2) * 4;
+      out[o] = r / n;
+      out[o + 1] = g / n;
+      out[o + 2] = b / n;
+      out[o + 3] = a / n;
+    }
+  }
+  return { data: out, width: w, height: h };
 }
 async function main() {
-  const [themeArg, outArg] = process.argv.slice(2);
-  const themePath = resolve(ROOT, themeArg ?? "theme.json");
-  const outPath = resolve(ROOT, outArg ?? "output/ink-studio.html");
-  const theme = await loadTheme(themePath).catch(() => exit(`could not read the theme at ${themePath}`));
-  const p = buildPalette(theme);
-  const js = await studioBundle();
-  const html2 = page(js, {
-    ink: p.ink,
-    paper: p.paper,
-    paper2: p.paper2,
-    // Named so an author can see at a glance WHICH book's ink they are drawing
-    // in — the studio is worth nothing if it is quietly previewing the default
-    // theme while the book ships another.
-    name: themeArg ?? "theme.json"
-  });
-  await mkdir(dirname(outPath), { recursive: true });
-  await writeFile(outPath, html2, "utf8");
-  const kb = (Buffer.byteLength(html2) / 1024).toFixed(0);
-  console.log(`  Ink Studio  \xB7  ${outPath}`);
-  console.log(`  ${kb} KB, one file, no install  \xB7  ink ${p.ink} on paper ${p.paper}`);
-  console.log(`  Open it, drop artwork in, export a transparent PNG.`);
+  const args = parse5(process.argv.slice(2));
+  const theme = await loadTheme(resolve(ROOT, args.theme)).catch(() => exit(`cannot read the theme at ${args.theme}`));
+  const palette = buildPalette(theme);
+  const source = await decode(args.input);
+  const scaled = resize(source, args.width);
+  const settings = {
+    ...args.settings,
+    nib: args.settings.nib * (scaled.width / 900)
+  };
+  const t0 = Date.now();
+  const drawn = inkWash(scaled, hexToRgb2(palette.ink), settings);
+  const png = new import_pngjs.PNG({ width: drawn.width, height: drawn.height });
+  png.data = Buffer.from(drawn.data.buffer, drawn.data.byteOffset, drawn.data.byteLength);
+  const bytes = import_pngjs.PNG.sync.write(png);
+  await writeFile(args.output, bytes);
+  const kb = (n) => `${Math.round(n / 1024)} KB`;
+  console.log(`  ${args.output}`);
+  console.log(`  ${drawn.width}\xD7${drawn.height} \xB7 ${kb(bytes.length)} \xB7 ink ${palette.ink} \xB7 ${Date.now() - t0} ms`);
+  console.log(`  use it with {.plate} if the page's ruled lines should not run through it`);
 }
 await main();
 /*! Bundled license information:

@@ -22,6 +22,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { buildPalette, loadTheme } from '../src/theme.ts'
+import { DEFAULT_INK, INK_PRESETS } from '../src/studio/ink.ts'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -46,6 +47,18 @@ async function studioBundle(): Promise<string> {
     )
   }
 }
+
+/**
+ * A control's starting position, taken from the default preset rather than
+ * written down again.
+ *
+ * It was written down again, once, and the two drifted the moment the presets
+ * were re-tuned: the studio opened saying "drawn" while three sliders showed
+ * numbers from an earlier tuning. The picture was right — it reads the preset —
+ * and the readout lied, which is the worse of the two failures, because a
+ * number on screen is what an author writes down and reuses.
+ */
+const startAt = (key: keyof typeof DEFAULT_INK): string => String(DEFAULT_INK[key])
 
 function page(js: string, theme: { ink: string; paper: string; paper2: string; name: string }): string {
   return `<!doctype html>
@@ -181,23 +194,23 @@ picture.</p>
       <h2>The hand</h2>
       <div class="control">
         <label for="nib"><span class="name">Nib &nbsp;<em>σ</em></span><output id="nib-val"></output></label>
-        <input type="range" id="nib" min="0.4" max="4" step="0.1" value="1.0">
+        <input type="range" id="nib" min="0.4" max="4" step="0.1" value="${startAt('nib')}">
         <span class="hint">The smallest mark the pen can make, in pixels. Broad loses detail on purpose.</span>
       </div>
       <div class="control">
         <label for="line"><span class="name">Line &nbsp;<em>p</em></span><output id="line-val"></output></label>
-        <input type="range" id="line" min="0" max="60" step="1" value="26">
+        <input type="range" id="line" min="0" max="60" step="1" value="${startAt('line')}">
         <span class="hint">Sharpness — how hard an edge is pushed away from what surrounds it.</span>
       </div>
       <div class="control">
         <label for="threshold"><span class="name">Threshold &nbsp;<em>ε</em></span><output id="threshold-val"></output></label>
-        <input type="range" id="threshold" min="0.30" max="0.95" step="0.01" value="0.62">
+        <input type="range" id="threshold" min="0.30" max="0.95" step="0.01" value="${startAt('threshold')}">
         <span class="hint">Where ink begins. Above this the sheet is left bare, which is what keeps
         the drawing off the empty page instead of tinting a rectangle.</span>
       </div>
       <div class="control">
         <label for="body"><span class="name">Body &nbsp;<em>φ</em></span><output id="body-val"></output></label>
-        <input type="range" id="body" min="0.5" max="100" step="0.5" value="5">
+        <input type="range" id="body" min="0.5" max="100" step="0.5" value="${startAt('body')}">
         <span class="hint">How hard the ink commits once it has begun. Low is a wash you can read
         the page through; high is a woodcut that covers it.</span>
       </div>
@@ -211,7 +224,7 @@ picture.</p>
       lesson. The preview below already shows it.</p>
       <div class="control">
         <label for="vignette"><span class="name">Edge fade</span><output id="vignette-val"></output></label>
-        <input type="range" id="vignette" min="0" max="0.45" step="0.01" value="0.28">
+        <input type="range" id="vignette" min="0" max="0.45" step="0.01" value="${startAt('vignette')}">
         <span class="hint">How far the drawing dissolves into bare page. Zero leaves a hard
         rectangle; this is what stops it looking pasted on.</span>
       </div>

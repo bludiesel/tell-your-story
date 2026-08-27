@@ -77,19 +77,19 @@ const K = 1.6
  * pictures here, because ε depends on how the input is normalised and every
  * implementation normalises differently.
  *
- * Chosen off a 4x4 sweep of ε against φ rather than picked. The sweep also
- * settled which control matters: φ moves a picture from a pale wash to a
- * woodcut on its own, ε decides how much sheet is left bare, and p is the
- * weakest of the three — the sharpening weights sum to one, so in flat regions
- * it cancels out and only edges feel it.
+ * Chosen off sweeps rather than picked: ε against φ first, then p against φ
+ * once the blur was fixed. p was measured at ZERO effect before that — the box
+ * approximation collapsed both blurs to the same radius — so the first set of
+ * presets was chosen with the line half of the operator switched off, and every
+ * drawing came out photographic. These are the numbers with it running.
  */
 export const INK_PRESETS: Readonly<Record<string, InkSettings>> = {
   /** Pencil shading: a gentle ramp, so most of the picture survives as tone. */
-  soft: { nib: 0.9, line: 12, threshold: 0.70, body: 2, vignette: 0.28 },
+  soft: { nib: 0.9, line: 20, threshold: 0.70, body: 2, vignette: 0.28 },
   /** Natural media — the house setting. A drawn line over real tone. */
-  drawn: { nib: 0.9, line: 12, threshold: 0.62, body: 4, vignette: 0.28 },
+  drawn: { nib: 0.9, line: 34, threshold: 0.62, body: 4, vignette: 0.28 },
   /** Two-tone woodcut: φ high enough that the ramp is effectively a cliff. */
-  engraved: { nib: 1.1, line: 20, threshold: 0.56, body: 16, vignette: 0.22 },
+  engraved: { nib: 1.1, line: 60, threshold: 0.56, body: 16, vignette: 0.22 },
 }
 
 export const DEFAULT_INK: InkSettings = INK_PRESETS.drawn!
@@ -123,60 +123,64 @@ export function hexToRgb(hex: string): Rgb {
 }
 
 /**
- * Gaussian blur, approximated by three box blurs.
+ * A real separable Gaussian, and it has to be real.
  *
- * Three passes of a box filter converge on a true Gaussian closely enough that
- * the difference is invisible in a drawing, and each pass costs one add and one
- * subtract per pixel regardless of radius. A real Gaussian kernel at σ=2 is 13
- * multiply-adds per pixel per axis; this is 6 adds. The operator runs four
- * blurs per image, so the saving is the difference between a slider you drag
- * and a slider you wait for.
+ * This was three box passes, which is the standard cheap approximation — and it
+ * silently destroyed the entire line half of the operator. Box radii are whole
+ * pixels, so at the default nib σ=0.9 and σ=1.44 both rounded to radius 1: the
+ * two blurs came out IDENTICAL, their difference was exactly zero, and `p`
+ * multiplied zero. Measured across p = 2 to 60 on four pictures, the output was
+ * bit-for-bit unchanged — 0.00%. The drawings looked photographic because no
+ * pen stroke was ever computed.
  *
- * Box widths follow Kovesi's standard sizing so the three passes sum to the
- * requested σ rather than to something close to it.
+ * A true kernel costs more per pixel and is worth every one of them: σ is a
+ * continuous quantity here, and the whole method rests on two blurs that differ
+ * by exactly a factor of 1.6. At the σ values a nib uses the kernel is a dozen
+ * taps, which is nothing against being correct.
  */
-function boxPass(src: Float32Array, dst: Float32Array, w: number, h: number, r: number): void {
-  const span = r * 2 + 1
-  const clampX = (x: number) => (x < 0 ? 0 : x > w - 1 ? w - 1 : x)
-  for (let y = 0; y < h; y++) {
-    const row = y * w
-    let acc = 0
-    for (let x = -r; x <= r; x++) acc += src[row + clampX(x)]!
-    for (let x = 0; x < w; x++) {
-      dst[row + x] = acc / span
-      acc += src[row + clampX(x + r + 1)]! - src[row + clampX(x - r)]!
-    }
+function kernel(sigma: number): Float32Array {
+  const radius = Math.max(1, Math.ceil(sigma * 3))
+  const k = new Float32Array(radius * 2 + 1)
+  const denom = 2 * sigma * sigma
+  let sum = 0
+  for (let i = -radius; i <= radius; i++) {
+    const v = Math.exp(-(i * i) / denom)
+    k[i + radius] = v
+    sum += v
   }
-}
-
-function transpose(src: Float32Array, dst: Float32Array, w: number, h: number): void {
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) dst[x * h + y] = src[y * w + x]!
-  }
+  for (let i = 0; i < k.length; i++) k[i] = k[i]! / sum
+  return k
 }
 
 function gaussian(plane: Float32Array, w: number, h: number, sigma: number): Float32Array {
   if (sigma <= 0.05) return plane.slice()
-  // Kovesi's box sizes for approximating a Gaussian with three passes.
-  const ideal = Math.sqrt((12 * sigma * sigma) / 3 + 1)
-  let wl = Math.floor(ideal)
-  if (wl % 2 === 0) wl--
-  const radius = Math.max(1, (wl - 1) / 2)
+  const k = kernel(sigma)
+  const r = (k.length - 1) / 2
+  const tmp = new Float32Array(plane.length)
+  const out = new Float32Array(plane.length)
 
-  let a = plane.slice()
-  let b = new Float32Array(plane.length)
-  // Horizontal three times, transpose, horizontal three times, transpose back —
-  // one code path does both axes, and the transposed passes run down cache
-  // lines rather than across them.
-  for (const [ww, hh] of [[w, h], [h, w]] as const) {
-    for (let pass = 0; pass < 3; pass++) {
-      boxPass(a, b, ww, hh, radius)
-      const t = a; a = b; b = t
+  for (let y = 0; y < h; y++) {
+    const row = y * w
+    for (let x = 0; x < w; x++) {
+      let acc = 0
+      for (let i = -r; i <= r; i++) {
+        const xx = x + i < 0 ? 0 : x + i > w - 1 ? w - 1 : x + i
+        acc += plane[row + xx]! * k[i + r]!
+      }
+      tmp[row + x] = acc
     }
-    transpose(a, b, ww, hh)
-    const t = a; a = b; b = t
   }
-  return a
+  for (let x = 0; x < w; x++) {
+    for (let y = 0; y < h; y++) {
+      let acc = 0
+      for (let i = -r; i <= r; i++) {
+        const yy = y + i < 0 ? 0 : y + i > h - 1 ? h - 1 : y + i
+        acc += tmp[yy * w + x]! * k[i + r]!
+      }
+      out[y * w + x] = acc
+    }
+  }
+  return out
 }
 
 /**

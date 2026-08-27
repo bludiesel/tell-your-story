@@ -285,6 +285,13 @@ image and a little text; the layout is chosen automatically.
 [ONE SHORT PARAGRAPH, OR NONE.]
 ```
 
+> **Treat artwork before you place it.** A photograph on a page of paper and
+> handwriting is the one element that came from a different hand. Run
+> `node dist/ink.mjs img/[FILE].png`, then reference the `.ink.png` it writes and
+> add `{.plate}` so the page's ruled lines do not run through it. Full syntax and
+> the slider version are in SKILL.md — no fenced example here, because every
+> fenced block in this file is extracted and built by `scripts/verify.ts`.
+
 ---
 
 ## Full bleed — a picture to every edge  `full-bleed`
