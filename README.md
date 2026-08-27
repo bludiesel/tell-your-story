@@ -5,8 +5,10 @@
 **One Markdown file in. One standalone HTML flipbook out.**
 
 A 3D workbook that opens on a stage curtain — hard section boards, fore-edge
-tabs, sticky notes, page curvature, presenter-remote control. No server, no
-network, no folder of assets. It opens from a USB stick.
+tabs, sticky notes, page curvature, presenter-remote control. Tick boxes that
+get ticked, procedures numbered to be found at arm's length, drawings with their
+parts named. No server, no network, no folder of assets. It opens from a USB
+stick.
 
 <img src="docs/screenshots/01-curtain.jpg" alt="A WebGL stage curtain parts to reveal a closed 3D book floating in the dark" width="100%">
 
@@ -201,9 +203,21 @@ material.
 </tr>
 </table>
 
+### It is a WORKBOOK, not just a book
+
+A book is read. A workbook is followed, ticked and filled in — so four of the
+layouts exist to hand the reader a job rather than a page.
+
+| | |
+|---|---|
+| **`:::checklist`** | Tick boxes, and the ticks **write themselves in** — a pen stroke, short down then long up, drawn into each box in turn once the list has landed. Boxes are 1.6rem: under about 5mm a biro tick covers the box, and this is a page marked standing on a site. |
+| **`:::steps`** | A numbered procedure, the numeral set at heading size because on a procedure page the number *is* the navigation. Not a flow diagram — `:::diagram flow` is for a decision that **branches**, and a flow chart of a straight line is harder to follow, not easier. |
+| **`:::dodont`** | Both halves of a rule, one page, one glance. `:::compare` puts them on a **spread**, and a reader who meets DO and turns the page to find DON'T has already formed the habit. **No colour carries the meaning** — a workbook printed in one colour still has to work. |
+| **`:::anatomy`** | A drawing with numbered pins and a key. You give each pin a position in per cent — `1. Burst disk \| 32 20` — because you know where the parts are and the software does not. Percentages, so a pin holds its part at any page size; labels drawn into the artwork cannot survive a resize, a rebrand or a translation. |
+
 ---
 
-## Seventeen layouts, and a guide for choosing between them
+## Twenty-two layouts, and a guide for choosing between them
 
 The failure mode of any kit like this is using three blocks and ignoring the
 rest, so choosing is documented separately from syntax:
@@ -212,11 +226,17 @@ rest, so choosing is documented separately from syntax:
 |---|---|
 | [`templates/CHOOSING.md`](templates/CHOOSING.md) | **Which layout for which content.** One table, by content shape — not by block name. Read this first. |
 | [`templates/LAYOUTS.md`](templates/LAYOUTS.md) | Every layout, with copyable syntax and placeholder text to replace. |
-| [`templates/starter.md`](templates/starter.md) | A real three-section book to copy. It builds as it stands. |
+| [`templates/starter.md`](templates/starter.md) | A real three-section book to copy and fill in. It **refuses to build** until you have — every placeholder is written `[LIKE THIS]` and the builder blocks any book still carrying one. That is the point: a forgotten placeholder cannot reach a reader. |
 
-| Authored | Generated for you |
+| | |
 |---|---|
-| `prose` · `opener` · `statement` · `quote-page` · `has-sticky` · `marginalia` · `takeaway` · `ptable` · `barchart` · `timeline` · `compare` · `half-bleed` · `full-bleed` · `colophon` | `cover` · `contents` · `divider` |
+| **Reading** | `prose` · `opener` · `statement` · `quote-page` · `takeaway` |
+| **Marking up** | `has-sticky` · `marginalia` |
+| **Data** | `ptable` · `barchart` |
+| **Across a spread** | `timeline` · `compare` |
+| **Workbook** | `checklist` · `steps` · `dodont` · `anatomy` |
+| **Pictures** | `plate` · `half-bleed` · `full-bleed` |
+| **Generated for you** | `cover` · `contents` · `divider` · `colophon` |
 
 The generated three are derived, never written: the contents page takes its page
 numbers from where the pages actually landed, so **it cannot cite a page that is
@@ -252,7 +272,7 @@ nothing.
 
 <div align="center">
 
-<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 186 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 187 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
 
 </div>
 
@@ -266,7 +286,7 @@ A built book is one file. The tool that builds it is nearly as lean:
 | Fonts | subset and embedded; a book needs no network |
 
 Every number on that card is measured on this commit, not rounded up for the
-graphic: `186` is what `node scripts/check.ts` prints, `22` is the length of
+graphic: `187` is what `node scripts/check.ts` prints, `22` is the length of
 `LAYOUTS` in `src/layout.ts` with all seventeen proved reachable by
 `scripts/verify.ts`, and `1` is the entire point of the project.
 

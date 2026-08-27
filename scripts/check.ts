@@ -1631,6 +1631,30 @@ check('book: shipped grain filter resolves',
     'half-bleed is tested first, so a treated drawing lands in the photograph layout again')
 }
 
+// ── the docs must not promise a build the guard refuses ─────────────────────
+//
+// README.md and SKILL.md both said the starter template "builds as it stands".
+// It does not, and cannot: it is 28 bracketed placeholders and the builder
+// blocks any book still carrying one. That refusal is correct — a forgotten
+// [BOOK TITLE] must never reach a reader — but it made the FIRST thing a new
+// user tries fail with an error the documentation told them would not happen.
+//
+// Checked against the template rather than against a phrase, so it stays true
+// however the sentence is worded next.
+{
+  const starter = await readFile(join(ROOT, 'templates', 'starter.md'), 'utf8')
+  const hasPlaceholders = /\[[A-Z][^\]\n]{1,70}\]/.test(starter)
+  const docs = [
+    await readFile(join(ROOT, 'README.md'), 'utf8'),
+    await readFile(join(ROOT, 'SKILL.md'), 'utf8'),
+  ].join('\n')
+  const promises = /starter[\s\S]{0,400}?builds as it stands|builds as it stands[\s\S]{0,400}?starter/i.test(docs)
+  check('docs: nothing claims the starter builds while it is still placeholders',
+    !(hasPlaceholders && promises),
+    'the starter is placeholders and the builder refuses it, but the docs say it builds — ' +
+    'which is the first thing a new reader tries')
+}
+
 // ── renderLayouts must reach every shape it handles ─────────────────────────
 //
 // It starts with a bail-out: a page whose HTML matches none of a list of names

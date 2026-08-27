@@ -131,7 +131,7 @@ place. Then open the book and turn it.
 
 | File | What it is for |
 |---|---|
-| **[`templates/starter.md`](templates/starter.md)** | Copy this and fill it in. A real three-section book with every placeholder written as `[CAPITALS]`. It builds as it stands, so you can see the shape before you write a word. |
+| **[`templates/starter.md`](templates/starter.md)** | Copy this and fill it in. A real three-section book with every placeholder written as `[CAPITALS]`. It **will not build until you have replaced them** — the builder blocks any book still carrying one and names every survivor. That refusal is the feature: a forgotten placeholder cannot reach a reader. To see the shape moving before you write, build `content/sample-book.md` instead. |
 | **[`templates/CHOOSING.md`](templates/CHOOSING.md)** | **Which layout for which content.** One table, worked top to bottom. Read this before authoring — choosing the layout is the decision most likely to go wrong. |
 | **[`templates/LAYOUTS.md`](templates/LAYOUTS.md)** | Every one of the 22 layouts, with copyable syntax and the placeholder text to replace. |
 | **[`content/every-layout.md`](content/every-layout.md)** | **The catalogue — LOOK at the layouts instead of imagining them.** One page per layout, one block per feature, in a real book you open and turn. Build it once and keep it open while authoring: `node dist/build.mjs content/every-layout.md output/every-layout.html`. Choosing well is a visual judgement, and reading syntax is not the same as seeing the page it produces. |
