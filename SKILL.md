@@ -237,10 +237,13 @@ Apply these rules when generating or extending a book:
 
 The curtain, cover opening, page turn, landing reveal, diagram choreography,
 section tabs, riffle, and the one-page/spread view control are **built-in
-choreography**, not per-book Markdown controls. The view control cycles
-automatic → one page → spread and is remembered per reader, not per book, so
-never author a lesson that assumes a facing page is on screen: a spread layout
-must still read when its partner is a page turn away. There is deliberately no front-matter setting for individual GSAP
+choreography**, not per-book Markdown controls. **A book opens on the two-page
+spread** — that is the object it is imitating, and it is what `:::compare` and
+`:::timeline` are laid out across. The view control cycles automatic → one page
+→ spread from there, and the choice is remembered per reader, not per book. Even
+so, never author a lesson that assumes a facing page is on screen: a reader on a
+phone, or one who picked a single page, must still be able to read a spread
+layout when its partner is a page turn away. There is deliberately no front-matter setting for individual GSAP
 durations or eases: a shared motion language keeps a workbook coherent. Choose
 the content's pacing with `steps`, `typing`, and the step markers; extend the
 runtime only when a new inline SVG teaches something the supplied blocks cannot.

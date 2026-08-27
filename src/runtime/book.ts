@@ -96,8 +96,18 @@ function boot(): void {
   // look at. It picks whichever mode draws the larger page, which is right for
   // reading and wrong for anyone who came to see the BOOK — a spread is the
   // object this whole thing is imitating, and on a 4:3 window the rule takes it
-  // away to buy four points of type. So the rule stays the default and the
-  // reader gets the wheel.
+  // away to buy four points of type.
+  //
+  // SO THE SPREAD IS THE DEFAULT, not `auto`. A book opens as two facing pages;
+  // that is what the whole object is for, and it is what `:::compare` and
+  // `:::timeline` are laid out across. `auto` was measured doing the wrong
+  // thing on an ordinary 1060x857 window — it chose one page, hid the fore-edge
+  // tabs, and turned every facing pair into two unrelated pages. `auto` remains
+  // one click away for anyone who would rather have the larger type.
+  //
+  // A narrow phone therefore opens on a spread it has to shrink. That is a
+  // deliberate consequence of "always open as a book", not an oversight: the
+  // reader can switch, and the switch is remembered.
   //
   // Stored under a plain global key, deliberately unlike the resume bookmark
   // beneath, which is namespaced per book: where you got to belongs to one
@@ -106,11 +116,13 @@ function boot(): void {
   type ViewMode = 'auto' | 'single' | 'spread'
   const VIEW_KEY = 'tell-your-story:view'
   const VIEW_ORDER: ViewMode[] = ['auto', 'single', 'spread']
+  /** What a book opens as before anyone has chosen. A book is two facing pages. */
+  const DEFAULT_VIEW: ViewMode = 'spread'
   const readView = (): ViewMode => {
     try {
       const raw = localStorage.getItem(VIEW_KEY)
-      return VIEW_ORDER.includes(raw as ViewMode) ? (raw as ViewMode) : 'auto'
-    } catch { return 'auto' }
+      return VIEW_ORDER.includes(raw as ViewMode) ? (raw as ViewMode) : DEFAULT_VIEW
+    } catch { return DEFAULT_VIEW }
   }
   let viewMode: ViewMode = readView()
 

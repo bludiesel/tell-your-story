@@ -1534,6 +1534,31 @@ check('book: shipped grain filter resolves',
   await rm(dir, { recursive: true, force: true })
 }
 
+// ── the two things a reader SEES first ──────────────────────────────────────
+//
+// Both were reported from a real book, not deduced, and both are one-line
+// regressions that no other check would notice.
+{
+  const runtime = await readFile(join(ROOT, 'src', 'runtime', 'book.ts'), 'utf8')
+  // A BOOK OPENS AS A BOOK. `auto` picks whichever mode draws the larger page,
+  // and on an ordinary 1060x857 window it chose ONE page — no fore-edge tabs,
+  // and every `:::compare` / `:::timeline` split across a turn.
+  check('view: a book opens on the two-page spread',
+    /DEFAULT_VIEW\s*:\s*ViewMode\s*=\s*'spread'/.test(runtime),
+    'the default view is not the spread — a book that opens as one page is not a book')
+
+  const layouts = await readFile(join(ROOT, 'src', 'runtime', 'layouts.css'), 'utf8')
+  // A PLATE IS NOT A BLEED. `.bleed-out img` / `.half-bleed-art img` fill their
+  // slot with `object-fit: cover`, which crops a drawing AND makes the plate's
+  // backdrop-filter blur half the page — measured at 51% wide by 86% tall, so
+  // the ruled lines vanished from practically the whole page.
+  const plateInBleed = /\.bleed-out img\.plate[\s\S]{0,400}?\}/.exec(layouts)?.[0] ?? ''
+  check('plate: a drawing in a bleed slot is contained, not cropped',
+    /object-fit:\s*contain/.test(plateInBleed) && /max-width:\s*100%/.test(plateInBleed),
+    'a {.plate} inside a bleed layout inherits object-fit: cover — it gets cropped, ' +
+    'and its blur covers the whole slot instead of the drawing')
+}
+
 console.log(`\n  ${passed} passed, ${failed} failed\n`)
 await rm(TMP, { recursive: true, force: true })
 process.exit(failed === 0 ? 0 : 1)

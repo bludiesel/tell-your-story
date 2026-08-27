@@ -494,6 +494,33 @@
   mask-composite: intersect;
 }
 
+/* A PLATE IS NOT A BLEED, SO IT MUST NOT BE POURED INTO ONE.
+   `.bleed-out img` and `.half-bleed-art img` are absolutely positioned to fill
+   their slot with `object-fit: cover`, which is right for a photograph that
+   runs off the fore-edge and wrong twice over for a drawing:
+
+     1. COVER CROPS IT. The shipped valve drawing is 1.25 wide; the half-bleed
+        column is 0.45 wide. Cover threw away both sides of the drawing to fill
+        a tall slot — measured on the real page, not deduced.
+     2. THE BLUR IS THE ELEMENT BOX, NOT THE INK. `backdrop-filter` blurs a
+        rectangle; it cannot see where the strokes are. Filling the slot made
+        that rectangle 51% of the page wide and 86% of it tall, so the ruled
+        lines vanished from practically the whole page and the mask's edge fade
+        landed at the page margins instead of around the drawing. It read as
+        "the blur is applied to the whole page", and it was.
+
+   Absolute + `inset: 0` + `margin: auto` + auto sizes shrinks the box to the
+   drawing's own aspect ratio and centres it in the slot. The border box then IS
+   the drawing, so the blur covers the drawing and the fade sits around it.
+   Nothing is cropped, at any column width. */
+.bleed-out img.plate,
+.half-bleed-art img.plate {
+  margin: auto;
+  width: auto; height: auto;
+  max-width: 100%; max-height: 100%;
+  object-fit: contain;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   /* nothing animates here — declared so the rule above is never mistaken for
      motion when someone greps this file for what moves. */
