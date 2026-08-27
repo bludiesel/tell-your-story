@@ -37045,6 +37045,7 @@ function pickLayout(html2, kind) {
   if (has(/class="[^"]*\bcontents\b/)) return "contents";
   if (has(/class="[^"]*\bopener\b/)) return "opener";
   if (has(/class="[^"]*\bbleed-out\b/)) return "full-bleed";
+  if (has(/class="[^"]*\bplate-page\b/)) return "plate";
   if (has(/class="[^"]*\bhalf-bleed\b/)) return "half-bleed";
   if (has(/class="[^"]*\bstatement\b/) && dominates(inside2(/class="[^"]*\bstatement\b[^"]*"[^>]*>([\s\S]*?)<\/(?:div|p|blockquote)>/)))
     return "statement";
@@ -37146,8 +37147,14 @@ function renderLayouts(html2) {
     const body = document2.body;
     const imgs = [...body.querySelectorAll("img")];
     const words = (body.textContent ?? "").replace(/\s+/g, " ").trim();
-    const alreadyLaidOut = body.querySelector(".bleed-out, .half-bleed, .marginalia, .compare, .timeline");
-    if (imgs.length === 1 && !alreadyLaidOut && words.length < 420) {
+    const alreadyLaidOut = body.querySelector(".bleed-out, .half-bleed, .plate-page, .marginalia, .compare, .timeline");
+    if (imgs.length === 1 && !alreadyLaidOut && imgs[0].classList.contains("plate") && words.length < 620) {
+      const art = imgs[0];
+      const holder = art.parentElement?.tagName === "P" ? art.parentElement : art;
+      const rest = [...body.children].filter((c) => c !== holder).map((c) => c.outerHTML).join("");
+      body.innerHTML = `<div class="plate-page"><div class="plate-art">${art.outerHTML}</div><div class="plate-copy">${rest}</div></div>`;
+    }
+    if (imgs.length === 1 && !body.querySelector(".plate-page") && !alreadyLaidOut && words.length < 420) {
       const art = imgs[0];
       const holder = art.parentElement?.tagName === "P" ? art.parentElement : art;
       const rest = [...body.children].filter((c) => c !== holder).map((c) => c.outerHTML).join("");
@@ -37972,6 +37979,7 @@ var SCRIPT_CLOSE = "</script>";
 var escapeForScriptTag = (js) => js.replaceAll(SCRIPT_CLOSE, "<\\/script>");
 var injectScript = (html2, placeholder, js) => html2.replace(placeholder, () => escapeForScriptTag(js));
 var TEMPLATE_PLACEHOLDERS = /* @__PURE__ */ new Set([
+  "[ONE OR TWO SHORT PARAGRAPHS ABOUT WHAT THE DRAWING SHOWS.]",
   "[A NOTE IN THE MARGIN]",
   "[A PARAGRAPH THE ASIDE BELONGS TO.]",
   "[A PARAGRAPH.]",

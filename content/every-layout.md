@@ -235,6 +235,17 @@ Right-hand column, the same weight as the first.
 
 > images on paper
 
+## Plate
+
+![A cylinder valve and its burst disk, drawn](img/valve.ink.png){.plate}
+
+A drawing laid on the paper, wide, with the words beneath it. The page's ruled
+lines stop where the drawing sits, so the ink covers what is under it.
+
+---
+
+> images on paper
+
 ## Half bleed
 
 ![A site photograph](img/site-photo.png)

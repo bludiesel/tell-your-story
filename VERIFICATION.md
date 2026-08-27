@@ -16,7 +16,7 @@ unreachable — shadowed by an earlier test that also matches. Nothing fails;
 the page simply comes out as something else. Walking in through the front
 door the templates describe is the only way to catch it.
 
-**22/22 verified.**
+**23/23 verified.**
 
 | Layout / block | Identifier | Verified | Evidence |
 |---|---|:--:|---|
@@ -31,17 +31,18 @@ door the templates describe is the only way to catch it.
 | Chart — horizontal bars | `barchart` | ✅ | 1 page(s) came back data-layout="barchart" |
 | Timeline — one rail across the gutter | `timeline` | ✅ | 2 page(s) came back data-layout="timeline" |
 | Before / after — a comparison spread | `compare` | ✅ | 2 page(s) came back data-layout="compare" |
+| Plate — a drawing laid on the paper | `plate` | ✅ | 1 page(s) came back data-layout="plate" |
 | Half bleed — a picture off the outer edge | `half-bleed` | ✅ | 1 page(s) came back data-layout="half-bleed" |
 | Full bleed — a picture to every edge | `full-bleed` | ✅ | 2 page(s) came back data-layout="full-bleed" |
 | Colophon — the record of how the book was made | `colophon` | ✅ | 1 page(s) came back data-layout="colophon" |
-| Every layout is reachable | — | ✅ | 17 known = 14 authored + 3 generated |
-| Generated: cover | `cover` | ✅ | emitted in every one of the 14 builds above |
-| Generated: contents | `contents` | ✅ | emitted in every one of the 14 builds above |
-| Generated: divider | `divider` | ✅ | emitted in every one of the 14 builds above |
+| Every layout is reachable | — | ✅ | 18 known = 15 authored + 3 generated |
+| Generated: cover | `cover` | ✅ | emitted in every one of the 15 builds above |
+| Generated: contents | `contents` | ✅ | emitted in every one of the 15 builds above |
+| Generated: divider | `divider` | ✅ | emitted in every one of the 15 builds above |
 | Notes and asides — typeset into the document | — | ✅ | 3 match(es) for class="callout callout-(note|tip|warning… |
 | Flow and cycle diagrams | — | ✅ | 2 match(es) for <svg[\s>]… |
 | Two columns | — | ✅ | 1 match(es) for class="[^"]*\bcolumns\b… |
-| The catalogue shows every layout | — | ✅ | all 17 layouts rendered in content/every-layout.md |
+| The catalogue shows every layout | — | ✅ | all 18 layouts rendered in content/every-layout.md |
 
 ## The runtime
 

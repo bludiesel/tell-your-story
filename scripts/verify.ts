@@ -65,6 +65,11 @@ const record = (name: string, layout: string, ok: boolean, evidence: string) => 
  */
 const fill = (snippet: string): string =>
   snippet
+    // A TREATED DRAWING IS NOT A PHOTOGRAPH, and the plate layout only exists
+    // because of the difference — so the stand-in has to be one. Substituting
+    // the photograph here would have built the plate snippet as a picture with
+    // no transparency, which is the one case the layout is not for.
+    .replace(/img\/\[[^\]]+\]\.ink\.png/g, 'img/valve.ink.png')
     .replace(/img\/\[[^\]]+\]\.png/g, 'img/site-photo.png')
     .replace(/\[([^\]\n]+)\]/g, (_, inner: string) => inner)
 

@@ -32,11 +32,11 @@ import { parseHTML } from 'linkedom'
  *
  * Layouts are never combined on one page — that is a design rule, not a
  * limitation, and it is why selection below is ordered rather than additive.
- * An eighteenth layout is a design decision, not an authoring one.
+ * A nineteenth layout is a design decision, not an authoring one.
  */
 export const LAYOUTS = [
   'cover', 'contents', 'divider', 'opener', 'prose', 'has-sticky', 'marginalia',
-  'half-bleed', 'full-bleed', 'ptable', 'barchart', 'timeline', 'compare',
+  'plate', 'half-bleed', 'full-bleed', 'ptable', 'barchart', 'timeline', 'compare',
   'statement', 'quote-page', 'takeaway', 'colophon',
 ] as const
 export type Layout = (typeof LAYOUTS)[number]
@@ -106,6 +106,10 @@ export function pickLayout(html: string, kind: 'cover' | 'content' | 'hard'): La
   // with it rather than re-deriving from the picture and risking the two
   // disagreeing — a page laid out as a half-bleed but labelled prose gets none
   // of the layout's rules and reads as a picture floating mid-page.
+  // A PLATE BEFORE A BLEED. Both are "one picture and a little copy", so the
+  // order is what separates them, and the order follows the artwork: a bleed
+  // runs a PHOTOGRAPH off the fore-edge, a plate lays a DRAWING on the paper.
+  if (has(/class="[^"]*\bplate-page\b/)) return 'plate'
   if (has(/class="[^"]*\bhalf-bleed\b/)) return 'half-bleed'
 
   // Proportion, not presence. A pull quote inside three paragraphs of argument
@@ -326,8 +330,35 @@ export function renderLayouts(html: string): string {
     const body = document.body
     const imgs = [...(body.querySelectorAll('img') as unknown as Iterable<Element>)]
     const words = (body.textContent ?? '').replace(/\s+/g, ' ').trim()
-    const alreadyLaidOut = body.querySelector('.bleed-out, .half-bleed, .marginalia, .compare, .timeline')
-    if (imgs.length === 1 && !alreadyLaidOut && words.length < 420) {
+    const alreadyLaidOut = body.querySelector('.bleed-out, .half-bleed, .plate-page, .marginalia, .compare, .timeline')
+
+    // ── a plate: a DRAWING laid on the paper, not a photograph off the edge ──
+    //
+    // A treated drawing has none of a photograph's properties. It is usually
+    // landscape, it has transparent margins, and its whole point is that the
+    // paper reads through it — so pouring it into the half-bleed's tall outer
+    // column was wrong in every way that matters: `object-fit: cover` cropped
+    // both sides off the shipped sample, and the plate's own blur, which can
+    // only ever cover a RECTANGLE, took 51% of the page's width and 86% of its
+    // height with it. The ruled lines went from nearly the whole page.
+    //
+    // So a plate gets the shape a drawing wants: the full text column, wide,
+    // with the copy beneath it. The picture is then read at its own proportion
+    // at a proper size, and the blur that hides the ruling is the drawing's own
+    // bounding box rather than half a page.
+    if (imgs.length === 1 && !alreadyLaidOut && imgs[0]!.classList.contains('plate') && words.length < 620) {
+      const art = imgs[0]!
+      const holder = art.parentElement?.tagName === 'P' ? art.parentElement : art
+      const rest = [...(body.children as unknown as Iterable<Element>)]
+        .filter((c) => c !== holder).map((c) => c.outerHTML).join('')
+      body.innerHTML =
+        `<div class="plate-page">` +
+        `<div class="plate-art">${art.outerHTML}</div>` +
+        `<div class="plate-copy">${rest}</div>` +
+        `</div>`
+    }
+
+    if (imgs.length === 1 && !body.querySelector('.plate-page') && !alreadyLaidOut && words.length < 420) {
       const art = imgs[0]!
       // The picture's own paragraph is scaffolding, not copy — unwrap it, or
       // the art cell inherits a paragraph's margins and stops reaching the edge.

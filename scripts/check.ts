@@ -1557,6 +1557,26 @@ check('book: shipped grain filter resolves',
     /object-fit:\s*contain/.test(plateInBleed) && /max-width:\s*100%/.test(plateInBleed),
     'a {.plate} inside a bleed layout inherits object-fit: cover — it gets cropped, ' +
     'and its blur covers the whole slot instead of the drawing')
+
+  // THE PLATE PAGE IS THE ONLY LAYOUT THAT REACHES THE BOTTOM OF THE PAGE.
+  // Prose flows from the top and runs out before the folio; this grid pins its
+  // copy to the bottom because the art row takes every pixel of slack, so
+  // without a reserve the last line prints straight through the page number —
+  // which the sample shipped doing until it was seen on screen.
+  const platePage = /\.plate-page\s*\{[\s\S]{0,900}?\}/.exec(layouts)?.[0] ?? ''
+  check('plate: the plate page reserves room for the folio',
+    /padding-bottom:/.test(platePage),
+    'the plate layout does not clear the page number — its last line will print over the folio')
+
+  // A PLATE IS A LAYOUT NOW, NOT A DECORATION, and the picker has to reach it
+  // BEFORE the half bleed: both are "one picture and a little copy", so
+  // whichever is tested first wins and a drawing would go back to being cropped.
+  const layoutTs = await readFile(join(ROOT, 'src', 'layout.ts'), 'utf8')
+  const plateAt = layoutTs.indexOf("return 'plate'")
+  const bleedAt = layoutTs.indexOf("return 'half-bleed'")
+  check('plate: the picker reaches a plate before a half bleed',
+    plateAt > 0 && bleedAt > 0 && plateAt < bleedAt,
+    'half-bleed is tested first, so a treated drawing lands in the photograph layout again')
 }
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`)

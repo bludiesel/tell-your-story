@@ -494,6 +494,44 @@
   mask-composite: intersect;
 }
 
+/* ── the plate PAGE: a drawing laid on the paper, with the copy beneath ──────
+   A drawing is not a photograph and wants none of the bleed's shape. It is
+   usually landscape, it carries transparent margins, and the paper is meant to
+   read through it — so it gets the full text column, wide, at its own
+   proportion, with the words underneath where a plate's caption has always sat.
+
+   `minmax(0, 1fr)` on the art row, not `auto`: a grid row sized to content lets
+   an image's intrinsic height win and push the copy off the page. The row takes
+   the space that is left and the picture fits inside it.
+
+   The height cap is what stops a tall drawing eating the page. 62% leaves room
+   for a heading band and three or four lines of copy, which is what this layout
+   is for — a picture with something to say about it, not a picture alone. A
+   picture alone is a bleed. */
+.plate-page {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--sp-4);
+  height: 100%;
+  /* CLEAR OF THE FOLIO, WHICH THIS LAYOUT IS THE ONLY ONE TO REACH.
+     Prose flows from the top and simply runs out before the page number.
+     This grid pins its copy to the BOTTOM — the art row takes every pixel of
+     slack — so the last line landed straight on the folio, and the sample
+     shipped reading "sized for the cylinder, not for the job" through an 11.
+     `.pageno` sits at `bottom: clamp(.7rem, 1.4vw, 1.2rem)` in a 1.25rem hand
+     face; this reserves that plus its line box. Keep the two in step. */
+  padding-bottom: calc(clamp(.7rem, 1.4vw, 1.2rem) + 1.9rem);
+}
+.plate-art { display: grid; place-items: center; min-height: 0; }
+.plate-art img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto; height: auto;
+  object-fit: contain;
+  display: block;
+}
+.plate-copy { display: flex; flex-direction: column; gap: var(--sp-3); }
+
 /* A PLATE IS NOT A BLEED, SO IT MUST NOT BE POURED INTO ONE.
    `.bleed-out img` and `.half-bleed-art img` are absolutely positioned to fill
    their slot with `object-fit: cover`, which is right for a photograph that

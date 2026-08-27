@@ -24,7 +24,8 @@ Work down it. The first row that genuinely fits is the answer.
 | **someone else's words**, given room | `:::quote` | an indented blockquote in prose |
 | text a reader would **annotate** | `:::marginalia` | prose with parenthetical asides |
 | **the one thing to remember** | `:::takeaway` | a bolded last paragraph |
-| a **picture that is the point** | an image alone (half bleed) or `:::bleed` | a picture inside prose |
+| a **photograph that is the point** | an image alone (half bleed) or `:::bleed` | a picture inside prose |
+| a **drawing you treated with `ink.mjs`** | the image with `{.plate}` — that is the plate layout, wide with the words beneath | a photograph; treat it first, then it is a drawing |
 | **how the book was made** | `:::colophon` | a credits paragraph |
 | anything else | **prose** | a block, just to use one |
 

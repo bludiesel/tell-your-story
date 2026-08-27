@@ -67,11 +67,13 @@ export const CAPABILITIES: CapabilityGroup[] = [
         use: 'The first page of a section, where the prose should begin rather than continue. ' +
              'The title of the block becomes the small hand-set line above it.',
         example: ':::opener chapter one\nThe first paragraph. Its first letter becomes the cap.\n:::' },
-      { id: '{.plate}', what: 'Makes a picture hide the page ruling it sits on',
-        use: 'Add it to any picture that should read as printed onto the paper rather than laid ' +
-             'over it. The book blurs what is behind the picture, so the paper matches at any ' +
-             'position and in any theme; without it the page reads straight through, which suits ' +
-             'open line art. Tune with --plate-blur and --plate-fade.',
+      { id: '{.plate}', what: 'Marks a picture as treated artwork: its own layout, and the page ruling hidden behind it',
+        use: 'Add it to any picture that came out of the Ink Studio or dist/ink.mjs. It does two ' +
+             'things. It puts the page on the PLATE layout — the drawing wide across the text ' +
+             'column at its own proportion, words beneath — because a drawing is usually ' +
+             'landscape and the half bleed would crop it. And it blurs what is behind the ' +
+             'drawing, so the ruled lines stop where the ink covers them and the paper matches ' +
+             'at any position and in any theme. Tune with --plate-blur and --plate-fade.',
         example: '![A technician checking a cylinder](artwork.ink.webp){.plate}' },
       { id: ':::timeline', what: 'A rail across the gutter with dated stops on it',
         use: 'A sequence with real times or dates. One line per stop, written `when | what`. ' +

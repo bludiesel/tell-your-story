@@ -28,7 +28,8 @@ to end is rarely what you want.
 | [Timeline](#timeline--one-rail-across-the-gutter--timeline) | Events in order. **Needs a facing pair.** |
 | [Before / after](#before--after--a-comparison-spread--compare) | Two things set against each other. **Needs a facing pair.** |
 | [Two columns](#two-columns) | Text that reads better narrow. |
-| [Half bleed](#half-bleed--a-picture-off-the-outer-edge--half-bleed) | A picture beside its explanation. |
+| [Plate](#plate--a-drawing-laid-on-the-paper--plate) | Artwork you treated with `ink.mjs`. Wide, words beneath. |
+| [Half bleed](#half-bleed--a-picture-off-the-outer-edge--half-bleed) | A photograph beside its explanation. |
 | [Full bleed](#full-bleed--a-picture-to-every-edge--full-bleed) | A picture that IS the page. |
 | [Colophon](#colophon--the-record-of-how-the-book-was-made--colophon) | The last page: how the book was made. |
 
@@ -300,6 +301,26 @@ For a page that genuinely holds two parallel things.
 
 ---
 
+## Plate — a drawing laid on the paper  `plate`
+
+For **artwork you have treated**, not for a photograph. The drawing runs wide
+across the text column with the words beneath it, at its own proportion — a
+drawing is usually landscape, and pouring one into the half bleed's tall outer
+column crops it and blurs half the page.
+
+Reach for it whenever the picture came out of `dist/ink.mjs`. It is chosen
+automatically by the `{.plate}` on the image; there is nothing else to write.
+
+```markdown
+## [HEADING]
+
+![[DESCRIPTION FOR SCREEN READERS]](img/[FILE].ink.png){.plate}
+
+[ONE OR TWO SHORT PARAGRAPHS ABOUT WHAT THE DRAWING SHOWS.]
+```
+
+---
+
 ## Half bleed — a picture off the outer edge  `half-bleed`
 
 A page that is mostly a picture, with the copy in the inner column. Just an
@@ -313,12 +334,11 @@ image and a little text; the layout is chosen automatically.
 [ONE SHORT PARAGRAPH, OR NONE.]
 ```
 
-> **Treat artwork before you place it.** A photograph on a page of paper and
-> handwriting is the one element that came from a different hand. Run
-> `node dist/ink.mjs img/[FILE].png`, then reference the `.ink.png` it writes and
-> add `{.plate}` so the page's ruled lines do not run through it. Full syntax and
-> the slider version are in SKILL.md — no fenced example here, because every
-> fenced block in this file is extracted and built by `scripts/verify.ts`.
+> **Half bleed is for a PHOTOGRAPH.** A photograph on a page of paper and
+> handwriting is the one element that came from a different hand, so treat it
+> first: run `node dist/ink.mjs img/[FILE].png` and place the `.ink.png` it
+> writes with `{.plate}` — which puts the page on the **Plate** layout above,
+> where a drawing belongs. Full syntax and the slider version are in SKILL.md.
 
 ---
 
