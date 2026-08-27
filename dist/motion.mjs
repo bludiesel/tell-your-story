@@ -1569,6 +1569,7 @@ var require_canvas = __commonJS({
 
 // scripts/motion.ts
 import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -12214,7 +12215,9 @@ async function main() {
   if (/\.(md|markdown)$/i.test(target)) {
     const dir = await mkdtemp(join(tmpdir(), "motion-"));
     htmlPath = join(dir, "book.html");
-    await run(process.execPath, [join(ROOT, "src", "build.ts"), target, htmlPath], { cwd: ROOT });
+    const bundled = join(ROOT, "dist", "build.mjs");
+    const builder = existsSync(bundled) ? bundled : join(ROOT, "src", "build.ts");
+    await run(process.execPath, [builder, target, htmlPath], { cwd: ROOT });
   }
   const pages = report(await readFile(htmlPath, "utf8"));
   const runtime = await readFile(join(ROOT, "src", "runtime", "book.ts"), "utf8");

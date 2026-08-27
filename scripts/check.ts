@@ -11,7 +11,8 @@
  */
 
 import { spawn } from 'node:child_process'
-import { access, rm, readFile, readdir, mkdir, writeFile } from 'node:fs/promises'
+import { access, cp, mkdtemp, rm, readFile, readdir, mkdir, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -235,6 +236,54 @@ const unplayed = [...new Set(keyframeNames)].filter(
 check('book: every keyframe is played by something',
   unplayed.length === 0,
   unplayed.length ? `never runs: ${unplayed.join(', ')}` : `${keyframeNames.length} keyframes checked`)
+
+// EVERY SHIPPED COMMAND MUST RUN WHERE THERE IS NO INSTALL.
+//
+// The suite runs in a checkout, where node_modules exists, so it could not see
+// that `motion` spawned `src/build.ts` — which imports markdown-it and dies the
+// moment the skill is somewhere real. One of the four commands a user is told
+// to run was the one command a user could not run, and it took copying the
+// skill exactly as it ships to notice.
+//
+// This copies it that way on purpose: no node_modules, no output, nothing but
+// what a user receives, then runs all four.
+// OUTSIDE THE REPOSITORY, and that is the whole trick.
+//
+// The first version put the copy under `output/`, which is inside the project —
+// so Node walked UP the directory tree, found the real `node_modules`, and
+// every command passed. The check was vacuous: reintroducing the exact bug it
+// was written for did not fail it. A temp directory elsewhere on disk is the
+// only place where "no install" is actually true.
+const clean = await mkdtemp(join(tmpdir(), 'tys-cleanroom-'))
+// Everything a user gets, and nothing they do not: the whole folder minus the
+// three directories that never travel. Listing wanted entries instead was tried
+// and gave a FALSE failure — the copy was thinner than a real skill, so the
+// builder failed for a reason no user would ever hit. A clean-room test is only
+// worth anything if the room matches.
+for (const entry of await readdir(ROOT)) {
+  if (entry === 'node_modules' || entry === 'output' || entry === '.git') continue
+  await cp(join(ROOT, entry), join(clean, entry), { recursive: true }).catch(() => {})
+}
+const shipped: Array<[string, string[]]> = [
+  ['dist/build.mjs', ['content/sample-book.md', 'out.html', '--quiet']],
+  ['dist/ink.mjs', ['content/img/valve.jpg', 'out.ink.png']],
+  ['dist/studio.mjs', ['theme.json', 'studio.html']],
+  ['dist/motion.mjs', ['content/sample-book.md']],
+]
+const brokenInTheWild: string[] = []
+for (const [cmd, argv] of shipped) {
+  const r = await new Promise<number>((res) => {
+    const proc = spawn(process.execPath, [join(clean, cmd), ...argv], {
+      cwd: clean, stdio: ['ignore', 'ignore', 'ignore'],
+    })
+    proc.on('close', (code) => res(code ?? 0))
+  })
+  if (r !== 0) brokenInTheWild.push(cmd)
+}
+check('shipped: every command runs with no node_modules at all',
+  brokenInTheWild.length === 0,
+  brokenInTheWild.length ? `dies without an install: ${brokenInTheWild.join(', ')}` :
+    `${shipped.length} commands run from a copy with nothing installed`)
 
 // ── the Ink Studio ──────────────────────────────────────────────────────────
 //
