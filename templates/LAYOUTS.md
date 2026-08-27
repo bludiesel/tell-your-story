@@ -7,6 +7,34 @@ they are never combined.
 Placeholders are written as `[SOMETHING IN CAPITALS]` so an unreplaced one is
 impossible to miss — `node scripts/check.ts` fails the build if any survive into a book.
 
+## What is in here
+
+Jump to the one you need — the whole file is worked examples, so reading it end
+to end is rarely what you want.
+
+| Layout | Reach for it when |
+|---|---|
+| [Prose](#prose--the-default--prose) | Most of a real book. The default; no block needed. |
+| [Chapter opener](#chapter-opener--a-drop-cap-four-lines-deep--opener) | The first page of a section. |
+| [Statement](#statement--one-line-the-largest-type-in-the-book--statement) | One sentence that has to land on its own. |
+| [Quote page](#quote-page--a-page-given-to-one-sentence--quote-page) | Someone else's words, attributed. |
+| [Notes and asides](#notes-and-asides--typeset-into-the-document) | `:::warning` `:::tip` `:::note` — a rule, a shortcut, an aside. |
+| [Sticky note](#sticky-note--stuck-onto-the-block-above-it--has-sticky) | An annotation ON something, in a human voice. |
+| [Marginalia](#marginalia--hand-notes-in-the-outer-margin--marginalia) | A hand note beside the text, not in it. |
+| [Takeaway](#takeaway--the-one-thing-to-remember--takeaway) | The line that must survive the book. |
+| [Table](#table--rules-never-boxes--ptable) | Facts that line up in columns. |
+| [Chart](#chart--horizontal-bars--barchart) | Quantities worth comparing by eye. |
+| [Flow and cycle](#flow-and-cycle-diagrams) | A sequence of steps, or a loop. |
+| [Timeline](#timeline--one-rail-across-the-gutter--timeline) | Events in order. **Needs a facing pair.** |
+| [Before / after](#before--after--a-comparison-spread--compare) | Two things set against each other. **Needs a facing pair.** |
+| [Two columns](#two-columns) | Text that reads better narrow. |
+| [Half bleed](#half-bleed--a-picture-off-the-outer-edge--half-bleed) | A picture beside its explanation. |
+| [Full bleed](#full-bleed--a-picture-to-every-edge--full-bleed) | A picture that IS the page. |
+| [Colophon](#colophon--the-record-of-how-the-book-was-made--colophon) | The last page: how the book was made. |
+
+For *which* of these a given piece of content wants, read
+[`CHOOSING.md`](CHOOSING.md) — it starts from the content, not the layout.
+
 Pages are separated by `---`. `## Heading` becomes the header band and is
 removed from the body, so it costs no space. `> line` is the handwritten
 eyebrow above it. `>> Name` starts a new section: a hard board, a fore-edge tab

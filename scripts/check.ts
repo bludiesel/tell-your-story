@@ -686,8 +686,12 @@ check('manifest: documents nothing that does not exist',
       .matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((m) => JSON.parse(`"${m[1]}"`) as string),
   )
   const inTemplates = new Set<string>()
+  // `(?!\()` — a Markdown link is not a placeholder. Adding a contents table to
+  // LAYOUTS.md turned every `[Prose](#prose)` into a demand that the build guard
+  // against the word "Prose", which is nonsense: the build scans rendered HTML,
+  // where a link is already an <a> and this shape cannot occur.
   for (const f of ['templates/starter.md', 'templates/LAYOUTS.md']) {
-    for (const m of (await readFile(join(ROOT, f), 'utf8')).matchAll(/\[[A-Z][^\]\n]{1,70}\]/g)) {
+    for (const m of (await readFile(join(ROOT, f), 'utf8')).matchAll(/\[[A-Z][^\]\n]{1,70}\](?!\()/g)) {
       inTemplates.add(m[0])
     }
   }
@@ -1473,6 +1477,61 @@ check('book: shipped grain filter resolves',
   check('design: the runtime holds no colour literals',
     strayHex.length === 0,
     `${[...new Set(strayHex)].join(' ')} — every colour comes from the theme, or a rebrand silently misses it`)
+}
+
+// ── prep's marker audit ─────────────────────────────────────────────────────
+//
+// PROVEN BY PLANTING THE BUG. `{.step-first}` on the SECOND of two blocks
+// inverts the page: the warning arrives on the turn and the paragraph it warns
+// about arrives after it. The book still builds and every other check still
+// passes — the only symptom is a page that reads backwards, which is exactly
+// the class of defect a human reviewer misses and a script should not.
+//
+// The second case is quieter and worse to leave in shipped content: a marker
+// that changes nothing still TEACHES, and the next author copies it.
+{
+  const dir = await mkdtemp(join(tmpdir(), 'tys-prep-'))
+  const inverted = join(dir, 'inverted.md')
+  await writeFile(inverted, [
+    '# The harness is the last line',
+    '',
+    ':::opener the harness',
+    'An anchor point rated for the load.',
+    ':::',
+    '',
+    ':::warning A harness that has arrested a fall is finished {.step-first}',
+    'It is destroyed, not returned to stores.',
+    ':::',
+  ].join('\n'))
+  const flagged = await runScript('scripts/prep.ts', [inverted])
+  check('prep: a marker that reorders a page is reported',
+    /\{\.step-first\} pulls/.test(flagged.out),
+    'prep said nothing about a marker that moves a block — an inverted page ships silently')
+
+  const noop = join(dir, 'noop.md')
+  await writeFile(noop, [
+    '# What to remember',
+    '',
+    'The argument that leads up to it.',
+    '',
+    ':::takeaway {.step-last}',
+    'Already the last block, so the marker does nothing.',
+    ':::',
+  ].join('\n'))
+  const dead = await runScript('scripts/prep.ts', [noop])
+  check('prep: a marker that changes nothing is reported',
+    /changes nothing/.test(dead.out),
+    'a no-op marker passed unremarked — it reads as intent and gets copied')
+
+  // AND THE SHIPPED CONTENT OBEYS ITS OWN ADVICE. A kit whose sample lessons
+  // carry no-op markers is teaching by example the thing it warns about.
+  for (const name of ['sample-book.md', 'reference-lesson.md', 'every-layout.md', 'audit-lesson.md']) {
+    const r = await runScript('scripts/prep.ts', [join(ROOT, 'content', name)])
+    check(`prep: content/${name} has no marker that does nothing`,
+      !/changes nothing/.test(r.out),
+      'a shipped lesson carries a marker with no effect')
+  }
+  await rm(dir, { recursive: true, force: true })
 }
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`)

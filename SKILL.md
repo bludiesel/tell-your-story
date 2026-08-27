@@ -14,6 +14,32 @@ network, no folder of assets unless you ask for one. It opens from a USB stick.
 > deck, this is the wrong skill — use `slide-kit`. Do not add a second output
 > format here.
 
+## What to bring — read this before anything else
+
+A book is only as good as what goes into it, and this is the step people skip.
+If the user has handed over a wall of text, or nothing at all, **ask for these
+before writing a line.** Nothing here needs a document: a conversation produces
+all of it, and asking takes two minutes against an afternoon of rework.
+
+| Ask for | Why it decides the outcome |
+|---|---|
+| **Who is reading it, and what must they be able to DO afterwards** | Every later choice — how much detail, which warnings, whether a page is prose or a checklist — follows from this one answer. |
+| **The spine: 2–6 sections, scaled to the length** | Written `>> Section name` — each becomes a hard board with its own fore-edge tab, and the reader navigates by them. Two is thin; more than six and the tabs crowd. `#` is a page, `>>` is a section; getting that wrong produces a book with no tabs and `prep` will say so. |
+| **At least 4 pages per section** | Every `>>` inserts a physical divider board — two faces of hard stock — so a reader turning past nearly as many boards as pages of content is being obstructed rather than helped. `prep` flags anything over one section per three pages. A short book wants two sections, not five. |
+| **What already exists** | An SOP, a deck, notes, a policy, a transcript. It saves inventing what somebody already wrote — and if the answer is "nothing", say so and interview instead. |
+| **The pictures, if any** | What each one shows and why it earns its page. See *Artwork* below — treat them, do not paste them in. |
+| **The brand, or permission to skip it** | Two colours and a font in `theme.json` is all it takes. The default is deliberately neutral, so "no brand yet" is a fine answer. |
+
+**The one number worth knowing before writing: a page holds about 130 words
+comfortably, 170 at a crush, and under 35 looks unfinished.** Those are measured
+against the real page box, not guessed. A picture costs roughly 55 words of room
+and a table row about 12. Write to that and `prep` will have little to say;
+ignore it and `prep` will say a great deal.
+
+**What NOT to ask for.** Do not ask which layout to use, or how the pages should
+be split — that is the job below, and asking pushes work back onto someone who
+came here to avoid it. Take the material and the intent, then choose.
+
 ## The order to do things in
 
 **NO INSTALL NEEDED.** Node 22 or newer, and nothing else.
@@ -50,6 +76,56 @@ well-chunked source makes a good book; a wall of text defeats every feature in
 here. `prep` measures what you cannot judge by reading — page lengths against
 measured capacity, missing sections, headless pages — and tells you what to do
 about each. It never rewrites your words.
+
+## Turning raw material into pages
+
+This is the loop. It is short, and every step exists because skipping it
+produced a worse book.
+
+**1 — Cut before you style.** Read the material for its *joints*: where the
+subject changes. Each joint is a `---`. Do not decide layouts yet; a page you
+have not yet sized is a page you cannot choose a layout for.
+
+**2 — Name the spine.** Group the pages into 2–6 themes and put `>> Theme name`
+on the first page of each. Then a `## Heading` on every page and a `> eyebrow`
+where a page needs a second line of orientation. Both are lifted into the header
+band and removed from the body, so they cost no space.
+
+**3 — Run `prep` and act on what it says.** It counts what a model reading
+Markdown cannot: which page is three times its neighbour, which page has no
+heading, whether the sections outnumber the content. Fix, re-run, repeat until it
+says *nothing to flag*. Two or three passes is normal.
+
+**4 — Now match the content shape to a layout**, with
+[`templates/CHOOSING.md`](templates/CHOOSING.md) open. Choose from what the
+content *is* — a rule with consequences is a `:::warning`, a thing to remember is
+a `:::takeaway`, an aside in a human voice is a `:::sticky` — never from which
+block you used last. If you are unsure what a layout looks like, build
+`content/every-layout.md` and turn to it rather than imagining it.
+
+**5 — Set the reveal order.** Blocks arrive one press at a time in the order they
+are written, which is usually right because you wrote them in reading order.
+Three markers bend it, and `prep` proposes each one with its reason:
+
+| Marker | What it does |
+|---|---|
+| `{.step-first}` | Arrives with the page turn, whatever its position. For a warning that must not wait behind the setup. |
+| `{.step-last}` | Arrives after everything else. For the line that concludes an argument. |
+| `{.with-previous}` | Shares a press with the block above. A caption is not a beat of its own. |
+
+**`prep` also audits the markers you wrote**, and says what each one will
+actually do — *"pulls this ahead of 2 blocks written before it"*. Read those
+lines. A `{.step-first}` on the second of only two blocks inverts the page: the
+warning arrives on the turn and the thing it warns about arrives after it. The
+book still builds, every check still passes, and the page reads backwards. It
+happened while dogfooding this skill, which is why the audit exists. A marker
+that `prep` says *changes nothing* should be deleted — it reads as intent and the
+next author copies it.
+
+**6 — Build, then walk it.** `node dist/motion.mjs` prints every page, its
+layout, whether it bends, and how many presses it costs. It is the cheapest way
+to notice that a page has seven steps or that a section board landed in the wrong
+place. Then open the book and turn it.
 
 ## Start from a template, not from a blank file
 
@@ -195,7 +271,7 @@ skill, not an application — nothing here is a user-facing program.
 
 | Command | File | What it does |
 |---|---|---|
-| `node scripts/prep.ts` | `scripts/prep.ts` | Analyses raw content and says how to chunk it. Reports, never rewrites. `--json` for machine use. |
+| `node scripts/prep.ts` | `scripts/prep.ts` | Analyses raw content and says how to chunk it, and audits the reveal markers already in it. Reports, never rewrites. `--json` for machine use. |
 | `node dist/build.mjs` | `dist/build.mjs` | Markdown → one standalone HTML book. **No install needed.** `src/build.ts` is the same thing from source, for contributors. |
 | `node scripts/check.ts` | `scripts/check.ts` | Every check is a bug that once shipped looking fine. The count is deliberately not quoted here — it only ever drifts. |
 | `node dist/motion.mjs` | `dist/motion.mjs` | **What moves on every page**, and whether it obeys the rules. Prints turn behaviour and step count per page for a built book, and fails if a section board starts bending or eating presses. Run it on any book before presenting from it. |

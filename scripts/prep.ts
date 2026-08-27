@@ -63,6 +63,8 @@ interface PageStat {
   tableRows: number
   blocks: string[]
   steps: Step[]
+  /** What the author's own reveal markers will do to the order, if anything. */
+  moves: string[]
 }
 
 /** One beat of a page: what arrives, when, and why it goes there. */
@@ -72,6 +74,102 @@ interface Step {
   why: string
   /** The marker to write in the Markdown, when the order is not simply document order. */
   marker?: '.step-first' | '.step-last' | '.with-previous'
+}
+
+/** One top-level block of a page, with any reveal marker the author wrote on it. */
+interface Block { kind: string; text: string; marker?: string }
+
+/**
+ * Split a page into its top-level blocks, in the order they were written,
+ * carrying whichever reveal marker sits on each one.
+ *
+ * The marker is captured from the same places the runtime reads it: the fence
+ * line of a `:::block`, and the trailing attribute list of a picture or a
+ * paragraph. Reading it here is what lets `moves()` below say what an author's
+ * marker will actually DO, rather than only proposing markers of its own.
+ */
+function topBlocks(chunk: string): Block[] {
+  const lines = chunk.split('\n')
+  const items: Block[] = []
+  let fence: string | null = null
+  let fenceMarker: string | undefined
+  let buf: string[] = []
+  // Anchored to end-of-line because that is where markdown-it-attrs honours an
+  // attribute block. Matching one mid-sentence would flag documentation that
+  // merely NAMES a marker — which it did, on the kit's own CHOOSING.md.
+  const STEP = /\{[^}]*\.(step-first|step-last|with-previous)[^}]*\}[ \t]*$/m
+  const flush = (kind: string, marker?: string) => {
+    const text = buf.join('\n').trim()
+    if (text) items.push({ kind, text, marker: marker ?? STEP.exec(text)?.[1] })
+    buf = []
+  }
+  for (const line of lines) {
+    const open = /^:::(\w+)/.exec(line)
+    if (fence === null && open) {
+      flush('prose')
+      fence = open[1]!
+      fenceMarker = STEP.exec(line)?.[1]
+      continue
+    }
+    if (fence !== null && /^:::\s*$/.test(line)) { flush(fence, fenceMarker); fence = null; fenceMarker = undefined; continue }
+    if (fence === null && /^(>>?\s|#{1,6}\s)/.test(line)) continue  // markers and headings
+    if (fence === null && line.trim() === '') { flush('prose'); continue }
+    buf.push(line)
+  }
+  flush(fence ?? 'prose', fenceMarker)
+  return items
+}
+
+/**
+ * ── WHAT THE AUTHOR'S OWN MARKERS WILL DO ───────────────────────────────────
+ * Replay the runtime's ordering rule over a page and report every block whose
+ * marker moves it away from where it was written.
+ *
+ * Everything else in this file PROPOSES an order. This checks the one the
+ * author already committed to, which is a different job and the one that was
+ * missing: `{.step-first}` on the last of two blocks silently inverts the page,
+ * and the page still builds, still passes every check, and reads backwards.
+ * That happened while dogfooding this very script, which is why it exists.
+ *
+ * It reports rather than forbids. Pulling a warning ahead of three paragraphs
+ * of setup is exactly what the marker is for, so the only honest thing a script
+ * can do is state the consequence and let the author confirm it was the intent.
+ *
+ * The rule mirrors `src/runtime/book.ts`: step-first blocks, then unmarked ones
+ * in document order, then step-last. Keep the two in step.
+ */
+function moves(chunk: string): string[] {
+  const blocks = topBlocks(chunk)
+  const label = (b: Block) =>
+    `${b.kind}: ${b.text.replace(/\{[^}]*\}/g, '').replace(/\s+/g, ' ').replace(/[*_`|]/g, '').trim().slice(0, 38)}`
+
+  const order = [
+    ...blocks.filter((b) => b.marker === 'step-first'),
+    ...blocks.filter((b) => b.marker !== 'step-first' && b.marker !== 'step-last'),
+    ...blocks.filter((b) => b.marker === 'step-last'),
+  ]
+
+  const out: string[] = []
+  for (const b of blocks) {
+    if (!b.marker || b.marker === 'with-previous') continue
+    const from = blocks.indexOf(b)
+    const to = order.indexOf(b)
+    if (from === to) {
+      out.push(`{.${b.marker}} on "${label(b)}" changes nothing — it is already ${
+        b.marker === 'step-first' ? 'the first' : 'the last'} block. Drop the marker.`)
+    } else if (b.marker === 'step-first') {
+      out.push(`{.step-first} pulls "${label(b)}" ahead of ${from} block(s) written before it, ` +
+        `so it is what the reader meets on the turn.`)
+    } else {
+      out.push(`{.step-last} pushes "${label(b)}" behind ${blocks.length - 1 - from} block(s) ` +
+        `written after it, so it lands once the argument is finished.`)
+    }
+  }
+  const first = blocks[0]
+  if (first?.marker === 'with-previous') {
+    out.push(`{.with-previous} on "${label(first)}" has nothing above it to join. Drop the marker.`)
+  }
+  return out
 }
 
 /**
@@ -97,25 +195,7 @@ interface Step {
  * sufficient alone, which is the whole reason it is split this way.
  */
 function sequence(chunk: string): Step[] {
-  // Split a page into its top-level blocks, in the order they were written.
-  const lines = chunk.split('\n')
-  const items: Array<{ kind: string; text: string }> = []
-  let fence: string | null = null
-  let buf: string[] = []
-  const flush = (kind: string) => {
-    const text = buf.join('\n').trim()
-    if (text) items.push({ kind, text })
-    buf = []
-  }
-  for (const line of lines) {
-    const open = /^:::(\w+)/.exec(line)
-    if (fence === null && open) { flush('prose'); fence = open[1]!; continue }
-    if (fence !== null && /^:::\s*$/.test(line)) { flush(fence); fence = null; continue }
-    if (fence === null && /^(>>?\s|#{1,6}\s)/.test(line)) continue  // markers and headings
-    if (fence === null && line.trim() === '') { flush('prose'); continue }
-    buf.push(line)
-  }
-  flush(fence ?? 'prose')
+  const items = topBlocks(chunk)
 
   const LAST = new Set(['takeaway', 'big'])
   const EARLY = new Set(['warning'])
@@ -197,6 +277,7 @@ function analyse(body: string): { pages: PageStat[]; findings: Finding[] } {
     pages.push({
       n: i + 1, section, eyebrow, heading, words: w, budget, images, tableRows, blocks,
       steps: sequence(chunk),
+      moves: moves(chunk),
     })
   })
 
@@ -259,6 +340,18 @@ function analyse(body: string): { pages: PageStat[]; findings: Finding[] } {
         do: 'Either move a block to the next page, or mark the ones that belong together ' +
             'with {.with-previous} so they arrive as one beat — a caption under a picture ' +
             'is not a beat of its own.',
+      })
+    }
+    for (const m of p.moves) {
+      findings.push({
+        where: `page ${p.n}${p.heading ? ` — "${p.heading}"` : ''}`,
+        severity: /Drop the marker/.test(m) ? 'fix' : 'consider',
+        what: m,
+        do: /Drop the marker/.test(m)
+          ? 'Remove it. A marker that changes nothing is a claim about the page that is not true, ' +
+            'and the next person to read the source will trust it.'
+          : 'Confirm that is the reading you want. If it is not, remove the marker and the block ' +
+            'arrives where you wrote it.',
       })
     }
     if (p.tableRows > 12) {

@@ -114,15 +114,17 @@ Order matters more than you think. A warning that arrives after the setup has
 already been ignored by the person it was written for.
 :::
 
-Three markers bend the default, and `node scripts/prep.ts` proposes them for you:
-`{.step-first}` to arrive with the page, `{.with-previous}` to share a press
-with the block above, and `{.step-last}` for the line that should land after
-its own argument.
-
 :::takeaway {.step-last}
 Nothing reflows on the page. The content arrives in place, in the order it is
 meant to be understood.
 :::
+
+Three markers bend the default, and `node scripts/prep.ts` proposes them for you:
+`{.step-first}` to arrive with the page, `{.with-previous}` to share a press
+with the block above, and `{.step-last}` for the line that should land after
+its own argument. This page uses two of them: the warning above was written
+second and arrives first, and the takeaway was written here and arrives last —
+which is why you are reading this paragraph before it.
 
 ---
 
