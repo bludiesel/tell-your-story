@@ -478,8 +478,16 @@
    which is what a vignetted plate does.
 
    FAILS SOFT. A browser without `backdrop-filter` shows the drawing with the
-   ruling reading through it — the previous behaviour, not a broken page. */
-.plate {
+   ruling reading through it — the previous behaviour, not a broken page.
+
+   `img.plate`, NEVER a bare `.plate`. A page carries its LAYOUT NAME as a
+   class, and the layout for a treated drawing is called `plate` — so a bare
+   `.plate` selector also matched `<div class="page pl plate">` and put the blur
+   and the edge mask on the WHOLE PAGE. The visible symptom was the header band
+   washing out, nowhere near the drawing. This is the second time a bare class
+   selector has collided with a layout name in this file (see the `barchart`
+   note above); `scripts/check.ts` now refuses any of them. */
+img.plate {
   --plate-blur: 18px;
   --plate-fade: 12%;
   -webkit-backdrop-filter: blur(var(--plate-blur));

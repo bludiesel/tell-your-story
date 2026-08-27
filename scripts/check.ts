@@ -1563,10 +1563,52 @@ check('book: shipped grain filter resolves',
   // copy to the bottom because the art row takes every pixel of slack, so
   // without a reserve the last line prints straight through the page number —
   // which the sample shipped doing until it was seen on screen.
+  const layoutTsForNames = await readFile(join(ROOT, 'src', 'layout.ts'), 'utf8')
   const platePage = /\.plate-page\s*\{[\s\S]{0,900}?\}/.exec(layouts)?.[0] ?? ''
   check('plate: the plate page reserves room for the folio',
     /padding-bottom:/.test(platePage),
     'the plate layout does not clear the page number — its last line will print over the folio')
+
+  // ── NO CSS RULE MAY SHARE A NAME WITH A LAYOUT ───────────────────────────
+  //
+  // A page carries its LAYOUT NAME as a class: `<div class="page pl plate">`.
+  // So a bare `.plate { … }` written for an image also styles the whole page,
+  // silently, and the symptom shows up nowhere near the rule — a blur meant for
+  // a drawing washed out the header band at the top of the page.
+  //
+  // This has now happened twice. `.barchart { display: flex }` matched only
+  // `<div class="page pr barchart">` and nothing else, and `.plate` put a
+  // backdrop-filter and an edge mask on an entire page. Both were written by
+  // someone who had read the other one's warning comment, which is exactly why
+  // a comment is not enough and this is a check.
+  //
+  // Qualify the selector — `img.plate`, `.plate-art img` — or rename it. A
+  // layout's OWN rules are the legitimate exception: `.page.plate` and
+  // `.page.divider` are qualified by `.page` and say what they mean.
+  {
+    const names = new Set((/export const LAYOUTS = \[([\s\S]*?)\] as const/.exec(layoutTsForNames)?.[1] ?? '')
+      .match(/'([a-z-]+)'/g)?.map((q) => q.slice(1, -1)) ?? [])
+    const css = [layouts, await readFile(join(ROOT, 'src', 'runtime', 'book.css'), 'utf8')].join('\n')
+    // NARROWED TO WHAT ACTUALLY WRECKS A PAGE. Twelve layouts are named after
+    // the block they contain — `.takeaway`, `.opener`, `.contents` — and those
+    // rules matching the page too is old, harmless and intended: they set
+    // layout and type, and a page is already the box they describe.
+    //
+    // These properties are different. Each one repaints or reshapes an entire
+    // box irrespective of what is in it, so applying one to a whole page is
+    // never what was meant and the damage appears far from the rule. That is
+    // the whole failure: the blur meant for a 347x277 drawing washed out a
+    // header band 60px from the top of the page.
+    const WRECKS_A_PAGE = /(backdrop-filter|[^-]filter\s*:|mask-image|mask-composite|mix-blend-mode|clip-path|opacity\s*:)/
+    const collisions = [...names].filter((n) => {
+      const rule = new RegExp(`(^|[,}])\\s*\\.${n}(?![\\w-])[^{]*\\{([^}]*)\\}`, 'm').exec(css)
+      return rule ? WRECKS_A_PAGE.test(rule[2]!) : false
+    })
+    check(`design: no bare CSS selector paints a whole page via one of the ${names.size} layout names`,
+      collisions.length === 0,
+      `${collisions.map((c) => `.${c}`).join(' ')} — a page carries its layout name as a class, so ` +
+      'this rule also blurs, masks or blends the whole page. Qualify it (img.plate) or rename it.')
+  }
 
   // A PLATE IS A LAYOUT NOW, NOT A DECORATION, and the picker has to reach it
   // BEFORE the half bleed: both are "one picture and a little copy", so
