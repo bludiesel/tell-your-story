@@ -35,7 +35,8 @@ imports only `node:fs` and `node:path`.
 **Changing the skill** is the only reason to install anything:
 
 ```bash
-npm install                # esbuild + typescript, for contributors only
+npm install                # or `bun install` — either works, and ONLY if you are
+                           # changing the skill. Using it needs no install at all.
 node scripts/check.ts      # the full suite
 node scripts/verify.ts     # every documented layout, built and identified
 node scripts/prebundle.ts  # rebuild dist/ and assets/ after editing src/

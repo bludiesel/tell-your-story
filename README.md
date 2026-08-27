@@ -80,7 +80,8 @@ the curtain, the flip engine, the fonts and the reveals in one go.
 Then check the machinery honestly reports itself:
 
 ```bash
-npm install               # contributors only
+npm install               # or `bun install` — contributors only; using the
+                          # skill needs no install of any kind
 node scripts/check.ts     # the full suite
 npx tsc --noEmit          # types
 ```

@@ -1,5 +1,17 @@
 # Credits
 
+## The sample photograph
+
+`content/img/valve.jpg` — *Hydrogen gas cylinder valve and burst disk*, U.S.
+National Archives and Records Administration, **public domain**.
+<https://commons.wikimedia.org/wiki/File:HYDROGEN_GAS_CYLINDER_VALVE_AND_BURST_DISK_-_NARA_-_17468077.jpg>
+
+It ships for one reason: the kit's other pictures are placeholder gradients, and
+a gradient cannot demonstrate an edge-detection treatment — run the Ink Studio
+on one and it correctly produces a smudge. `valve.ink.png` beside it is that
+photograph through `node dist/ink.mjs`, so a reader can see what the treatment
+is for, and re-run it to see how.
+
 ## XDoG — the Ink Studio's treatment
 
 Winnemöller, H., Kyprianidis, J. E., Olsen, S. C.

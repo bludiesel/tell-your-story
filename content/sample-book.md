@@ -95,6 +95,17 @@ Pin the isolation points before you touch anything. Know your exits.
 
 ---
 
+> the hardware
+
+## Know the valve before you open it
+
+![A cylinder valve and its burst disk, drawn](img/valve.ink.png){.plate}
+
+The burst disk is the part that decides how this ends. It is sized for the
+cylinder, not for the job.
+
+---
+
 > remember
 
 :::takeaway The one thing
