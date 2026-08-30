@@ -1653,6 +1653,61 @@ check('book: shipped grain filter resolves',
     'half-bleed is tested first, so a treated drawing lands in the photograph layout again')
 }
 
+// ── hand-drawn diagrams ─────────────────────────────────────────────────────
+//
+// Three diagram types are generated in code; the rest are drawn by whoever is
+// writing the book, from a grammar in `design/diagram-grammars/`. That trade is
+// only safe because two things are enforced rather than requested.
+{
+  const dir = await mkdtemp(join(tmpdir(), 'tys-dg-'))
+  const svg = (fill: string) =>
+    ['# A page', '', ':::diagram flowchart',
+     '<svg viewBox="0 0 200 100" role="img" aria-label="t">',
+     `  <rect class="dg-node" x="10" y="10" width="80" height="40" fill="${fill}"/>`,
+     '</svg>', ':::'].join('\n')
+
+  // 1. COLOUR IS THE THEME'S, NOT THE DIAGRAM'S. A literal looks right in the
+  // theme it was written against and wrong in every other, and a rebrand that
+  // misses one page is worse than a build that stops.
+  const bad = join(dir, 'bad.md')
+  await writeFile(bad, svg('#35C0B6'))
+  const r1 = await runScript('dist/build.mjs', [bad, join(dir, 'bad.html')])
+  check('diagram: a hand-drawn diagram may not carry its own colours',
+    r1.code !== 0 && /hard-codes/.test(r1.out),
+    'a diagram with a hex colour built happily — it will survive a rebrand looking wrong')
+
+  // 2. AND THE SAME DIAGRAM ON THEME MUST BUILD, or the guard is just a wall.
+  const good = join(dir, 'good.md')
+  await writeFile(good, svg('var(--paper-2)'))
+  const r2 = await runScript('dist/build.mjs', [good, join(dir, 'good.html'), '--quiet'])
+  check('diagram: the same diagram on theme tokens builds',
+    r2.code === 0,
+    `a themed diagram was refused too:\n${r2.out.split('\n').slice(0, 6).join('\n')}`)
+
+  // 3. THE AUTHORED SVG SURVIVES. Stripping tags is what the generated path
+  // does to its text input, and it would quietly reduce a hand-drawn diagram to
+  // a paragraph of nothing.
+  const html = await readFile(join(dir, 'good.html'), 'utf8')
+  check('diagram: authored SVG reaches the page intact',
+    /<svg[\s>]/.test(html) && /dg-node/.test(html),
+    'the SVG did not survive the build — the animation contract needs the elements')
+  await rm(dir, { recursive: true, force: true })
+
+  // 4. THE ANIMATION CONTRACT IS THE FOUR CLASS NAMES, and the grammar README
+  // is where anyone drawing a diagram learns them. If the runtime grows a fifth
+  // and the document does not, every diagram drawn after that is under-animated
+  // and nobody finds out.
+  const runtime = await readFile(join(ROOT, 'src', 'runtime', 'book.ts'), 'utf8')
+  const anim = /function animateDiagrams[\s\S]*?\n  \}/.exec(runtime)?.[0] ?? ''
+  const classes = [...new Set([...anim.matchAll(/'\.?(dg-[a-z]+)'/g)].map((m) => m[1]!))]
+  const grammar = await readFile(join(ROOT, 'design', 'diagram-grammars', 'README.md'), 'utf8')
+  const undocumented = classes.filter((c) => !grammar.includes(c))
+  check(`diagram: all ${classes.length} animated classes are in the grammar`,
+    undocumented.length === 0,
+    `${undocumented.join(' ')} — the runtime animates these and the grammar never mentions them, ` +
+    'so nothing drawn from it will use them')
+}
+
 // ── every layout has a picture ──────────────────────────────────────────────
 //
 // The README's "what it looks like" table is how anyone decides a layout is

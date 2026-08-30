@@ -983,7 +983,24 @@ body.blackout { cursor: none; }
   max-width: 100%;
 }
 .diagram svg {
-  max-width: 100%; height: auto; overflow: visible;
+  /* `width: 100%` and not just `max-width`. An <svg> with a viewBox and no
+     width attribute renders at its INTRINSIC size — the viewBox units read as
+     pixels — so a hand-drawn diagram written `viewBox="0 0 640 300"` came out
+     640px wide in a column half again as wide and read as a thumbnail somebody
+     forgot to enlarge. The viewBox is a coordinate system, not a size, and this
+     is what makes that true.
+
+     A diagram that should NOT fill its column overrides this by name, the way
+     `.diagram-cycle` does below — a ring of steps at full column width is a
+     ring you have to move your head to read. */
+  /* `display: block` IS WHAT MAKES THE TWO ABOVE WORK. An <svg> is inline by
+     default, and neither `width` nor `max-width` applies to a non-replaced
+     inline element — so the browser fell back to the intrinsic size, drew the
+     diagram at its viewBox width, and quietly let it OVERFLOW its column:
+     measured at 636px inside a 473px figure while `max-width: 100%` sat there
+     computing to exactly that and doing nothing. */
+  display: block; margin-inline: auto;
+  width: 100%; max-width: 100%; height: auto; overflow: visible;
   font-family: var(--font-ui);
 }
 .diagram text { font-family: var(--font-ui); }

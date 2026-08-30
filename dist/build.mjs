@@ -37318,13 +37318,32 @@ async function buildPages(body, md, store, baseDir, diagramColours) {
   }
   return pages;
 }
+function assertThemedColours(svg2, kind) {
+  const literals = [.../* @__PURE__ */ new Set([
+    ...svg2.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [],
+    ...svg2.match(/\brgba?\([^)]*\)/g) ?? [],
+    ...svg2.match(/\bhsla?\([^)]*\)/g) ?? []
+  ])];
+  if (literals.length === 0) return;
+  throw new Error(
+    `the ${kind} diagram hard-codes ${literals.length} colour${literals.length > 1 ? "s" : ""}: ${literals.slice(0, 6).join(" ")}
+  Diagrams take their colour from the theme, or a rebrand leaves this page behind.
+  Use currentColor, or var(--ink) / var(--accent-ink) / var(--paper) / var(--paper-2).`
+  );
+}
 function renderDiagrams(html2, c) {
   return html2.replace(
     /<div class="diagram">\s*(?:<h4 class="block-title">([^<]*)<\/h4>)?([\s\S]*?)<\/div>/g,
     (_all, title, inner) => {
+      const kind = (title ?? "flow").trim().toLowerCase();
+      const authored = /<svg[\s>]/i.test(inner);
+      if (authored) {
+        const svgSource = inner.replace(/<\/?p>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&").trim();
+        assertThemedColours(svgSource, kind);
+        return `<figure class="diagram diagram-${kind}">${svgSource}</figure>`;
+      }
       const text2 = inner.replace(/<[^>]+>/g, "\n").replace(/&amp;/g, "&");
       const lines = text2.split("\n").map((l) => l.trim()).filter(Boolean);
-      const kind = (title ?? "flow").trim().toLowerCase();
       let svg2 = "";
       if (kind.startsWith("cycle")) {
         svg2 = cycleDiagram(lines.flatMap((l) => l.split("|").map((x2) => x2.trim())), c);
@@ -38037,6 +38056,9 @@ function usage() {
   Pick 'folder' when the book is picture-heavy and stays in one place.
 `);
 }
+function asBuildError(err) {
+  exit(err instanceof Error ? err.message : String(err));
+}
 function exit(message) {
   console.error(`
   Error: ${message}
@@ -38234,7 +38256,7 @@ async function main() {
       link: palette.inkSoft,
       text: palette.ink,
       accent: palette.accentInk
-    });
+    }).catch(asBuildError);
     if (pages.length === 0) exit("that file produced no pages \u2014 separate pages with a --- line");
     let markHtml = "";
     let markRef = "";

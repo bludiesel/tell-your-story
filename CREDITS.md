@@ -114,3 +114,27 @@ The book's look — the closed 3D volume you tap to open, the cover boards, the
 page stack that shrinks as you read, the ruled paper and handwritten accents —
 is ported from learn-kit's own `book/book-workbook.src.html`. Every colour that
 was a hardcoded navy or orange there is a theme token here.
+
+## Diagram grammars — `cathrynlavery/diagram-design`
+
+The layout rules in `design/diagram-grammars/` are **adapted** from
+[diagram-design](https://github.com/cathrynlavery/diagram-design) by Cathryn
+Lavery, MIT licensed. Its licence text is kept beside them at
+`design/diagram-grammars/LICENSE-diagram-design.txt`.
+
+**What was taken:** the geometry and the editorial judgement — how many layers a
+pyramid should have before it stops being legible, that a funnel's widths must
+be honest, which shapes belong to which kind of argument, and the anti-patterns
+worth naming. That is the expensive part and it is genuinely theirs.
+
+**What was not:** its palette, its type stack, and its output format. Its
+diagrams are standalone HTML files styled by its own tokens; ours are inline SVG
+inside a book page, coloured by `theme.json` and animated by GSAP on the turn.
+Copying the style rules verbatim would have told an author to reach for a
+typeface and an accent colour this kit does not have.
+
+**The method was taken too, and deliberately:** one short reference per type,
+loaded only when that type is chosen, each written as *best for / layout
+conventions / anti-patterns*. Thirty-nine shapes cannot live in one document
+anybody reads, and they should not live in code either — a fishbone is a page of
+layout rules, not an algorithm.

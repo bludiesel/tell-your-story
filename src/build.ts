@@ -138,6 +138,17 @@ function usage(): void {
 `)
 }
 
+/**
+ * A THROWN BUILD ERROR MUST NOT LOOK LIKE A CRASH. `buildPages` validates the
+ * author's own content — a diagram carrying hard-coded colours, for one — and a
+ * Node stack trace tells the person who wrote the diagram nothing except that
+ * software is frightening. Everything the builder rejects on purpose comes out
+ * through `exit()` looking like the rest of the kit's refusals.
+ */
+function asBuildError(err: unknown): never {
+  exit(err instanceof Error ? err.message : String(err))
+}
+
 function exit(message: string): never {
   console.error(`\n  Error: ${message}\n`)
   process.exit(1)
@@ -407,7 +418,7 @@ async function main(): Promise<void> {
       link: palette.inkSoft,
       text: palette.ink,
       accent: palette.accentInk,
-    })
+    }).catch(asBuildError)
     if (pages.length === 0) exit('that file produced no pages — separate pages with a --- line')
 
     // THE COVER MARK IS GENERATED, NOT A SHIPPED FILE.

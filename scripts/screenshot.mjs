@@ -74,10 +74,16 @@ await send('Page.enable'); await send('Runtime.enable')
 // A book resumes where you stopped reading. For a photograph that is a trap —
 // the second run would start somewhere else and shoot a different page — so the
 // bookmark goes before anything else does.
-await send('Page.navigate', { url })
+// A CACHE-BUSTER, BECAUSE THE POINT IS TO PHOTOGRAPH THE CURRENT BUILD.
+// Chrome serves the same URL from its own cache, so a run right after a rebuild
+// quietly photographs the previous book — which it did, and cost a round of
+// "why has the CSS change not taken effect" when the CSS was fine all along.
+const fresh = `${url}${url.includes('?') ? '&' : '?'}shot=${Math.random().toString(36).slice(2)}`
+
+await send('Page.navigate', { url: fresh })
 await sleep(1200)
 await evaluate('try{localStorage.clear()}catch(e){}')
-await send('Page.navigate', { url })
+await send('Page.navigate', { url: fresh })
 await sleep(2000)
 
 // A REAL MOUSE, NOT element.click(). The curtain and the cover both listen for
@@ -117,6 +123,20 @@ const nextPage = '(()=>{const b=[...document.querySelectorAll(".chrome button")]
  * a layout as visible while the reader is still looking at cloth. That is how
  * the first run photographed the curtain twice and called it a checklist.
  */
+/**
+ * A NAME MAY BE A LAYOUT OR A SELECTOR. Most pages are identified by their
+ * layout, but a diagram is a BLOCK on a prose page — there are six prose pages
+ * in the catalogue and `prose` names all of them. `.diagram-flowchart` names
+ * exactly one, so anything starting with a dot is matched as a selector on the
+ * current spread instead.
+ */
+const matches = async (name) => {
+  if (!name.startsWith('.')) return (await onScreen()).includes(name)
+  return await evaluate(
+    `[...document.querySelectorAll(".stf__item.--left,.stf__item.--right")]` +
+    `.some(e=>e.querySelector(${JSON.stringify(name)}))`)
+}
+
 const onScreen = async () => await evaluate(
   // ASK THE ENGINE, DO NOT MEASURE. page-flip marks the leaves of the CURRENT
   // spread `--left` and `--right`; every other leaf stays mounted at full size
@@ -131,7 +151,7 @@ const shot = async (name) => {
   await evaluate('(()=>{const c=document.querySelector(".chrome");if(c)c.style.opacity="0"})()')
   await sleep(400)
   const r = await send('Page.captureScreenshot', { format: 'jpeg', quality: 88 })
-  const file = join(OUT, `${name}.jpg`)
+  const file = join(OUT, `${name.replace(/^\./, '').replace(/[^\w-]/g, '-')}.jpg`)
   fs.writeFileSync(file, Buffer.from(r.result.data, 'base64'))
   const kb = Math.round(fs.statSync(file).size / 1024)
   console.log(`  ${file}  ${kb} KB`)
@@ -141,9 +161,8 @@ const shot = async (name) => {
 const found = new Set()
 console.log('')
 for (let press = 0; press < 90 && found.size < wanted.length; press++) {
-  const here = await onScreen()
   for (const layout of wanted) {
-    if (found.has(layout) || !here.includes(layout)) continue
+    if (found.has(layout) || !await matches(layout)) continue
     // PRESS THROUGH THE REVEALS FIRST. A checklist shot on arrival is a picture
     // of empty boxes; the ticks are the thing worth showing.
     // `End` COMPLETES THE PAGE'S REVEALS WITHOUT TURNING IT — DESIGN.md's

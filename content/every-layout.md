@@ -246,6 +246,46 @@ Right-hand column, the same weight as the first.
 
 ---
 
+> a decision
+
+## Flowchart
+
+:::diagram flowchart
+<svg viewBox="228 16 384 248" role="img" aria-label="Is the line dead?">
+  <defs>
+    <marker id="fa" viewBox="0 0 8 8" refX="7" refY="4"
+            markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#fa)">
+    <path class="dg-link" d="M320 74 L320 108"/>
+    <path class="dg-link" d="M320 172 L320 206"/>
+    <path class="dg-link" stroke="var(--accent-ink)" d="M394 140 L520 140 L520 206"/>
+  </g>
+  <rect class="dg-node" x="240" y="30" width="160" height="44" rx="22"
+        fill="var(--paper-2)" stroke="currentColor"/>
+  <path class="dg-node" d="M320 108 L394 140 L320 172 L246 140 z"
+        fill="var(--paper-2)" stroke="currentColor"/>
+  <rect class="dg-node" x="240" y="206" width="160" height="44" rx="8"
+        fill="var(--paper-2)" stroke="currentColor"/>
+  <rect class="dg-node" x="440" y="206" width="160" height="44" rx="8"
+        fill="var(--paper-2)" stroke="var(--accent-ink)"/>
+  <g class="dg-label" text-anchor="middle" font-size="13" fill="currentColor">
+    <text x="320" y="57">Gauge read</text>
+    <text x="320" y="145">Fallen to zero?</text>
+    <text x="320" y="233">Open it</text>
+    <text x="520" y="233">Stop. Ask.</text>
+    <text x="336" y="192" font-size="11">yes</text>
+    <text x="452" y="132" font-size="11">no</text>
+  </g>
+</svg>
+:::
+
+Drawn from the grammar, coloured by the theme, animated by the page turn.
+
+---
+
 > in this order
 
 ## Steps

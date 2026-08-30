@@ -117,13 +117,75 @@ export async function buildPages(
  * animate element by element when the page turns. Nothing of svg.js itself
  * ships — the reader receives finished markup.
  */
+/**
+ * A hand-drawn diagram may not carry its own colours.
+ *
+ * This is the ONE thing that cannot be delegated to whoever writes the SVG. A
+ * literal `#35C0B6` looks right in the theme it was written against and is
+ * wrong in every other — and a rebrand that silently misses a diagram produces
+ * a book with one page in somebody else's palette, which is worse than a book
+ * that fails to build.
+ *
+ * `currentColor` and `var(--token)` both inherit, so the whole grammar can be
+ * written once and every theme gets its own diagram. The build refuses anything
+ * else and names the offending colour, because a warning in a log is a warning
+ * nobody reads.
+ */
+export function assertThemedColours(svg: string, kind: string): void {
+  const literals = [...new Set([
+    ...(svg.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []),
+    ...(svg.match(/\brgba?\([^)]*\)/g) ?? []),
+    ...(svg.match(/\bhsla?\([^)]*\)/g) ?? []),
+  ])]
+  if (literals.length === 0) return
+  throw new Error(
+    `the ${kind} diagram hard-codes ${literals.length} colour${literals.length > 1 ? 's' : ''}: ` +
+    `${literals.slice(0, 6).join(' ')}\n` +
+    '  Diagrams take their colour from the theme, or a rebrand leaves this page behind.\n' +
+    '  Use currentColor, or var(--ink) / var(--accent-ink) / var(--paper) / var(--paper-2).',
+  )
+}
+
 export function renderDiagrams(html: string, c: DiagramColours): string {
   return html.replace(
     /<div class="diagram">\s*(?:<h4 class="block-title">([^<]*)<\/h4>)?([\s\S]*?)<\/div>/g,
     (_all, title: string | undefined, inner: string) => {
+      const kind = (title ?? 'flow').trim().toLowerCase()
+
+      // ── AUTHORED SVG PASSES STRAIGHT THROUGH ──────────────────────────
+      //
+      // Three diagram types are generated in code. There are thirty-nine shapes
+      // a training book might want, and writing thirty-nine generators is the
+      // wrong trade — the geometry of a fishbone or a Wardley map is a page of
+      // layout rules, not an algorithm, and a model reading those rules draws
+      // it better and in less code than a function ever will.
+      //
+      // So a `:::diagram` may simply CONTAIN its SVG, written from a grammar in
+      // `design/diagram-grammars/`. What the kit keeps is the part that must not
+      // be delegated: every colour comes from the theme, and the reveal is ours.
+      //
+      // `dg-node`, `dg-link`, `dg-bar`, `dg-label` are the whole animation
+      // contract. `animateDiagrams` in the runtime knows those four class names
+      // and nothing about diagram types, so a hand-drawn Sankey animates on the
+      // page turn for free the moment its shapes carry them.
+      const authored = /<svg[\s>]/i.test(inner)
+      if (authored) {
+        // Un-escape: markdown-it has already turned the author's `<svg>` into
+        // entities on its way through, and a diagram made of &lt;svg&gt; renders
+        // as a paragraph of angle brackets.
+        const svgSource = inner
+          .replace(/<\/?p>/g, '')
+          .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'").replace(/&amp;/g, '&')
+          .trim()
+        // Rethrown with the block's own words so the message names the page
+        // the author has to go and fix, not a regex.
+        assertThemedColours(svgSource, kind)
+        return `<figure class="diagram diagram-${kind}">${svgSource}</figure>`
+      }
+
       const text = inner.replace(/<[^>]+>/g, '\n').replace(/&amp;/g, '&')
       const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
-      const kind = (title ?? 'flow').trim().toLowerCase()
 
       let svg = ''
       if (kind.startsWith('cycle')) {

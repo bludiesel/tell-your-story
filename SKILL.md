@@ -421,6 +421,34 @@ Three rules that matter:
 3. **Pictures are ordinary Markdown.** `![alt](img/x.png)` — packed into the
    file automatically and deduplicated by content.
 
+## Diagrams beyond the three generated ones
+
+`:::diagram flow|cycle|bars` writes itself from a line of text. For anything
+else — a decision with branches, a swimlane, a fishbone, a pyramid — **draw the
+SVG and put it in the block**:
+
+````markdown
+:::diagram flowchart
+<svg viewBox="228 16 384 248" role="img" aria-label="Is the line dead?">…</svg>
+:::
+````
+
+The layout rules live in [`design/diagram-grammars/`](design/diagram-grammars/)
+— one short file per type, adapted from
+[diagram-design](https://github.com/cathrynlavery/diagram-design) (MIT). **Read
+only the one you are drawing.** Each gives the geometry, the numbers, and the
+anti-patterns worth naming.
+
+Two things are enforced rather than requested:
+
+| | |
+|---|---|
+| **Colour comes from the theme** | The build **refuses** a diagram containing a hex, `rgb()` or `hsl()` value and names it. Use `currentColor`, `var(--ink)`, `var(--accent-ink)`, `var(--paper-2)`. A literal is right in one theme and wrong in every other. |
+| **Four class names animate it** | `dg-link` draws itself, `dg-node` pops in, `dg-bar` grows from its baseline, `dg-label` fades last. The runtime knows those four and nothing about diagram types — so a hand-drawn Sankey animates on the turn with no code that knows what a Sankey is. |
+
+Adding a type is a file in that folder. Nothing in the build knows what a
+diagram type is, so there is no code to change.
+
 ## Artwork — make it look drawn, do not paste it in
 
 A book of paper, handwriting and grain puts a photograph on a page and the

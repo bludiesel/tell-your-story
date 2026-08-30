@@ -44,7 +44,7 @@ door the templates describe is the only way to catch it.
 | Generated: contents | `contents` | ✅ | emitted in every one of the 19 builds above |
 | Generated: divider | `divider` | ✅ | emitted in every one of the 19 builds above |
 | Notes and asides — typeset into the document | — | ✅ | 3 match(es) for class="callout callout-(note|tip|warning… |
-| Flow and cycle diagrams | — | ✅ | 2 match(es) for <svg[\s>]… |
+| Flow and cycle diagrams | — | ✅ | 4 match(es) for <svg[\s>]… |
 | Two columns | — | ✅ | 1 match(es) for class="[^"]*\bcolumns\b… |
 | The catalogue shows every layout | — | ✅ | all 22 layouts rendered in content/every-layout.md |
 
