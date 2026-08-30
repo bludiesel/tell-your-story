@@ -88,7 +88,7 @@ A page is a sequence of steps, not a slab. The first lands with the page; each
 press brings the next.
 
 **At most five steps a page.** More than that and the presenter is clicking
-rather than talking. `node scripts/prep.ts` counts them and says so.
+rather than talking. `node dist/prep.mjs` counts them and says so.
 
 Three markers change the order, and nothing else does:
 
@@ -104,7 +104,7 @@ Three markers change the order, and nothing else does:
 :::
 ```
 
-**Run `node scripts/prep.ts <file>` before building.** It measures what cannot be judged
+**Run `node dist/prep.mjs <file>` before building.** It measures what cannot be judged
 by reading — page lengths against real capacity, headless pages, overlong
 tables, too many steps — and proposes the pacing, with the exact marker to
 paste. It never rewrites your words. Overrule it where it is wrong: it reads
@@ -115,7 +115,7 @@ structure, you read meaning.
 ## The order to work in
 
 ```bash
-node scripts/prep.ts   content/lesson.md                      # 1. shape it   <- do not skip
+node dist/prep.mjs   content/lesson.md                      # 1. shape it   <- do not skip
 node dist/build.mjs content/lesson.md output/lesson.html  # 2. build it
 node scripts/check.ts                                         # 3. prove it
 ```

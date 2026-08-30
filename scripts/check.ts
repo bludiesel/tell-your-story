@@ -264,12 +264,23 @@ for (const entry of await readdir(ROOT)) {
   if (entry === 'node_modules' || entry === 'output' || entry === '.git') continue
   await cp(join(ROOT, entry), join(clean, entry), { recursive: true }).catch(() => {})
 }
-const shipped: Array<[string, string[]]> = [
-  ['dist/build.mjs', ['content/sample-book.md', 'out.html', '--quiet']],
-  ['dist/ink.mjs', ['content/img/valve.jpg', 'out.ink.png']],
-  ['dist/studio.mjs', ['theme.json', 'studio.html']],
-  ['dist/motion.mjs', ['content/sample-book.md']],
-]
+// EVERY command a user is told to run, not a sample of them. Two shipped
+// untested — `doctor` and `prep` — and prep was the worse of the two: it is
+// step one of every documented workflow and it was still raw TypeScript, so on
+// a Node that does not strip types by default the FIRST command anyone ran
+// would fail while the builder worked. The list is derived below rather than
+// hand-kept, so adding a command to dist/ adds it to this test.
+const shippedArgs: Record<string, string[]> = {
+  'build.mjs': ['content/sample-book.md', 'out.html', '--quiet'],
+  'ink.mjs': ['content/img/valve.jpg', 'out.ink.png'],
+  'studio.mjs': ['theme.json', 'studio.html'],
+  'motion.mjs': ['content/sample-book.md'],
+  'doctor.mjs': ['content/sample-book.md'],
+  'prep.mjs': ['content/sample-book.md'],
+}
+const shipped: Array<[string, string[]]> = (await readdir(join(ROOT, 'dist')))
+  .filter((f) => f.endsWith('.mjs'))
+  .map((f) => [`dist/${f}`, shippedArgs[f] ?? ['content/sample-book.md']])
 const brokenInTheWild: string[] = []
 for (const [cmd, argv] of shipped) {
   const r = await new Promise<number>((res) => {
@@ -279,6 +290,17 @@ for (const [cmd, argv] of shipped) {
     proc.on('close', (code) => res(code ?? 0))
   })
   if (r !== 0) brokenInTheWild.push(cmd)
+}
+{
+  // The flag the docs point at for "which copy am I running?" has to work in
+  // the same empty room as everything else — it is the command someone reaches
+  // for precisely when their install is in doubt.
+  const v = await new Promise<number>((res) => {
+    const proc = spawn(process.execPath, [join(clean, 'dist/build.mjs'), '--version'],
+      { cwd: clean, stdio: ['ignore', 'ignore', 'ignore'] })
+    proc.on('close', (code) => res(code ?? 0))
+  })
+  if (v !== 0) brokenInTheWild.push('dist/build.mjs --version')
 }
 check('shipped: every command runs with no node_modules at all',
   brokenInTheWild.length === 0,
@@ -1629,6 +1651,31 @@ check('book: shipped grain filter resolves',
   check('plate: the picker reaches a plate before a half bleed',
     plateAt > 0 && bleedAt > 0 && plateAt < bleedAt,
     'half-bleed is tested first, so a treated drawing lands in the photograph layout again')
+}
+
+// ── the docs must not send a user at raw TypeScript ─────────────────────────
+//
+// `node scripts/prep.ts` relies on Node stripping types, which is not on by
+// default across the whole Node 22 line the docs promise. prep is STEP ONE of
+// every workflow, so on an early 22 the first command anyone ran would fail
+// while the builder worked fine — the most confusing possible failure.
+//
+// Bundled now, and the docs point at the bundle. Checked because the two are
+// easy to let drift apart, and the drift is invisible on a machine new enough
+// to run either.
+{
+  const docs = await Promise.all(
+    ['SKILL.md', 'README.md', 'templates/CHOOSING.md']
+      .map((f) => readFile(join(ROOT, f), 'utf8')))
+  const raw = docs.join('\n').match(/node scripts\/\w+\.ts/g) ?? []
+  // `check`, `verify`, `prebundle` and `gen-capabilities` are contributor tools
+  // and are allowed to be run from source — they are not part of the promise.
+  const CONTRIBUTOR = /check|verify|prebundle|gen-capabilities|drive-browser/
+  const forUsers = [...new Set(raw)].filter((c) => !CONTRIBUTOR.test(c))
+  check('docs: no user-facing command is run from raw TypeScript',
+    forUsers.length === 0,
+    `${forUsers.join(' ')} — needs Node's type stripping, which the promised Node 22 ` +
+    'floor does not guarantee. Bundle it and point the docs at dist/.')
 }
 
 // ── doctor has to actually fail a broken book ───────────────────────────────

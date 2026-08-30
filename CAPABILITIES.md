@@ -138,7 +138,7 @@ _in braces after any block — these change WHEN it arrives, never where it sits
 | `{.step-first}` | Arrives with the page, whatever its position | A warning that must not wait behind three paragraphs of setup. |
 | `{.step-last}` | Arrives last, after everything else on the spread | A takeaway or a closing line, so the point lands after the argument for it. |
 | `{.with-previous}` | Arrives WITH the block above it, not on its own press | A caption under a picture, or a sticky note annotating the paragraph it sits by — neither is a beat of its own. |
-| `node scripts/prep.ts` | Proposes the order for you and says why | The sequencing pass reads the block TYPES and prints the pacing for any page that should not simply be document order, with the exact marker to paste. It is a proposal from structure; YOU are reading the meaning, so overrule it where it is wrong — that split is deliberate. |
+| `node dist/prep.mjs` | Proposes the order for you and says why | The sequencing pass reads the block TYPES and prints the pacing for any page that should not simply be document order, with the exact marker to paste. It is a proposal from structure; YOU are reading the meaning, so overrule it where it is wrong — that split is deliberate. |
 
 ```markdown
 :::takeaway {.step-last}
@@ -207,7 +207,7 @@ _command line, before and after building_
 
 | | What it is | When to use it |
 |---|---|---|
-| `node scripts/prep.ts` | Analyses raw content and says how to chunk it | ALWAYS run this before building. It measures what you cannot judge by reading — page lengths against real capacity, missing sections, headless pages — and gives the action for each. It reports; it never rewrites your words. --json for machine use. |
+| `node dist/prep.mjs` | Analyses raw content and says how to chunk it | ALWAYS run this before building. It measures what you cannot judge by reading — page lengths against real capacity, missing sections, headless pages — and gives the action for each. It reports; it never rewrites your words. --json for machine use. |
 | `node scripts/check.ts` | The check suite | After any change to the kit. Each check is a bug that once shipped looking fine. The count is not quoted anywhere on purpose — it only ever drifts. |
 | `node dist/ink.mjs` | The ink treatment, headless — for an assistant | The one command to run before putting any supplied picture in a book. Same operator as the studio with no browser and no install: reads JPEG or PNG, writes a transparent PNG to use with {.plate}. Presets --soft --drawn --engraved, and every number is a flag. Reach for the studio instead when a PERSON is choosing the look. |
 | `node dist/studio.mjs` | The Ink Studio — makes artwork look drawn on the page | Before putting any supplied picture in a book. Writes output/ink-studio.html, one self-contained page needing no install: drop the artwork in, turn Line, Tone and Nib, and save a transparent PNG that carries only the ink, so the page own paper and grain read through it. Previews in this book real ink, so what you approve is what lands. Pass a theme path to draw in another book ink. |

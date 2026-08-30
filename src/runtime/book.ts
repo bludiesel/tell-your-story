@@ -525,7 +525,7 @@ function boot(): void {
    *
    * Document order is the default and is right most of the time, but not
    * always, so three classes — written in the Markdown with `markdown-it-attrs`
-   * and proposed by `node scripts/prep.ts` — bend it:
+   * and proposed by `node dist/prep.mjs` — bend it:
    *
    *   .step-first        arrive with the page, whatever the position on it
    *   .step-last         arrive last, so a takeaway lands after its argument

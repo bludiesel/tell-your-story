@@ -28,7 +28,7 @@ It is deliberately **brand-agnostic**. Every colour, typeface and proportion
 comes out of `theme.json`. Ships neutral; rebrand in one file.
 
 ```bash
-node scripts/prep.ts content/lesson.md                     # 1. shape it  ← do not skip
+node dist/prep.mjs content/lesson.md                     # 1. shape it  ← do not skip
 node dist/build.mjs  content/lesson.md output/book.html    # 2. build it
 node dist/build.mjs  content/lesson.md output/book.html --watch   # or: rebuild on save
 ```
@@ -94,6 +94,22 @@ wrapper is a convenience, not a requirement.
 
 ### First run — prove it works before you write anything
 
+**Requirement: Node 22 or newer. That is the entire list.** No npm install, no
+Python, no browser engine, no build step. Check with `node --version`.
+
+```bash
+cd ~/.claude/skills/tell-your-story
+node dist/doctor.mjs content/sample-book.md
+```
+
+Three ticks and `Nothing is broken` means the install is sound — `doctor` runs
+the whole chain (chunking, build, motion) and exits non-zero if any part of it
+is not working. It is the fastest possible answer to "did this install
+properly?", and the same command you run later to ask whether a book of your own
+is finished.
+
+Then look at one:
+
 ```bash
 node dist/build.mjs content/sample-book.md output/sample.html
 open output/sample.html
@@ -102,6 +118,11 @@ open output/sample.html
 You should get a stage curtain that parts when you click it, a book that opens,
 and pages that turn. **If that works, everything works** — the sample exercises
 the curtain, the flip engine, the fonts and the reveals in one go.
+
+> Every command above runs from a copy with **no `node_modules` at all** — the
+> dependencies are compiled into `dist/`. A check in the suite spawns each one
+> in a clean room to keep that true, so "no install needed" is tested rather
+> than promised.
 
 Then check the machinery honestly reports itself:
 
@@ -148,7 +169,7 @@ the whole job:
 **Then follow this order, and do not skip step 1.**
 
 ```bash
-node scripts/prep.ts content/lesson.md   # 1. it tells you how to chunk
+node dist/prep.mjs content/lesson.md   # 1. it tells you how to chunk
 node dist/build.mjs  content/lesson.md output/book.html
 node dist/motion.mjs output/book.html    # 3. what moves, and whether it obeys the rules
 ```
@@ -296,7 +317,7 @@ nothing.
 
 <div align="center">
 
-<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 193 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 194 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
 
 </div>
 
@@ -310,7 +331,7 @@ A built book is one file. The tool that builds it is nearly as lean:
 | Fonts | subset and embedded; a book needs no network |
 
 Every number on that card is measured on this commit, not rounded up for the
-graphic: `193` is what `node scripts/check.ts` prints, `22` is the length of
+graphic: `194` is what `node scripts/check.ts` prints, `22` is the length of
 `LAYOUTS` in `src/layout.ts` with all seventeen proved reachable by
 `scripts/verify.ts`, and `1` is the entire point of the project.
 
@@ -322,7 +343,7 @@ graphic: `193` is what `node scripts/check.ts` prints, `22` is the length of
 |---|---|
 | `node dist/doctor.mjs <lesson.md>` | **Is this finished?** Runs prep, build and motion and returns one verdict with an exit code — the command to run before handing a book over. `--json` to branch on it. It never judges the writing: green means nothing is broken, not that the book is good. |
 | `node dist/build.mjs --version` | Which copy this is, and every layout it knows about — read from the code, not from a number in a document. |
-| `node scripts/prep.ts <file>` | **Run this first.** Measures page lengths against real capacity, finds headless pages, warns when a facing pair has been split, proposes the reveal order, and audits the reveal markers you wrote by saying what each one will actually do to the page. Reports; never rewrites your words. `--json` for machine use. |
+| `node dist/prep.mjs <file>` | **Run this first.** Measures page lengths against real capacity, finds headless pages, warns when a facing pair has been split, proposes the reveal order, and audits the reveal markers you wrote by saying what each one will actually do to the page. Reports; never rewrites your words. `--json` for machine use. |
 | `node dist/build.mjs <in> <out>` | Markdown → one standalone HTML book. **No install.** `src/build.ts` is the same thing from source, for contributors. |
 | `node scripts/check.ts` | The full suite. Every check in it is a bug that once shipped looking fine. |
 | `node dist/motion.mjs <book.html>` | **What moves on every page.** Prints turn behaviour and step count per page, and fails if a section board starts bending or swallowing presses. |

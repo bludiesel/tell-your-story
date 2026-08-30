@@ -73,7 +73,7 @@ async function main(): Promise<void> {
     // ── 1. is it chunked like a book? ────────────────────────────────────
     let prep: PrepOut | null = null
     try {
-      const { stdout } = await run(node, [join(ROOT, 'scripts', 'prep.ts'), lesson, '--json'])
+      const { stdout } = await run(node, [tool('prep.mjs', 'scripts/prep.ts'), lesson, '--json'])
       prep = JSON.parse(stdout) as PrepOut
     } catch (e) {
       checks.push({ name: 'chunking', ok: false, detail: 'prep could not read the lesson',

@@ -103,7 +103,17 @@ came here to avoid it. Take the material and the intent, then choose.
 
 ## The order to do things in
 
-**NO INSTALL NEEDED.** Node 22 or newer, and nothing else. The skill IS the
+**NO INSTALL NEEDED. Node 22 or newer is the entire requirement** — no npm, no
+Python, no browser. Every command below is compiled into `dist/` and runs from a
+folder with no `node_modules` at all; a check spawns each one in a clean room, so
+that is tested rather than promised.
+
+**If anything looks wrong, run this first** — it exercises the whole chain and
+exits non-zero if the install is not sound:
+
+```bash
+node dist/doctor.mjs content/sample-book.md
+``` The skill IS the
 repository: `git clone … ~/.claude/skills/tell-your-story` installs it and
 `git -C ~/.claude/skills/tell-your-story pull` updates it. To find out which
 version is actually running — the question behind "why don't I have the new
@@ -111,7 +121,7 @@ layouts?" — `node dist/build.mjs --version` prints it and lists every layout i
 knows about, read from the code rather than from a number in a document.
 
 ```bash
-node scripts/prep.ts  content/lesson.md                      # 1. shape it  ← do not skip
+node dist/prep.mjs  content/lesson.md                      # 1. shape it  ← do not skip
 node dist/build.mjs   content/lesson.md output/lesson.html   # 2. build it
 node dist/motion.mjs  output/lesson.html                     # 3. see what moves
 node dist/doctor.mjs  content/lesson.md                      # 4. is it finished?  ← before handing over
@@ -343,7 +353,7 @@ skill, not an application — nothing here is a user-facing program.
 |---|---|---|
 | `node dist/doctor.mjs <lesson.md>` | `scripts/doctor.ts` | **Is this book finished?** Runs prep, build and motion and returns ONE verdict with an exit code — the command to run before you hand anything over. `--json` to branch on the answer. It never judges the WRITING: green means nothing is broken, not that the book is good. |
 | `node dist/build.mjs --version` | — | **Which copy is this?** Version plus every layout the installed copy actually knows about, read from the code. Answers "why have I not got the new layouts?" without anyone having to work out whether they are running a checkout, a plugin cache or a zip. `--json` too. |
-| `node scripts/prep.ts` | `scripts/prep.ts` | Analyses raw content and says how to chunk it, and audits the reveal markers already in it. Reports, never rewrites. `--json` for machine use. |
+| `node dist/prep.mjs` | `scripts/prep.ts` | Analyses raw content and says how to chunk it, and audits the reveal markers already in it. Reports, never rewrites. `--json` for machine use. |
 | `node dist/build.mjs` | `dist/build.mjs` | Markdown → one standalone HTML book. **No install needed.** `src/build.ts` is the same thing from source, for contributors. |
 | `node scripts/check.ts` | `scripts/check.ts` | Every check is a bug that once shipped looking fine. The count is deliberately not quoted here — it only ever drifts. |
 | `node dist/motion.mjs` | `dist/motion.mjs` | **What moves on every page**, and whether it obeys the rules. Prints turn behaviour and step count per page for a built book, and fails if a section board starts bending or eating presses. Run it on any book before presenting from it. |

@@ -31,7 +31,7 @@ The default. A heading, a couple of paragraphs, nothing else — and it is the
 right answer far more often than the fancier layouts are.
 
 Keep a page to one idea. Around 130 words fills the space comfortably; past
-about 170 the text starts crowding the outer edge. `node scripts/prep.ts` measures this
+about 170 the text starts crowding the outer edge. `node dist/prep.mjs` measures this
 for you rather than making you count.
 
 ---
@@ -119,7 +119,7 @@ Nothing reflows on the page. The content arrives in place, in the order it is
 meant to be understood.
 :::
 
-Three markers bend the default, and `node scripts/prep.ts` proposes them for you:
+Three markers bend the default, and `node dist/prep.mjs` proposes them for you:
 `{.step-first}` to arrive with the page, `{.with-previous}` to share a press
 with the block above, and `{.step-last}` for the line that should land after
 its own argument. This page uses two of them: the warning above was written

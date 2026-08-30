@@ -177,6 +177,14 @@ if (runDirectly) {
     // can build a book but cannot ask whether the book is sound is exactly the
     // gap this exists to close.
     { entry: 'scripts/doctor.ts', out: 'dist/doctor.mjs' },
+    // PREP IS STEP ONE OF EVERY WORKFLOW and was the only headline command
+    // still shipping as raw TypeScript. `node scripts/prep.ts` relies on Node's
+    // built-in type stripping, which is not on by default across the whole of
+    // the Node 22 line the docs promise — so on an early 22 the FIRST command
+    // anyone runs would fail while the builder worked fine. Bundling it removes
+    // the question rather than raising the floor, which is not a decision this
+    // kit should make on a user's behalf.
+    { entry: 'scripts/prep.ts', out: 'dist/prep.mjs' },
   ]
 
   await mkdir(join(ROOT, 'dist'), { recursive: true })

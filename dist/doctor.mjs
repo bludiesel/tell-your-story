@@ -32,7 +32,7 @@ async function main() {
   try {
     let prep = null;
     try {
-      const { stdout } = await run(node, [join(ROOT, "scripts", "prep.ts"), lesson, "--json"]);
+      const { stdout } = await run(node, [tool("prep.mjs", "scripts/prep.ts"), lesson, "--json"]);
       prep = JSON.parse(stdout);
     } catch (e) {
       checks.push({

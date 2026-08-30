@@ -149,7 +149,7 @@ export const CAPABILITIES: CapabilityGroup[] = [
       { id: '{.with-previous}', what: 'Arrives WITH the block above it, not on its own press',
         use: 'A caption under a picture, or a sticky note annotating the paragraph it sits by — ' +
              'neither is a beat of its own.' },
-      { id: 'node scripts/prep.ts', what: 'Proposes the order for you and says why',
+      { id: 'node dist/prep.mjs', what: 'Proposes the order for you and says why',
         use: 'The sequencing pass reads the block TYPES and prints the pacing for any page that ' +
              'should not simply be document order, with the exact marker to paste. It is a ' +
              'proposal from structure; YOU are reading the meaning, so overrule it where it is ' +
@@ -229,7 +229,7 @@ export const CAPABILITIES: CapabilityGroup[] = [
     group: 'Authoring tools (run these, do not skip prep)',
     where: 'command line, before and after building',
     items: [
-      { id: 'node scripts/prep.ts', what: 'Analyses raw content and says how to chunk it',
+      { id: 'node dist/prep.mjs', what: 'Analyses raw content and says how to chunk it',
         use: 'ALWAYS run this before building. It measures what you cannot judge by reading — ' +
              'page lengths against real capacity, missing sections, headless pages — and gives ' +
              'the action for each. It reports; it never rewrites your words. --json for machine use.' },
