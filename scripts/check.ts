@@ -1653,6 +1653,33 @@ check('book: shipped grain filter resolves',
     'half-bleed is tested first, so a treated drawing lands in the photograph layout again')
 }
 
+// ── every layout has a picture ──────────────────────────────────────────────
+//
+// The README's "what it looks like" table is how anyone decides a layout is
+// worth using — reading syntax is not the same as seeing the page. So a layout
+// with no picture is a layout nobody chooses.
+//
+// Five shipped without one and the README showed 17 while claiming 22. Nothing
+// failed; the docs were simply a photograph of an older kit. `scripts/
+// screenshot.mjs` makes refreshing them one command, and this makes forgetting
+// impossible.
+{
+  const shots = new Set((await readdir(join(ROOT, 'docs', 'screenshots')))
+    .map((f) => f.replace(/^\d+-/, '').replace(/\.\w+$/, '')))
+  const layoutTs = await readFile(join(ROOT, 'src', 'layout.ts'), 'utf8')
+  const names = (/export const LAYOUTS = \[([\s\S]*?)\] as const/.exec(layoutTs)?.[1] ?? '')
+    .match(/'([a-z-]+)'/g)?.map((q) => q.slice(1, -1)) ?? []
+  // The generated four have no page a reader chooses — a cover, a contents, a
+  // divider board and a colophon arrive whether you want them or not, so there
+  // is nothing to decide and nothing to photograph for.
+  const GENERATED = new Set(['cover', 'contents', 'divider', 'colophon'])
+  const undocumented = names.filter((n) => !GENERATED.has(n) && !shots.has(n))
+  check(`docs: all ${names.length - GENERATED.size} chooseable layouts have a screenshot`,
+    undocumented.length === 0,
+    `no picture for: ${undocumented.join(', ')} — a layout nobody can see is a layout ` +
+    'nobody picks. node scripts/screenshot.mjs <url> ' + undocumented.join(' '))
+}
+
 // ── the docs must not send a user at raw TypeScript ─────────────────────────
 //
 // `node scripts/prep.ts` relies on Node stripping types, which is not on by

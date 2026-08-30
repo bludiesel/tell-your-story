@@ -37192,7 +37192,9 @@ function renderLayouts(html2) {
     const body = document2.body;
     const imgs = [...body.querySelectorAll("img")];
     const words = (body.textContent ?? "").replace(/\s+/g, " ").trim();
-    const alreadyLaidOut = body.querySelector(".bleed-out, .half-bleed, .plate-page, .marginalia, .compare, .timeline");
+    const alreadyLaidOut = body.querySelector(
+      ".bleed-out, .half-bleed, .plate-page, .marginalia, .compare, .timeline, .anatomy, .checklist, .steps, .dodont"
+    );
     if (imgs.length === 1 && !alreadyLaidOut && imgs[0].classList.contains("plate") && words.length < 620) {
       const art = imgs[0];
       const holder = art.parentElement?.tagName === "P" ? art.parentElement : art;

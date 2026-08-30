@@ -246,6 +246,30 @@ material.
 <td><b>Charts and diagrams</b> are real SVG, drawn at build time, animated when their step arrives.</td>
 <td><b>Full-bleed pictures</b> to every edge, with the caption printed over them.</td>
 </tr>
+<tr>
+<td><img src="docs/screenshots/checklist.jpg" alt="A checklist page with ticks drawn into the boxes"></td>
+<td><img src="docs/screenshots/steps.jpg" alt="A numbered procedure with large numerals down the page"></td>
+</tr>
+<tr>
+<td><b>Checklists whose ticks write themselves in</b> — a pen stroke into each box in turn, once the list has landed. Boxes sized for a real biro, because this is marked standing on a site.</td>
+<td><b>Numbered procedures.</b> The numeral is set at heading size: on a procedure page the number IS the navigation.</td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/dodont.jpg" alt="A do and don't page with both halves side by side"></td>
+<td><img src="docs/screenshots/anatomy.jpg" alt="A drawing with numbered pins on it and a key beneath"></td>
+</tr>
+<tr>
+<td><b>Do and don't on ONE page</b>, one glance. No colour carries the meaning — a workbook printed in one colour still has to work.</td>
+<td><b>Anatomy:</b> a drawing with numbered pins and a key. Pins are placed in per cent, so they hold their part at any page size.</td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/plate.jpg" alt="A treated drawing laid on the page, ruled lines stopping around it"></td>
+<td><img src="docs/screenshots/statement.jpg" alt="A page given to a single sentence in the largest type in the book"></td>
+</tr>
+<tr>
+<td><b>Treated artwork.</b> Run a photograph through the Ink Studio and it reads as drawn on the page — the ruled lines stop where the ink covers them.</td>
+<td><b>A statement page</b> — one sentence, the largest type in the book, and the silence around it doing the work.</td>
+</tr>
 </table>
 
 ### It is a WORKBOOK, not just a book
@@ -317,7 +341,7 @@ nothing.
 
 <div align="center">
 
-<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 194 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 195 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
 
 </div>
 
@@ -331,7 +355,7 @@ A built book is one file. The tool that builds it is nearly as lean:
 | Fonts | subset and embedded; a book needs no network |
 
 Every number on that card is measured on this commit, not rounded up for the
-graphic: `194` is what `node scripts/check.ts` prints, `22` is the length of
+graphic: `195` is what `node scripts/check.ts` prints, `22` is the length of
 `LAYOUTS` in `src/layout.ts` with all seventeen proved reachable by
 `scripts/verify.ts`, and `1` is the entire point of the project.
 
@@ -347,6 +371,7 @@ graphic: `194` is what `node scripts/check.ts` prints, `22` is the length of
 | `node dist/build.mjs <in> <out>` | Markdown → one standalone HTML book. **No install.** `src/build.ts` is the same thing from source, for contributors. |
 | `node scripts/check.ts` | The full suite. Every check in it is a bug that once shipped looking fine. |
 | `node dist/motion.mjs <book.html>` | **What moves on every page.** Prints turn behaviour and step count per page, and fails if a section board starts bending or swallowing presses. |
+| `node scripts/screenshot.mjs <url> <layout>…` | Photographs named layouts from a built book at 1600x1008, matching the set in `docs/screenshots/`. Needs a headless Chrome on :9222 — the command is in the file header. Dev-only. |
 | `node scripts/verify.ts` | Copies each snippet out of `LAYOUTS.md`, builds it, and checks the page comes back as the layout the template promised. Writes [`VERIFICATION.md`](VERIFICATION.md). |
 | `node scripts/drive-browser.mjs <url>` | Drives a built book in a real headless Chrome — curtain, turns, reveals, a held clicker, the tabs, the resume. The only thing that can see what a button press actually does. |
 

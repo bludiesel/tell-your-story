@@ -345,7 +345,19 @@ export function renderLayouts(html: string): string {
     const body = document.body
     const imgs = [...(body.querySelectorAll('img') as unknown as Iterable<Element>)]
     const words = (body.textContent ?? '').replace(/\s+/g, ' ').trim()
-    const alreadyLaidOut = body.querySelector('.bleed-out, .half-bleed, .plate-page, .marginalia, .compare, .timeline')
+    // `.anatomy` IS IN THIS LIST BECAUSE IT CONTAINS A PICTURE. An anatomy block
+    // is one image plus a key, so the plate-page builder below recognised it as
+    // "a page that is mostly a picture", wrapped the whole body, and THEN the
+    // anatomy restructure ran inside that — printing the drawing twice, once
+    // plain and once with the pins on it, and pushing the key off the page.
+    // Invisible in every check; obvious in the first photograph taken of it.
+    //
+    // The other three are here for the same reason before they earn it: a
+    // checklist, a procedure or a do/don't page may perfectly well carry one
+    // picture, and none of them wants to be silently converted into a plate.
+    const alreadyLaidOut = body.querySelector(
+      '.bleed-out, .half-bleed, .plate-page, .marginalia, .compare, .timeline, ' +
+      '.anatomy, .checklist, .steps, .dodont')
 
     // ── a plate: a DRAWING laid on the paper, not a photograph off the edge ──
     //
