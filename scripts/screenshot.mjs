@@ -96,6 +96,68 @@ const clickAt = async (x, y) => {
   }
 }
 
+/**
+ * Wait until the spread STOPS CHANGING, rather than sleeping a guess.
+ *
+ * `End` ADVANCES the remaining reveal steps; it does not freeze them at their
+ * end state, so each one still plays out. How long that takes depends on the
+ * page: a fishbone with nine drawn links and a stagger runs for most of three
+ * seconds, and a fixed 1600ms — then 2800ms — photographed it with its bones
+ * drawn and every label still invisible. Twice. A picture of a bug that was not
+ * there, filed as documentation.
+ *
+ * So sample what the animated properties actually are, twice, and stop when two
+ * consecutive samples match. Any duration works, and a slow machine does not
+ * silently produce half-drawn documentation.
+ */
+const settle = async (quietMs = 500, ms = 12000) => {
+  const signature = `(()=>{const v=${SPREAD};` +
+    'const s=v.flatMap(e=>[...e.querySelectorAll(".dg-node,.dg-label,[data-slot],.reveal *")]' +
+    '.map(n=>{const c=getComputedStyle(n);return c.opacity+","+c.strokeDashoffset+","+c.transform}));' +
+    'return s.join("|")})()'
+  const until = Date.now() + ms
+  let last = null
+  let stable = 0
+  while (Date.now() < until) {
+    const now = await evaluate(signature)
+    // AN EMPTY SIGNATURE IS NOT A SETTLED ONE. The first version read the
+    // leaves by class alone, which on this engine can select a stale clone with
+    // no laid-out children — so it sampled nothing, sampled nothing again, and
+    // declared the page finished before a single label had faded in.
+    if (now && now === last) { if (++stable >= 2) return true } else { stable = 0 }
+    last = now
+    await sleep(quietMs)
+  }
+  return false
+}
+
+/**
+ * Nothing on the spread is caught halfway through a fade.
+ *
+ * Stability alone is not enough: a tween killed mid-flight is perfectly stable
+ * at 0.1969 forever, and that is exactly what a skipped reveal used to leave
+ * behind. A page is finished when every animated thing on it is all the way in
+ * or all the way out — so this is the condition worth waiting for, and a
+ * timeout here is worth SAYING rather than quietly photographing.
+ */
+const whole = async (ms = 15000) => {
+  // Two conditions, because either alone has a hole in it. Anything on the page
+  // caught between transparent and solid is mid-fade. And a diagram's shapes and
+  // labels must end up VISIBLE — treating a fully-transparent one as "finished"
+  // is how a picture of an empty page passed this test and got committed.
+  const partial = `(()=>${SPREAD}.flatMap(e=>[` +
+    `...[...e.querySelectorAll('.reveal *')].map(n=>parseFloat(getComputedStyle(n).opacity))` +
+    `.filter(o=>o>0.02&&o<0.98),` +
+    `...[...e.querySelectorAll('.dg-node,.dg-label')].map(n=>parseFloat(getComputedStyle(n).opacity))` +
+    `.filter(o=>o<0.98)]).length)()`
+  const until = Date.now() + ms
+  while (Date.now() < until) {
+    if (await evaluate(partial) === 0) return true
+    await sleep(200)
+  }
+  return false
+}
+
 /** Wait for the book to SAY it is in a state, rather than sleeping a guess. */
 const waitFor = async (cls, ms = 15000) => {
   const until = Date.now() + ms
@@ -132,18 +194,29 @@ const nextPage = '(()=>{const b=[...document.querySelectorAll(".chrome button")]
  */
 const matches = async (name) => {
   if (!name.startsWith('.')) return (await onScreen()).includes(name)
-  return await evaluate(
-    `[...document.querySelectorAll(".stf__item.--left,.stf__item.--right")]` +
-    `.some(e=>e.querySelector(${JSON.stringify(name)}))`)
+  return await evaluate(`${SPREAD}.some(e=>e.querySelector(${JSON.stringify(name)}))`)
 }
 
-const onScreen = async () => await evaluate(
-  // ASK THE ENGINE, DO NOT MEASURE. page-flip marks the leaves of the CURRENT
-  // spread `--left` and `--right`; every other leaf stays mounted at full size
-  // just outside the viewport. Two runs were filed under the wrong name before
-  // this stopped being a geometry problem and started being a state question.
-  '(()=>[...document.querySelectorAll(".stf__item.--left,.stf__item.--right")]' +
-  '.map(e=>e.dataset.layout).filter(Boolean))()')
+/**
+ * THE LEAVES THE READER IS ACTUALLY LOOKING AT — both halves of the test.
+ *
+ * ASK THE ENGINE: page-flip marks the leaves of the CURRENT spread `--left` and
+ * `--right`, and every other leaf stays mounted at full size just outside the
+ * viewport, so filtering by geometry alone files pages under the wrong name.
+ * Two runs did exactly that.
+ *
+ * AND THEN CHECK THE GEOMETRY ANYWAY: the engine also keeps stale leaves
+ * carrying those same classes, laid out at zero size. Selecting by class alone
+ * can therefore return a page that paints nothing — which is how `settle()`
+ * came to watch a set of elements that could never change and reported a
+ * half-drawn fishbone as finished, twice, in two different pictures.
+ *
+ * Neither test is sufficient. Both together name exactly the visible spread.
+ */
+const SPREAD = '[...document.querySelectorAll(".stf__item.--left,.stf__item.--right")]' +
+  '.filter(e=>e.getBoundingClientRect().width>0)'
+
+const onScreen = async () => await evaluate(`(()=>${SPREAD}.map(e=>e.dataset.layout).filter(Boolean))()`)
 
 const shot = async (name) => {
   // Hide the floating controls. They idle-fade on their own, but a photograph
@@ -170,9 +243,17 @@ for (let press = 0; press < 90 && found.size < wanted.length; press++) {
     // instead both reveals AND, once a spread is spent, turns the leaf, so the
     // shutter fired on the page after the one it came for: three runs filed a
     // divider board as `anatomy` before this stopped using the wrong key.
+    // AND NOT WHILE THE LEAF IS STILL IN THE AIR — the runtime now refuses a
+    // skip mid-turn, so pressing early is a silent no-op and the page is
+    // photographed before it has revealed anything.
+    for (let w = 0; w < 60; w++) {
+      if (!await evaluate('!!document.querySelector(".stage.is-turning, .is-turning")')) break
+      await sleep(150)
+    }
     await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'End', code: 'End', windowsVirtualKeyCode: 35 })
     await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'End', code: 'End', windowsVirtualKeyCode: 35 })
-    await sleep(1600)
+    await settle()
+    if (!await whole()) console.log('    (something on this spread never finished arriving — check the picture)')
     await shot(layout)
     found.add(layout)
   }

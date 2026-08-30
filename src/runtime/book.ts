@@ -462,6 +462,11 @@ function boot(): void {
   /** One handle for every tween the reveal starts, so a fast reader turning
       pages mid-animation cannot leave half-faded content stranded. */
   let revealCtx: gsap.Context | undefined
+  /** The spread's own arrival timeline, so a skip can COMPLETE it rather than
+   *  race it. Layering a second timeline over one still in flight is what left
+   *  a diagram's labels frozen partway in — the two owned the same targets and
+   *  the loser stopped wherever it was. */
+  let revealTl: gsap.core.Timeline | null = null
   /** Which spread the reveal last ran for, so one turn cannot fire it twice. */
   let revealedAt = -1
   /** The incoming spread must survive two paints before it is queried. */
@@ -870,6 +875,20 @@ function boot(): void {
    */
   function finishSteps(): boolean {
     if (!STEPS_ON) return false
+    // NOT WHILE A LEAF IS IN THE AIR. `goNext`/`goPrev` have always refused to
+    // act mid-turn; skipping the reveals of a page that has not landed yet is
+    // just as meaningless, and it is worse than a no-op: the tweens this starts
+    // belong to the OUTGOING spread's context, which is reverted the moment the
+    // turn completes — and content caught in that crossfire stays frozen at
+    // whatever opacity it had reached. Measured at 0.1969, permanently, on a
+    // fishbone whose labels were still readable in the DOM and invisible on the
+    // page. Entrance animation must fail visible; this failed invisible.
+    if (turning()) { heldIntent = 'finish'; return false }
+    // FINISH WHAT IS ALREADY MOVING FIRST. A reader who presses skip a second
+    // after the page lands catches the arrival timeline mid-flight; starting a
+    // second timeline over it leaves whatever they shared stranded at the
+    // opacity it had reached. Completing it is also what "skip" means.
+    revealTl?.progress(1)
     const rest = stepGroups().filter((g) => g.some(parked)).flat()
     if (rest.length === 0) return false
     const run = () => {
@@ -975,6 +994,7 @@ function boot(): void {
     revealCtx = gsap.context(() => {
       readMotionTokens()
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+      revealTl = tl
 
       // The page settles, then its contents arrive. Choreographed in three
       // passes rather than one flat stagger: the eyebrow leads, the heading
@@ -1023,10 +1043,22 @@ function boot(): void {
       // would reveal two blocks on a spread the presenter arrived at cleanly,
       // which is a worse bug than the dropped press this exists to fix.
       const claimed = heldIntent === 'next'
+      // A SKIP HELD OVER FROM MID-TURN OPENS THE WHOLE SPREAD. `End` used to be
+      // obeyed the instant it was pressed, which meant a press during a turn
+      // started tweens owned by the OUTGOING page's context — reverted the
+      // moment the turn landed, stranding whatever they were animating at
+      // whatever opacity it had reached. Measured at 0.1969, permanently, on a
+      // fishbone whose labels were in the DOM and invisible on the page.
+      // Refusing the press instead was worse: the reader pressed skip and
+      // nothing ever arrived. So it is held, like a forward press, and spent
+      // here — where the tweens belong to the page they are animating.
+      const skipped = heldIntent === 'finish'
       heldIntent = null
-      const opening = claimed ? [...(groups[0] ?? []), ...(groups[1] ?? [])] : (groups[0] ?? [])
+      const opening = skipped
+        ? groups.flat()
+        : claimed ? [...(groups[0] ?? []), ...(groups[1] ?? [])] : (groups[0] ?? [])
       opening.forEach((el, i) => animateStep(el, tl, 0.14 + i * revealBeat))
-      const rest = groups.slice(claimed ? 2 : 1).flat()
+      const rest = skipped ? [] : groups.slice(claimed ? 2 : 1).flat()
       if (rest.length > 0) gsap.set(rest, { opacity: 0, y: 16 })
     })
   }
@@ -1298,7 +1330,7 @@ function boot(): void {
    * arriving page's first beat. Without that the automatic first step and the
    * replayed press both fire and one click reveals two things.
    */
-  let heldIntent: 'next' | null = null
+  let heldIntent: 'next' | 'finish' | null = null
   const turning = () => stage?.classList.contains('is-turning') ?? false
 
   const goNext = (): void => {
