@@ -37965,6 +37965,10 @@ var PKG_VERSION = (() => {
   }
 })();
 function version() {
+  if (process.argv.includes("--json")) {
+    console.log(JSON.stringify({ name: "tell-your-story", version: PKG_VERSION, layouts: LAYOUTS }, null, 2));
+    return;
+  }
   console.log(`
   tell-your-story ${PKG_VERSION}
   ${LAYOUTS.length} layouts \xB7 ${LAYOUTS.join(" \xB7 ")}

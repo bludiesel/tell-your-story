@@ -14,30 +14,91 @@ network, no folder of assets unless you ask for one. It opens from a USB stick.
 > deck, this is the wrong skill — use `slide-kit`. Do not add a second output
 > format here.
 
-## What to bring — read this before anything else
+## The first thing you do is ASK — do not start writing
 
-A book is only as good as what goes into it, and this is the step people skip.
-If the user has handed over a wall of text, or nothing at all, **ask for these
-before writing a line.** Nothing here needs a document: a conversation produces
-all of it, and asking takes two minutes against an afternoon of rework.
+**When this skill triggers, open a conversation before you open an editor.** The
+person asking for a workbook almost never arrives with a finished brief, and a
+book built from a one-line request is a book they will quietly not use.
 
-| Ask for | Why it decides the outcome |
+Work through the four below **in one batch**, not as a drip of single questions.
+Say what you already know from their request so they only fill the gaps.
+
+**1 — What is this, and who reads it?**
+Ask what the book must make its reader able to DO afterwards. Every later choice
+follows from that one answer: how much detail, which warnings, whether a page is
+prose or a checklist. "A refresher for people who already know it" and "the only
+training a new starter gets" produce different books from the same material.
+
+**2 — What content already exists?**
+An SOP, a deck, a policy, a transcript, notes, a previous version. Ask them to
+paste it or point you at it. If the honest answer is "nothing", **interview them
+instead** — ask what goes wrong on this job, what people get wrong, what the one
+rule is that nobody may break. A subject-matter expert will talk for ten minutes
+and give you a better book than any document would have.
+
+**3 — Artwork and assets.**
+Ask what pictures they have and what each one shows. Photographs of their own
+kit, their own site and their own people are worth more than anything you could
+find, and they carry no licensing question. Treat every one through the Ink
+Studio so it belongs to the page — see *Artwork* below.
+
+**If they have none, offer to go and find some.** See *Researching what they do
+not have*, next — including the licence rule, which matters because company
+training material gets distributed.
+
+**4 — Brand.**
+`theme.json` is the only file that brands a book: two colours and a font name is
+the whole job, and `brand.mark` points at their logo. "We do not have one yet"
+is a fine answer — the kit ships neutral and generates a monogram from the brand
+name. See *Rebranding*.
+
+**Then say what you are going to build before you build it.** A one-paragraph
+shape — how many sections, roughly what is on each, how long it takes to read —
+costs thirty seconds and catches a wrong turn that would otherwise cost an
+afternoon.
+
+## Researching what they do not have
+
+When the user has no pictures, no examples, or thin material, **offer to
+research** — do not silently proceed with an empty book, and do not invent facts
+to fill it.
+
+| Ask for | What to do |
 |---|---|
-| **Who is reading it, and what must they be able to DO afterwards** | Every later choice — how much detail, which warnings, whether a page is prose or a checklist — follows from this one answer. |
-| **The spine: 2–6 sections, scaled to the length** | Written `>> Section name` — each becomes a hard board with its own fore-edge tab, and the reader navigates by them. Two is thin; more than six and the tabs crowd. `#` is a page, `>>` is a section; getting that wrong produces a book with no tabs and `prep` will say so. |
-| **At least 4 pages per section** | Every `>>` inserts a physical divider board — two faces of hard stock — so a reader turning past nearly as many boards as pages of content is being obstructed rather than helped. `prep` flags anything over one section per three pages. A short book wants two sections, not five. |
-| **What already exists** | An SOP, a deck, notes, a policy, a transcript. It saves inventing what somebody already wrote — and if the answer is "nothing", say so and interview instead. |
-| **The pictures, if any** | What each one shows and why it earns its page. See *Artwork* below — treat them, do not paste them in. |
-| **The brand, or permission to skip it** | Two colours and a font in `theme.json` is all it takes. The default is deliberately neutral, so "no brand yet" is a fine answer. |
+| **Pictures** | Search for images of the actual equipment, site or procedure. Then **treat the chosen one through `dist/ink.mjs`** so it reads as drawn rather than pasted. |
+| **Quotes** | A regulator's own wording, a standard, a line from an incident report. Attribute it on a `:::quote` page. A quote nobody can source is worse than no quote. |
+| **Supporting material** | The relevant standard or regulation, typical failure modes, real incident summaries. These make a book specific instead of generic. |
 
-**The one number worth knowing before writing: a page holds about 130 words
-comfortably, 170 at a crush, and under 35 looks unfinished.** Those are measured
-against the real page box, not guessed. A picture costs roughly 55 words of room
-and a table row about 12. Write to that and `prep` will have little to say;
-ignore it and `prep` will say a great deal.
+**THE LICENCE RULE, AND IT IS NOT OPTIONAL.** This produces training material a
+company distributes to its staff. An image found through a search is somebody
+else's property unless it explicitly says otherwise.
 
-**What NOT to ask for.** Do not ask which layout to use, or how the pages should
-be split — that is the job below, and asking pushes work back onto someone who
+- Prefer **public domain and openly licensed** sources — national archives,
+  government and regulator publications, Wikimedia Commons, Unsplash, the
+  organisation's own materials.
+- **Record where every asset came from and under what licence**, on the
+  `:::colophon` page. That layout exists for this.
+- **Tell the user what you used and where it came from.** Do not present a found
+  image as theirs.
+- If you cannot establish a licence, **say so and offer the alternatives**: their
+  own photograph, a diagram (`:::diagram`, generated and owned by them), or a
+  page that carries no picture. A page with no picture is not a failure; an
+  unlicensed picture in a company handbook is.
+
+Facts get the same treatment. Cite a regulation by number, and if you are not
+certain of a figure, say you are not certain rather than writing it into a book
+that people will treat as authoritative.
+
+## The shape you are aiming for, before you write
+
+| | |
+|---|---|
+| **The spine: 2–6 sections** | Written `>> Section name` — each becomes a hard divider board with its own fore-edge tab, and the reader navigates by them. Two is thin; past six the tabs crowd. `#` is a page, `>>` is a section; getting that wrong produces a book with no tabs, and `prep` will say so. |
+| **At least 4 pages per section** | Every `>>` inserts two faces of hard stock. A reader turning past nearly as many boards as pages of content is being obstructed, not helped. `prep` flags anything over one section per three pages — a short book wants two sections, not five. |
+| **~130 words a page** | 170 at a crush, under 35 looks unfinished. Measured against the real page box, not guessed. A picture costs about 55 words of room and a table row about 12. Write to that and `prep` will have little to say. |
+
+**What NOT to ask them.** Do not ask which layout to use, or how the pages should
+be split. That is your job, below — asking pushes the work back onto someone who
 came here to avoid it. Take the material and the intent, then choose.
 
 ## The order to do things in
@@ -53,6 +114,7 @@ knows about, read from the code rather than from a number in a document.
 node scripts/prep.ts  content/lesson.md                      # 1. shape it  ← do not skip
 node dist/build.mjs   content/lesson.md output/lesson.html   # 2. build it
 node dist/motion.mjs  output/lesson.html                     # 3. see what moves
+node dist/doctor.mjs  content/lesson.md                      # 4. is it finished?  ← before handing over
 
 # authoring? leave this running and just save:
 node dist/build.mjs   content/lesson.md output/lesson.html --watch
@@ -279,6 +341,8 @@ skill, not an application — nothing here is a user-facing program.
 
 | Command | File | What it does |
 |---|---|---|
+| `node dist/doctor.mjs <lesson.md>` | `scripts/doctor.ts` | **Is this book finished?** Runs prep, build and motion and returns ONE verdict with an exit code — the command to run before you hand anything over. `--json` to branch on the answer. It never judges the WRITING: green means nothing is broken, not that the book is good. |
+| `node dist/build.mjs --version` | — | **Which copy is this?** Version plus every layout the installed copy actually knows about, read from the code. Answers "why have I not got the new layouts?" without anyone having to work out whether they are running a checkout, a plugin cache or a zip. `--json` too. |
 | `node scripts/prep.ts` | `scripts/prep.ts` | Analyses raw content and says how to chunk it, and audits the reveal markers already in it. Reports, never rewrites. `--json` for machine use. |
 | `node dist/build.mjs` | `dist/build.mjs` | Markdown → one standalone HTML book. **No install needed.** `src/build.ts` is the same thing from source, for contributors. |
 | `node scripts/check.ts` | `scripts/check.ts` | Every check is a bug that once shipped looking fine. The count is deliberately not quoted here — it only ever drifts. |

@@ -337,7 +337,18 @@ function analyse(body: string): { pages: PageStat[]; findings: Finding[] } {
       })
     }
     const headless = new Set(['bleed', 'colophon', 'big', 'quote'])
-    const wantsNoBand = p.blocks.some((b: string) => headless.has(b))
+    // A TAKEAWAY PAGE IS THE SAME SHAPE AS A STATEMENT — one panel, alone,
+    // carrying its own title. A band above it prints the heading twice, which
+    // is the reason `big` and `quote` are already exempt.
+    //
+    // But it only earns that when it IS the page. `:::takeaway` also lands at
+    // the END of an ordinary page of argument, and there the heading is very
+    // much wanted — so this is keyed on the takeaway being the page's only
+    // block rather than merely present on it. Found by `doctor`, which flagged
+    // the kit's own sample for a heading its own stylesheet would have made
+    // redundant.
+    const soleTakeaway = p.blocks.length === 1 && p.blocks[0] === 'takeaway'
+    const wantsNoBand = p.blocks.some((b: string) => headless.has(b)) || soleTakeaway
     if (!p.heading && !wantsNoBand) {
       findings.push({
         where: `page ${p.n}`,

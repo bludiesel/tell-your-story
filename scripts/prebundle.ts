@@ -172,6 +172,11 @@ if (runDirectly) {
     // on. Its two image codecs are pure JavaScript precisely so they can be
     // compiled in here and cost a user nothing.
     { entry: 'scripts/ink.ts', out: 'dist/ink.mjs' },
+    // The one command that answers "is this finished?". It shells out to prep,
+    // build and motion, so it has to ship wherever they do — an assistant that
+    // can build a book but cannot ask whether the book is sound is exactly the
+    // gap this exists to close.
+    { entry: 'scripts/doctor.ts', out: 'dist/doctor.mjs' },
   ]
 
   await mkdir(join(ROOT, 'dist'), { recursive: true })

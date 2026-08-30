@@ -1631,6 +1631,40 @@ check('book: shipped grain filter resolves',
     'half-bleed is tested first, so a treated drawing lands in the photograph layout again')
 }
 
+// ── doctor has to actually fail a broken book ───────────────────────────────
+//
+// A verdict command that says "fine" whatever you give it is worse than no
+// verdict command: an assistant trusts it and hands over a broken book with
+// more confidence than if it had checked nothing. So the check is not "does it
+// run" — it is "does it say no when the answer is no".
+{
+  const dir = await mkdtemp(join(tmpdir(), 'tys-doctor-'))
+  const doctor = join(ROOT, 'dist', 'doctor.mjs')
+
+  // A book that cannot build: a template placeholder the builder refuses.
+  const broken = join(dir, 'broken.md')
+  await writeFile(broken, ['# A page', '', 'This still says [BOOK TITLE] in it.'].join('\n'))
+  const bad = await runScript('dist/doctor.mjs', [broken])
+  check('doctor: it fails a book that does not build',
+    bad.code !== 0 && /✗/.test(bad.out),
+    'doctor passed a lesson the builder refuses — a verdict that is always yes is worse ' +
+    'than no verdict at all')
+
+  // And passes the shipped sample, which is known good.
+  const good = await runScript('dist/doctor.mjs', [join(ROOT, 'content', 'sample-book.md')])
+  check('doctor: it passes the shipped sample',
+    good.code === 0,
+    `doctor fails the kit's own sample:\n${good.out.split('\n').slice(0, 8).join('\n')}`)
+
+  check('doctor: --json carries the verdict a caller branches on',
+    /"ok":/.test((await runScript('dist/doctor.mjs',
+      [join(ROOT, 'content', 'sample-book.md'), '--json'])).out),
+    '--json has no ok field, so a caller has to parse prose to find the answer')
+
+  void doctor
+  await rm(dir, { recursive: true, force: true })
+}
+
 // ── --version must list the layouts that actually exist ─────────────────────
 //
 // The question behind "why haven't I got the new layouts?" is "which copy am I

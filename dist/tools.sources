@@ -1,4 +1,5 @@
 scripts/build_studio.ts
+scripts/doctor.ts
 scripts/ink.ts
 scripts/motion.ts
 src/assets.ts

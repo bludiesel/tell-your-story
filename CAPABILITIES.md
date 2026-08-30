@@ -19,7 +19,11 @@ _in the body of any page, written as ::: fences_
 | `:::takeaway` | The single thing to remember from a page | End of a section, when one idea must survive everything else. |
 | `:::sticky` | A physical sticky note pinned at an angle | An aside in a HUMAN voice — a reminder someone stuck on afterwards. Distinct from :::note, which is typeset into the document. Colour and tilt rotate automatically across notes on a page. It arrives by being pressed onto the paper — in from above, off-square, landing on its tilt — rather than fading in the way the typeset blocks do. |
 | `:::opener` | A chapter opener with a drop cap four lines deep | The first page of a section, where the prose should begin rather than continue. The title of the block becomes the small hand-set line above it. |
-| `{.plate}` | Makes a picture hide the page ruling it sits on | Add it to any picture that should read as printed onto the paper rather than laid over it. The book blurs what is behind the picture, so the paper matches at any position and in any theme; without it the page reads straight through, which suits open line art. Tune with --plate-blur and --plate-fade. |
+| `{.plate}` | Marks a picture as treated artwork: its own layout, and the page ruling hidden behind it | Add it to any picture that came out of the Ink Studio or dist/ink.mjs. It does two things. It puts the page on the PLATE layout — the drawing wide across the text column at its own proportion, words beneath — because a drawing is usually landscape and the half bleed would crop it. And it blurs what is behind the drawing, so the ruled lines stop where the ink covers them and the paper matches at any position and in any theme. Tune with --plate-blur and --plate-fade. |
+| `:::checklist` | Tick boxes the reader marks, sized for a real pen | A list the reader has to CONFIRM, not just read — a pre-start check, a handover, kit to bring. Use it when the point is that each line gets done and signed off. A plain bullet list when they only need to know the items. |
+| `:::steps` | A numbered procedure, the numeral set big enough to find | Do these, in this order. Distinct from `:::diagram flow`, which is for a decision that BRANCHES — most training is linear and a flow chart of a straight line is harder to follow than a numbered list, not easier. |
+| `:::dodont` | Both halves of a rule side by side on ONE page | A rule with a wrong way and a right way. Write two `###` headings inside it — the first is the DO half, the second the DON'T. Reach for `:::compare` instead when the two things are separated by TIME rather than by judgement, and you have a facing pair to give it. |
+| `:::anatomy` | A drawing with numbered pins on it and a key beneath | Naming the parts of a thing. Each key line carries the pin position as per cent across and down the picture — `1. Burst disk | 32 20` — because you know where the parts are and the software does not. Percentages, so a pin stays on its part at every page size; labels drawn into the artwork instead cannot survive a resize, a rebrand or a translation. |
 | `:::timeline` | A rail across the gutter with dated stops on it | A sequence with real times or dates. One line per stop, written `when | what`. Use it on BOTH pages of a spread and the rail reads as one line crossing the fold. The rail draws itself outward from the gutter as the page arrives. |
 | `:::compare` | One side of a before/after spread | Put `:::compare before` on one page and `:::compare after` on the next. Both sides carry the same structure on purpose — the comparison is only honest if the one difference is the content. |
 | `:::marginalia` | A narrow column with hand notes in the outer margin | Text that a reader would annotate. Any `>` blockquote inside becomes a margin note. Notes always sit in the OUTER margin, never the gutter — nobody can write in a fold. |
@@ -50,6 +54,38 @@ The first paragraph. Its first letter becomes the cap.
 
 ```markdown
 ![A technician checking a cylinder](artwork.ink.webp){.plate}
+```
+
+```markdown
+:::checklist Before you go up
+- Permit signed and in date
+- Anchor point rated for the load
+:::
+```
+
+```markdown
+:::steps Isolating a line
+1. Close the upstream valve
+2. Watch the gauge fall
+3. Tag it
+:::
+```
+
+```markdown
+:::dodont Ladders
+### Do
+- Tie it off
+### Don't
+- Stand on the top two rungs
+:::
+```
+
+```markdown
+:::anatomy The cylinder valve
+![A valve, drawn](valve.ink.png){.plate}
+1. Burst disk | 32 20
+2. Handwheel | 60 45
+:::
 ```
 
 ```markdown
@@ -162,6 +198,8 @@ _command line — the output is always a book_
 | `--theme` | Point at a different theme.json | Rebranding for another client. |
 | `--watch` | Rebuild whenever the lesson or its theme changes | Authoring. Leave it running, save, reload — about 85ms a rebuild. Each one is a fresh process, so nothing is carried over from the last. |
 | `--quiet` | Print only the result line | Scripted builds. |
+| `doctor` | One verdict on whether a book is finished | node dist/doctor.mjs <lesson.md> — runs prep, build and motion and answers with a single pass/fail plus what to fix, so an assistant asks one question instead of reading three prose reports and deciding for itself. --json to branch on it. It never judges the writing: green means nothing is broken, not that the book is good. |
+| `--version` | Which copy is this, and what layouts does it have | Answers "why have I not got the new layouts?" — the version plus every layout the installed copy actually knows about, read from its own code. Faster than working out whether you are running a checkout, a plugin cache or a zip. |
 
 ## Authoring tools (run these, do not skip prep)
 

@@ -296,7 +296,7 @@ nothing.
 
 <div align="center">
 
-<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 189 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 193 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
 
 </div>
 
@@ -310,7 +310,7 @@ A built book is one file. The tool that builds it is nearly as lean:
 | Fonts | subset and embedded; a book needs no network |
 
 Every number on that card is measured on this commit, not rounded up for the
-graphic: `189` is what `node scripts/check.ts` prints, `22` is the length of
+graphic: `193` is what `node scripts/check.ts` prints, `22` is the length of
 `LAYOUTS` in `src/layout.ts` with all seventeen proved reachable by
 `scripts/verify.ts`, and `1` is the entire point of the project.
 
@@ -320,6 +320,8 @@ graphic: `189` is what `node scripts/check.ts` prints, `22` is the length of
 
 | Command | What it does |
 |---|---|
+| `node dist/doctor.mjs <lesson.md>` | **Is this finished?** Runs prep, build and motion and returns one verdict with an exit code — the command to run before handing a book over. `--json` to branch on it. It never judges the writing: green means nothing is broken, not that the book is good. |
+| `node dist/build.mjs --version` | Which copy this is, and every layout it knows about — read from the code, not from a number in a document. |
 | `node scripts/prep.ts <file>` | **Run this first.** Measures page lengths against real capacity, finds headless pages, warns when a facing pair has been split, proposes the reveal order, and audits the reveal markers you wrote by saying what each one will actually do to the page. Reports; never rewrites your words. `--json` for machine use. |
 | `node dist/build.mjs <in> <out>` | Markdown → one standalone HTML book. **No install.** `src/build.ts` is the same thing from source, for contributors. |
 | `node scripts/check.ts` | The full suite. Every check in it is a bug that once shipped looking fine. |

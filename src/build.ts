@@ -60,6 +60,12 @@ interface Options {
  * the layouts you expect, and that is the question people actually have.
  */
 function version(): void {
+  // `--version --json` for a caller that is going to branch on the answer.
+  // The layout list is the point of the flag, so it is in both forms.
+  if (process.argv.includes('--json')) {
+    console.log(JSON.stringify({ name: 'tell-your-story', version: PKG_VERSION, layouts: LAYOUTS }, null, 2))
+    return
+  }
   console.log(`
   tell-your-story ${PKG_VERSION}
   ${LAYOUTS.length} layouts · ${LAYOUTS.join(' · ')}
