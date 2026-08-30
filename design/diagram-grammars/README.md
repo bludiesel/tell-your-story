@@ -83,22 +83,44 @@ background scaffolding — an axis does not need to make an entrance.
   is.
 - **Text is `<text>`, not paths.** It has to be searchable, translatable and
   re-themable, and outlined type is none of those.
+- **The type sizes in these grammars are viewBox units, not pixels.** The SVG is
+  stretched to the column — about 470px — so a `font-size="11"` inside a 480-unit
+  viewBox lands near 11px on the page, and the same 11 inside a 600-unit viewBox
+  lands near 8.6px, which is under the legibility floor. **Scale the type with the
+  viewBox**: multiply by `viewBox width / 480`. A fishbone drawn 600 wide with
+  10px labels photographed as a diagram nobody could read, and nothing about the
+  markup looked wrong.
 
 ---
 
 ## The types
 
-Read the one you need. Each is *best for / layout conventions / anti-patterns*.
+**Thirty-nine of them.** Read the one you need — each is a page: *best for /
+not for / layout conventions / colour / tag it / anti-patterns*.
 
-| | |
+| Group | Types |
 |---|---|
-| **Generated, no SVG needed** | `flow` · `cycle` · `bars` — write a line of text, the build draws it |
-| **Sequence and process** | [`flowchart`](type-flowchart.md) · [`swimlane`](type-swimlane.md) · [`sequence`](type-sequence.md) · [`journey`](type-journey.md) · `process` · `state` |
-| **Hierarchy and structure** | [`pyramid`](type-pyramid.md) · [`tree`](type-tree.md) · `org-chart` · `nested` · `layers` · `architecture` |
-| **Comparison and position** | [`quadrant`](type-quadrant.md) · `radar` · `venn` · `matrix` |
-| **Cause and effect** | [`fishbone`](type-fishbone.md) · `loop` · `dependency` |
-| **Quantity** | `sankey` · `treemap` · `gantt` · `line` · `scatter` |
+| **Generated — no SVG needed** | `flow` · `cycle` · `bars` — write a line of text and the build draws it |
+| **Sequence and process** | [`flowchart`](type-flowchart.md) · [`process`](type-process.md) · [`swimlane`](type-swimlane.md) · [`sequence`](type-sequence.md) · [`journey`](type-journey.md) · [`state`](type-state.md) · [`story-map`](type-story-map.md) |
+| **Hierarchy and structure** | [`tree`](type-tree.md) · [`pyramid`](type-pyramid.md) · [`layers`](type-layers.md) · [`nested`](type-nested.md) · [`org-chart`](type-org-chart.md) · [`uml-class`](type-uml-class.md) |
+| **Comparison and position** | [`quadrant`](type-quadrant.md) · [`radar`](type-radar.md) · [`venn`](type-venn.md) · [`wardley`](type-wardley.md) · [`security-matrix`](type-security-matrix.md) |
+| **Cause and effect** | [`fishbone`](type-fishbone.md) · [`loop`](type-loop.md) · [`dependency`](type-dependency.md) |
+| **Quantity** | [`bar`](type-bar.md) · [`line`](type-line.md) · [`scatter`](type-scatter.md) · [`sankey`](type-sankey.md) · [`treemap`](type-treemap.md) · [`polar`](type-polar.md) · [`gantt`](type-gantt.md) · [`timeline`](type-timeline.md) |
+| **Systems and data** | [`overview`](type-overview.md) · [`architecture`](type-architecture.md) · [`deployment`](type-deployment.md) · [`data-flow`](type-data-flow.md) · [`integration`](type-integration.md) · [`er`](type-er.md) · [`db-schema`](type-db-schema.md) · [`medallion`](type-medallion.md) |
+| **Work in progress** | [`kanban`](type-kanban.md) · [`current-future`](type-current-future.md) |
 
-Types without a link are not written yet. Adding one is a file in this folder
-and a row in this table — no code changes, because nothing in the build knows
-what a diagram type is.
+A check keeps this table and the folder honest: **every type listed here has a
+file, and every file here is listed.** Adding a type is a file plus a row — no
+code changes, because nothing in the build knows what a diagram type is.
+
+### Four we renamed
+
+Four of the upstream names only made sense inside that project's own context, so
+they carry ours instead. Same shape, clearer label.
+
+| Theirs | Ours | Why |
+|---|---|---|
+| `high-level` | [`overview`](type-overview.md) | "High level" is a relative term; the page is the one at the front of the book |
+| `it-state` | [`current-future`](type-current-future.md) | It is a before-and-after spread, and nothing about it is IT-specific |
+| `dp-integration` | [`integration`](type-integration.md) | The `dp-` prefix meant "data platform" upstream; the grammar applies to any two systems |
+| `dp-security-matrix` | [`security-matrix`](type-security-matrix.md) | Same |
