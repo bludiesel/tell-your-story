@@ -7,7 +7,7 @@
                      linkedom, yaml, @svgdotjs/svg.js
       3 bundled    — page-flip, GSAP, curtains.js, already committed as one
                      pre-built file so nothing is fetched at build time
-      187 checks   — scripts/check.ts on this commit
+      189 checks   — scripts/check.ts on this commit
       22 layouts   — src/layout.ts LAYOUTS, all proved reachable by verify.ts
       1 file out   — the whole point
   -->
@@ -119,7 +119,7 @@
   <line x1="34" y1="248" x2="816" y2="248" stroke="#16333F"/>
   <g class="in s6" font-family="'Segoe UI',Roboto,Arial,sans-serif" text-anchor="middle">
     <g fill="#F2F7F6" font-size="25" font-weight="800">
-      <text x="112" y="288">187</text><text x="268" y="288">22</text>
+      <text x="112" y="288">189</text><text x="268" y="288">22</text>
       <text x="424" y="288">1</text><text x="580" y="288">0</text><text x="736" y="288">100%</text>
     </g>
     <g fill="#79C3BD" font-size="10" letter-spacing="1.1">

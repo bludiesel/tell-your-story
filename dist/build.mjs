@@ -6639,13 +6639,13 @@ var require_directives = __commonJS({
               onError(0, "%YAML directive should contain exactly one part");
               return false;
             }
-            const [version] = parts;
-            if (version === "1.1" || version === "1.2") {
-              this.yaml.version = version;
+            const [version2] = parts;
+            if (version2 === "1.1" || version2 === "1.2") {
+              this.yaml.version = version2;
               return true;
             } else {
-              const isValid = /^\d+\.\d+$/.test(version);
-              onError(6, `Unsupported YAML version ${version}`, isValid);
+              const isValid = /^\d+\.\d+$/.test(version2);
+              onError(6, `Unsupported YAML version ${version2}`, isValid);
               return false;
             }
           }
@@ -9745,14 +9745,14 @@ var require_Document = __commonJS({
           version: "1.2"
         }, options);
         this.options = opt;
-        let { version } = opt;
+        let { version: version2 } = opt;
         if (options?._directives) {
           this.directives = options._directives.atDocument();
           if (this.directives.yaml.explicit)
-            version = this.directives.yaml.version;
+            version2 = this.directives.yaml.version;
         } else
-          this.directives = new directives.Directives({ version });
-        this.setSchema(version, options);
+          this.directives = new directives.Directives({ version: version2 });
+        this.setSchema(version2, options);
         this.contents = value === void 0 ? null : this.createNode(value, _replacer, options);
       }
       /**
@@ -9932,11 +9932,11 @@ var require_Document = __commonJS({
        *
        * Overrides all previously set schema options.
        */
-      setSchema(version, options = {}) {
-        if (typeof version === "number")
-          version = String(version);
+      setSchema(version2, options = {}) {
+        if (typeof version2 === "number")
+          version2 = String(version2);
         let opt;
-        switch (version) {
+        switch (version2) {
           case "1.1":
             if (this.directives)
               this.directives.yaml.version = "1.1";
@@ -9947,9 +9947,9 @@ var require_Document = __commonJS({
           case "1.2":
           case "next":
             if (this.directives)
-              this.directives.yaml.version = version;
+              this.directives.yaml.version = version2;
             else
-              this.directives = new directives.Directives({ version });
+              this.directives = new directives.Directives({ version: version2 });
             opt = { resolveKnownTags: true, schema: "core" };
             break;
           case null:
@@ -9958,7 +9958,7 @@ var require_Document = __commonJS({
             opt = null;
             break;
           default: {
-            const sv = JSON.stringify(version);
+            const sv = JSON.stringify(version2);
             throw new Error(`Expected '1.1', '1.2' or null as first argument, but found: ${sv}`);
           }
         }
@@ -15203,6 +15203,7 @@ var require_canvas = __commonJS({
 });
 
 // src/build.ts
+import { readFileSync } from "node:fs";
 import { access, mkdir as mkdir2, readFile as readFile4, writeFile as writeFile2 } from "node:fs/promises";
 import { basename as basename2, dirname, join as join3, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31429,19 +31430,19 @@ var require_environment_v8_version = /* @__PURE__ */ __commonJSMin(((exports, mo
   var versions = process2 && process2.versions || Deno && Deno.version;
   var v8 = versions && versions.v8;
   var match;
-  var version;
+  var version2;
   if (v8) {
     match = v8.split(".");
-    version = match[0] > 0 && match[0] < 4 ? 1 : +(match[0] + match[1]);
+    version2 = match[0] > 0 && match[0] < 4 ? 1 : +(match[0] + match[1]);
   }
-  if (!version && userAgent) {
+  if (!version2 && userAgent) {
     match = userAgent.match(/Edge\/(\d+)/);
     if (!match || match[1] >= 74) {
       match = userAgent.match(/Chrome\/(\d+)/);
-      if (match) version = +match[1];
+      if (match) version2 = +match[1];
     }
   }
-  module.exports = version;
+  module.exports = version2;
 }));
 var require_symbol_constructor_detection = /* @__PURE__ */ __commonJSMin(((exports, module) => {
   var V8_VERSION = require_environment_v8_version();
@@ -37045,6 +37046,30 @@ function barsDiagram(rows, c) {
 }
 
 // src/layout.ts
+var LAYOUTS = [
+  "cover",
+  "contents",
+  "divider",
+  "opener",
+  "prose",
+  "has-sticky",
+  "marginalia",
+  "plate",
+  "half-bleed",
+  "full-bleed",
+  "ptable",
+  "barchart",
+  "timeline",
+  "compare",
+  "checklist",
+  "steps",
+  "dodont",
+  "anatomy",
+  "statement",
+  "quote-page",
+  "takeaway",
+  "colophon"
+];
 function pickLayout(html2, kind) {
   if (kind === "cover") return "cover";
   if (kind === "hard") return "divider";
@@ -37932,6 +37957,22 @@ var EMBEDDED_FAMILIES = [...new Set(FACES.map((f) => f.family))];
 
 // src/build.ts
 var SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+var PKG_VERSION = (() => {
+  try {
+    return JSON.parse(readFileSync(join3(SKILL_ROOT, "package.json"), "utf8")).version ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+})();
+function version() {
+  console.log(`
+  tell-your-story ${PKG_VERSION}
+  ${LAYOUTS.length} layouts \xB7 ${LAYOUTS.join(" \xB7 ")}
+
+  Newest release and how to update:
+  https://github.com/bludiesel/tell-your-story#keeping-it-up-to-date
+`);
+}
 function parseArgs(argv) {
   const positional = [];
   let mode = "inline";
@@ -37952,6 +37993,9 @@ function parseArgs(argv) {
       watch = true;
     } else if (arg === "--quiet") {
       quiet = true;
+    } else if (arg === "--version" || arg === "-v" || arg === "-V") {
+      version();
+      process.exit(0);
     } else if (arg === "--help" || arg === "-h") {
       usage();
       process.exit(0);
@@ -37981,6 +38025,7 @@ function usage() {
     --assets folder    put pictures in an ./assets/ folder beside it
     --theme <path>     theme.json to use            (default: skill root)
     --quiet            only print the result line
+    --version          which copy this is, and every layout it knows about
 
   Pick 'inline' when you want one thing to send and don't mind the size.
   Pick 'folder' when the book is picture-heavy and stays in one place.

@@ -214,6 +214,10 @@ export const CAPABILITIES: CapabilityGroup[] = [
       { id: '--theme', what: 'Point at a different theme.json', use: 'Rebranding for another client.' },
       { id: '--watch', what: 'Rebuild whenever the lesson or its theme changes', use: 'Authoring. Leave it running, save, reload — about 85ms a rebuild. Each one is a fresh process, so nothing is carried over from the last.' },
       { id: '--quiet', what: 'Print only the result line', use: 'Scripted builds.' },
+      { id: '--version', what: 'Which copy is this, and what layouts does it have',
+        use: 'Answers "why have I not got the new layouts?" — the version plus every layout ' +
+             'the installed copy actually knows about, read from its own code. Faster than ' +
+             'working out whether you are running a checkout, a plugin cache or a zip.' },
     ],
   },
   {

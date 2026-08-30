@@ -10,6 +10,7 @@
  * final step. Everything before that point deals in `asset:<key>` references.
  */
 
+import { readFileSync } from 'node:fs'
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -20,12 +21,29 @@ import { buildPages, renderBook, type BookMeta } from './book.ts'
 import { auditPalette, buildPalette, bookCss, contrast, loadTheme, scaleCss, themeCss } from './theme.ts'
 import { fontFaceCss } from './fonts.ts'
 import { markSvg } from './svg.ts'
+import { LAYOUTS } from './layout.ts'
 
 // `import.meta.url` + fileURLToPath, NOT `import.meta.dir` — the latter is a Bun
 // extension and does not exist in Node, where it arrives as undefined and takes
 // the process down inside path.resolve() before the build has read a single
 // file. This is the portable spelling and it works in both.
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+
+/**
+ * Read from package.json rather than restated here, so `--version` cannot
+ * disagree with the package it shipped in. `..` from the module resolves to the
+ * skill root from BOTH `src/build.ts` and `dist/build.mjs`, which is why the
+ * same expression serves the source and the bundled builder.
+ *
+ * Falls back rather than throwing: a missing package.json is a reason to be
+ * vague about the version, not a reason to refuse to build a book.
+ */
+const PKG_VERSION: string = (() => {
+  try {
+    return (JSON.parse(readFileSync(join(SKILL_ROOT, 'package.json'), 'utf8')) as { version?: string })
+      .version ?? 'unknown'
+  } catch { return 'unknown' }
+})()
 
 interface Options {
   input: string
@@ -34,6 +52,21 @@ interface Options {
   themePath: string
   quiet: boolean
   watch: boolean
+}
+
+/**
+ * Printed by `--version`. The layout count is READ FROM THE CODE, not restated:
+ * a version number tells you nothing about whether the copy you are reading has
+ * the layouts you expect, and that is the question people actually have.
+ */
+function version(): void {
+  console.log(`
+  tell-your-story ${PKG_VERSION}
+  ${LAYOUTS.length} layouts · ${LAYOUTS.join(' · ')}
+
+  Newest release and how to update:
+  https://github.com/bludiesel/tell-your-story#keeping-it-up-to-date
+`)
 }
 
 function parseArgs(argv: string[]): Options {
@@ -57,6 +90,14 @@ function parseArgs(argv: string[]): Options {
       watch = true
     } else if (arg === '--quiet') {
       quiet = true
+    } else if (arg === '--version' || arg === '-v' || arg === '-V') {
+      // WHAT HAVE I ACTUALLY GOT? A skill installed by cloning is updated by
+      // pulling, and a skill installed as a plugin is updated by updating the
+      // plugin — so "I pulled and nothing changed" is a real and confusing
+      // failure. One command that prints the version and the layout count
+      // settles it in a second, without the reader having to know where the
+      // copy being read actually lives.
+      version(); process.exit(0)
     } else if (arg === '--help' || arg === '-h') {
       usage(); process.exit(0)
     } else if (arg.startsWith('-')) {
@@ -84,6 +125,7 @@ function usage(): void {
     --assets folder    put pictures in an ./assets/ folder beside it
     --theme <path>     theme.json to use            (default: skill root)
     --quiet            only print the result line
+    --version          which copy this is, and every layout it knows about
 
   Pick 'inline' when you want one thing to send and don't mind the size.
   Pick 'folder' when the book is picture-heavy and stays in one place.

@@ -1631,6 +1631,28 @@ check('book: shipped grain filter resolves',
     'half-bleed is tested first, so a treated drawing lands in the photograph layout again')
 }
 
+// ── --version must list the layouts that actually exist ─────────────────────
+//
+// The question behind "why haven't I got the new layouts?" is "which copy am I
+// running?", and no document can answer it — the reader has a checkout, a
+// plugin cache or a zip, and cannot tell which. So the builder answers it, and
+// answers with the layout list READ FROM THE CODE rather than a count somebody
+// remembered to update. A hardcoded number here would be the same lie the
+// question exists to escape.
+{
+  const buildTs = await readFile(join(ROOT, 'src', 'build.ts'), 'utf8')
+  const fn = /function version\(\)[\s\S]*?\n\}/.exec(buildTs)?.[0] ?? ''
+  check('version: --version reads the layout list from the code',
+    /LAYOUTS\.length/.test(fn) && /LAYOUTS\.join/.test(fn),
+    '--version restates a count instead of reading LAYOUTS, so it can claim ' +
+    'layouts the installed copy does not have')
+  const readme = await readFile(join(ROOT, 'README.md'), 'utf8')
+  check('docs: the README says how to update, not just how to install',
+    /git -C[^\n]*pull/.test(readme) && /--version/.test(readme),
+    'the README installs the skill and never says how to update it or how to ' +
+    'find out which version is running — the exact hole someone falls into')
+}
+
 // ── the docs must not promise a build the guard refuses ─────────────────────
 //
 // README.md and SKILL.md both said the starter template "builds as it stands".

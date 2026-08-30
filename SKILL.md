@@ -42,7 +42,12 @@ came here to avoid it. Take the material and the intent, then choose.
 
 ## The order to do things in
 
-**NO INSTALL NEEDED.** Node 22 or newer, and nothing else.
+**NO INSTALL NEEDED.** Node 22 or newer, and nothing else. The skill IS the
+repository: `git clone … ~/.claude/skills/tell-your-story` installs it and
+`git -C ~/.claude/skills/tell-your-story pull` updates it. To find out which
+version is actually running — the question behind "why don't I have the new
+layouts?" — `node dist/build.mjs --version` prints it and lists every layout it
+knows about, read from the code rather than from a number in a document.
 
 ```bash
 node scripts/prep.ts  content/lesson.md                      # 1. shape it  ← do not skip

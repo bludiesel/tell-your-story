@@ -42,16 +42,40 @@ from-source path.
 
 ## Install
 
-### As a Claude Code skill
-
-Drop it where Claude Code looks for skills and it becomes available by name.
+**One command. This repository *is* the skill** — clone it where Claude Code
+looks for skills and it is installed.
 
 ```bash
 git clone https://github.com/bludiesel/tell-your-story.git ~/.claude/skills/tell-your-story
 ```
 
-For one project only, clone into `<project>/.claude/skills/` instead — the skill
+That's the whole install. No package manager, no build step, no plugin to
+register — the builder ships compiled, so there is nothing to compile.
+
+For one project only, clone into `<project>/.claude/skills/` instead; the skill
 is then available in that repo and nowhere else.
+
+### Keeping it up to date
+
+```bash
+git -C ~/.claude/skills/tell-your-story pull
+```
+
+**Check what you actually have, any time:**
+
+```bash
+node ~/.claude/skills/tell-your-story/dist/build.mjs --version
+```
+
+It prints the version *and every layout it knows about*, read from the code
+rather than from a number someone remembered to update — so "have I got the new
+layouts?" is answered by the thing itself, not by this file.
+
+> **If you installed it some other way, pulling will not help you.** A skill
+> installed through a plugin marketplace runs from a cached copy that `git pull`
+> never touches, and it will keep serving the old version silently. Either
+> update it the way you installed it, or delete that copy and clone as above.
+> The clone has no cache and cannot go stale.
 
 Restart Claude Code, or start a new session, and ask for what you want:
 
@@ -272,7 +296,7 @@ nothing.
 
 <div align="center">
 
-<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 187 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 189 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
 
 </div>
 
@@ -286,7 +310,7 @@ A built book is one file. The tool that builds it is nearly as lean:
 | Fonts | subset and embedded; a book needs no network |
 
 Every number on that card is measured on this commit, not rounded up for the
-graphic: `187` is what `node scripts/check.ts` prints, `22` is the length of
+graphic: `189` is what `node scripts/check.ts` prints, `22` is the length of
 `LAYOUTS` in `src/layout.ts` with all seventeen proved reachable by
 `scripts/verify.ts`, and `1` is the entire point of the project.
 
