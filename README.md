@@ -270,6 +270,14 @@ material.
 <td><b>Treated artwork.</b> Run a photograph through the Ink Studio and it reads as drawn on the page — the ruled lines stop where the ink covers them.</td>
 <td><b>A statement page</b> — one sentence, the largest type in the book, and the silence around it doing the work.</td>
 </tr>
+<tr>
+<td><img src="docs/screenshots/diagram-fishbone.jpg" alt="A fishbone root-cause diagram, one bone picked out in the accent colour"></td>
+<td><img src="docs/screenshots/diagram-quadrant.jpg" alt="A quadrant plot with all four corners named and two items in the accent colour"></td>
+</tr>
+<tr>
+<td><b>A fishbone</b>, drawn by hand from its grammar and animated by the four class names — the spine and bones draw themselves, the effect box lands, the labels follow.</td>
+<td><b>A quadrant</b> where the corner names <i>are</i> the recommendation. <b>39 diagram grammars</b> ship with the kit; the runtime knows none of them by name.</td>
+</tr>
 </table>
 
 ### It is a WORKBOOK, not just a book
@@ -341,7 +349,7 @@ nothing.
 
 <div align="center">
 
-<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 199 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 206 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
 
 </div>
 
@@ -355,7 +363,7 @@ A built book is one file. The tool that builds it is nearly as lean:
 | Fonts | subset and embedded; a book needs no network |
 
 Every number on that card is measured on this commit, not rounded up for the
-graphic: `199` is what `node scripts/check.ts` prints, `22` is the length of
+graphic: `206` is what `node scripts/check.ts` prints, `22` is the length of
 `LAYOUTS` in `src/layout.ts` with all seventeen proved reachable by
 `scripts/verify.ts`, and `1` is the entire point of the project.
 

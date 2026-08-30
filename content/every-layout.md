@@ -286,6 +286,130 @@ Drawn from the grammar, coloured by the theme, animated by the page turn.
 
 ---
 
+> and effect
+
+## Fishbone
+
+:::diagram fishbone
+<svg viewBox="-8 20 630 296" role="img" aria-label="Why the permit was issued late">
+  <defs>
+    <marker id="fb" viewBox="0 0 8 8" refX="7" refY="4"
+            markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L8 4 L0 8 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="currentColor" stroke-width="1.6">
+    <path class="dg-link" d="M20 160 L430 160" marker-end="url(#fb)"/>
+    <path class="dg-link" d="M170 160 L100 40"/>
+    <path class="dg-link" d="M330 160 L260 40"/>
+    <path class="dg-link" stroke="var(--accent-ink)" d="M240 160 L170 280"/>
+    <path class="dg-link" d="M390 160 L320 280"/>
+    <g stroke-width="1.2">
+      <path class="dg-link" d="M135 100 L89 100"/>
+      <path class="dg-link" d="M295 100 L249 100"/>
+      <path class="dg-link" stroke="var(--accent-ink)" d="M205 220 L159 220"/>
+      <path class="dg-link" d="M355 220 L309 220"/>
+    </g>
+  </g>
+  <rect class="dg-node" x="440" y="138" width="170" height="44" rx="8"
+        fill="var(--paper-2)" stroke="currentColor"/>
+  <g class="dg-label" fill="currentColor">
+    <g font-size="15" text-anchor="middle">
+      <text x="100" y="31">People</text>
+      <text x="260" y="31">Process</text>
+      <text x="170" y="299" fill="var(--accent-ink)">Equipment</text>
+      <text x="320" y="299">Records</text>
+    </g>
+    <g font-size="13" text-anchor="end" fill="var(--ink-soft)">
+      <text x="85" y="104">one signatory</text>
+      <text x="245" y="104">no cut-off time</text>
+      <text x="155" y="224" fill="var(--accent-ink)">gauge unreadable</text>
+      <text x="305" y="224">register out of date</text>
+    </g>
+    <text x="525" y="166" font-size="16" text-anchor="middle">Permit issued late</text>
+  </g>
+</svg>
+:::
+
+One bone in the accent: the cause the investigation actually confirmed.
+
+---
+
+> what rests on what
+
+## Layers
+
+:::diagram layers
+<svg viewBox="80 18 480 224" role="img" aria-label="What a permit rests on">
+  <g stroke="currentColor" stroke-width="1.3">
+    <rect class="dg-node" x="90" y="26" width="460" height="50" rx="6" fill="var(--paper)"/>
+    <rect class="dg-node" x="90" y="77" width="460" height="50" fill="var(--paper-2)"/>
+    <rect class="dg-node" x="90" y="128" width="460" height="50" fill="var(--paper-2)"
+          stroke="var(--accent-ink)"/>
+    <rect class="dg-node" x="90" y="179" width="460" height="50" rx="6" fill="var(--paper-2)"/>
+  </g>
+  <g class="dg-label" font-size="13" fill="currentColor">
+    <text x="110" y="56">The signature</text>
+    <text x="110" y="107">The checks that were done</text>
+    <text x="110" y="158" fill="var(--accent-ink)">The isolation that made them safe</text>
+    <text x="110" y="209">The drawing everyone trusted</text>
+    <g font-size="10" text-anchor="end" fill="var(--ink-soft)">
+      <text x="530" y="56">last</text>
+      <text x="530" y="209">first</text>
+    </g>
+  </g>
+</svg>
+:::
+
+Bottom is the foundation, and nobody has to be told.
+
+---
+
+> where things sit
+
+## Quadrant
+
+:::diagram quadrant
+<svg viewBox="60 14 420 300" role="img" aria-label="Findings by likelihood and severity">
+  <g stroke="var(--ink-soft)" stroke-width="1">
+    <path class="dg-link" d="M90 292 L450 292"/>
+    <path class="dg-link" d="M90 292 L90 32"/>
+    <path class="dg-link" d="M270 292 L270 32"/>
+    <path class="dg-link" d="M90 162 L450 162"/>
+  </g>
+  <g class="dg-node" fill="currentColor">
+    <circle cx="150" cy="238" r="6"/>
+    <circle cx="196" cy="212" r="6"/>
+    <circle cx="336" cy="222" r="6"/>
+    <circle cx="152" cy="104" r="6"/>
+    <circle cx="358" cy="80" r="6" fill="var(--accent-ink)"/>
+    <circle cx="392" cy="118" r="6" fill="var(--accent-ink)"/>
+  </g>
+  <g class="dg-label" font-size="11" fill="currentColor">
+    <text x="162" y="242">labelling</text>
+    <text x="208" y="216">signage</text>
+    <text x="348" y="226">housekeeping</text>
+    <text x="164" y="108">relief valve</text>
+    <text x="370" y="84" fill="var(--accent-ink)">isolation</text>
+    <text x="404" y="122" fill="var(--accent-ink)">gas detection</text>
+    <g font-size="10" fill="var(--ink-soft)">
+      <text x="96" y="308">rare</text>
+      <text x="450" y="308" text-anchor="end">often</text>
+      <text x="80" y="292" text-anchor="end">minor</text>
+      <text x="80" y="40" text-anchor="end">severe</text>
+      <text x="100" y="46">plan for it</text>
+      <text x="440" y="46" text-anchor="end">act now</text>
+      <text x="100" y="284">note it</text>
+      <text x="440" y="284" text-anchor="end">tidy it up</text>
+    </g>
+  </g>
+</svg>
+:::
+
+Four corners, four verdicts — and the accent marks the corner that cannot wait.
+
+---
+
 > in this order
 
 ## Steps

@@ -434,10 +434,12 @@ SVG and put it in the block**:
 ````
 
 The layout rules live in [`design/diagram-grammars/`](design/diagram-grammars/)
-— one short file per type, adapted from
+— **39 grammars, one short file per type**, adapted from
 [diagram-design](https://github.com/cathrynlavery/diagram-design) (MIT). **Read
-only the one you are drawing.** Each gives the geometry, the numbers, and the
-anti-patterns worth naming.
+only the one you are drawing.** Each gives what it is best for, what it is *not*
+for, the geometry, the numbers, and the anti-patterns worth naming. The
+[index](design/diagram-grammars/README.md) groups them: sequence and process,
+hierarchy, comparison, cause and effect, quantity, systems and data.
 
 Two things are enforced rather than requested:
 

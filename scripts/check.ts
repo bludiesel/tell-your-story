@@ -1706,6 +1706,36 @@ check('book: shipped grain filter resolves',
     undocumented.length === 0,
     `${undocumented.join(' ')} — the runtime animates these and the grammar never mentions them, ` +
     'so nothing drawn from it will use them')
+
+  // 5. THE INDEX AND THE FOLDER AGREE, BOTH WAYS. A grammar nothing links to is
+  // a page nobody finds, and a linked page that does not exist is a 404 in the
+  // middle of drawing a diagram. Both happen by writing one and forgetting the
+  // other, which is exactly the kind of drift a check exists for.
+  const grammarDir = join(ROOT, 'design', 'diagram-grammars')
+  const onDisk = (await readdir(grammarDir))
+    .filter((f) => f.startsWith('type-') && f.endsWith('.md'))
+  const linked = [...grammar.matchAll(/\(type-([a-z-]+)\.md\)/g)].map((m) => `type-${m[1]}.md`)
+  const unlinked = onDisk.filter((f) => !linked.includes(f))
+  const missing = [...new Set(linked)].filter((f) => !onDisk.includes(f))
+  check(`diagram: all ${onDisk.length} grammars are listed in the index`,
+    unlinked.length === 0,
+    `${unlinked.join(' ')} — written but linked from nowhere, so nobody drawing a diagram finds them`)
+  check('diagram: every type the index links to has a grammar',
+    missing.length === 0,
+    `${missing.join(' ')} — the index promises these and the folder does not have them`)
+
+  // 6. AND SKILL.md's COUNT IS THE REAL ONE. An assistant reads that number to
+  // decide whether the folder is worth opening, so a stale one either hides
+  // types or promises types that were never written.
+  for (const doc of ['SKILL.md', 'README.md']) {
+    const text = await readFile(join(ROOT, doc), 'utf8')
+    const claims = [...text.matchAll(/(?:\*\*|<b>)(\d+) (?:diagram )?grammars/g)].map((m) => Number(m[1]))
+    check(`diagram: ${doc}'s count matches the folder (${onDisk.length})`,
+      claims.length > 0 && claims.every((n) => n === onDisk.length),
+      claims.length === 0
+        ? `${doc} no longer states a grammar count — the check that keeps it honest has nothing to read`
+        : `${doc} says ${claims.join('/')} grammars, the folder has ${onDisk.length}`)
+  }
 }
 
 // ── every layout has a picture ──────────────────────────────────────────────
@@ -1947,6 +1977,36 @@ check('book: shipped grain filter resolves',
     turns >= 2 && places <= 2,
     `${turns} animated turns and ${places} instant placements in riffle() — ` +
     'a riffle wants a turn per step, not a run of cuts')
+}
+
+// ── a skip must never strand content half-faded ─────────────────────────────
+//
+// `End` means "show me the rest of this page". It used to be obeyed the instant
+// it was pressed, and both of the moments a reader is most likely to press it
+// were broken:
+//
+//   DURING a turn — the tweens it started belonged to the OUTGOING spread's
+//   context, which is reverted the moment the turn lands. Whatever they were
+//   animating stopped where it was: measured at opacity 0.1969, permanently, on
+//   a fishbone whose labels were present in the DOM and invisible on the page.
+//
+//   JUST AFTER one — a second timeline layered over the arrival timeline still
+//   in flight, both owning the same targets, and the loser stopped mid-fade.
+//
+// Entrance animation must FAIL VISIBLE. This failed invisible, and it took four
+// photographs of a "broken" diagram before the diagram turned out to be fine.
+{
+  const runtime = await readFile(join(ROOT, 'src', 'runtime', 'book.ts'), 'utf8')
+  const body = /function finishSteps\(\)[\s\S]*?\n  \}/.exec(runtime)?.[0] ?? ''
+  check('skip: a skip pressed mid-turn is held, not thrown away',
+    /if \(turning\(\)\) \{ heldIntent = 'finish'/.test(body),
+    'End acts while the leaf is in the air — its tweens die with the outgoing context')
+  check('skip: the arriving spread spends a held skip',
+    /heldIntent === 'finish'/.test(runtime.replace(body, '')),
+    'the intent is held and never consumed, so pressing skip mid-turn does nothing at all')
+  check('skip: it completes the arrival timeline before starting its own',
+    /revealTl\?\.progress\(1\)/.test(body),
+    'a second timeline is layered over one still running — whatever they share stops mid-fade')
 }
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`)
