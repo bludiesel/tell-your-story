@@ -138,3 +138,21 @@ loaded only when that type is chosen, each written as *best for / layout
 conventions / anti-patterns*. Thirty-nine shapes cannot live in one document
 anybody reads, and they should not live in code either — a fishbone is a page of
 layout rules, not an algorithm.
+
+## Page-fit measurement — `OrRon/EpicInfographics`
+
+`scripts/overflow.ts` **adapts** the measurement technique from that project's
+`check.mjs` (MIT, © 2026 epic-infographics contributors). What was taken is the
+idea and the arithmetic, not the code: that a line box is not the ink, that the
+canvas `TextMetrics` API gives the real painted extent of a string in a font,
+that SVG text has to be measured per character through its own screen matrix or
+a rotated label inherits the bounding box of its whole arc, and that a collision
+is best judged as a share of the smaller element's ink rather than as a boolean.
+
+Everything around it is ours and had to be, because a book is not a poster: it
+walks spreads instead of one canvas, finds and runs a browser rather than
+depending on one, completes each page's reveals before measuring it, and knows
+which of our own things — stickies, fore-edge tabs, drop caps — overhang on
+purpose.
+
+We did not take their design languages, canvas presets, or render pipeline.

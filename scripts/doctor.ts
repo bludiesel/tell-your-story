@@ -52,6 +52,11 @@ interface Check {
 interface PrepFinding { where: string; severity: string; what: string; do: string }
 interface PrepOut { pages: Array<{ n: number; budget: number }>; findings: PrepFinding[] }
 interface MotionOut { pages: Array<{ turn: string; reveal: string; problems: string[] }>; problems: number }
+interface FitOut {
+  ran: boolean; why?: string; pages: number; texts: number
+  errors: Array<{ kind: string; page: string; detail: string }>
+  warnings: Array<{ kind: string; page: string; detail: string }>
+}
 
 const kb = (n: number) => `${Math.round(n / 1024)} KB`
 
@@ -133,6 +138,43 @@ async function main(): Promise<void> {
         })
       } catch (e) {
         checks.push({ name: 'motion', ok: false, detail: 'could not read the built book',
+          fix: (e as Error).message.split('\n')[0] ?? '' })
+      }
+    }
+
+    // ── 4. does every page FIT? ──────────────────────────────────────────
+    // The other three checks read the book as text. This one opens it in a
+    // browser and measures the painted glyphs, because a page is a fixed-size
+    // sheet and "does it fit" cannot be answered by counting characters —
+    // which is exactly what `prep` above is doing when it talks about capacity.
+    // It needs a browser, so it reports "not run" rather than failing when
+    // there is not one; a check that turns a missing browser into a red book
+    // would just teach people to ignore it.
+    if (built) {
+      try {
+        const { stdout } = await run(node, [tool('overflow.mjs', 'scripts/overflow.ts'), out, '--json'],
+          { maxBuffer: 32 * 1024 * 1024 })
+        const f = JSON.parse(stdout) as FitOut
+        if (!f.ran) {
+          checks.push({ name: 'page fit', ok: true, detail: `not measured — ${f.why ?? 'no browser'}` })
+        } else {
+          checks.push({
+            name: 'page fit',
+            ok: f.errors.length === 0,
+            detail: f.errors.length === 0
+              ? `${f.pages} pages measured, ${f.texts} pieces of text, nothing off the sheet`
+              : `${f.errors.length} thing(s) that do not fit across ${f.pages} pages`,
+            fix: f.errors.map((e) => `${e.page}: ${e.detail}`).join('\n                '),
+          })
+          if (f.warnings.length > 0) {
+            checks.push({ name: 'page fit notes', ok: true,
+              detail: `${f.warnings.length} thing(s) worth a look — tight, not broken`,
+              fix: f.warnings.map((w) => `${w.page}: ${w.detail}`).join('\n                ') })
+          }
+        }
+      } catch (e) {
+        checks.push({ name: 'page fit', ok: true,
+          detail: 'not measured — the browser check could not run',
           fix: (e as Error).message.split('\n')[0] ?? '' })
       }
     }

@@ -98,6 +98,41 @@ async function main() {
         });
       }
     }
+    if (built) {
+      try {
+        const { stdout } = await run(
+          node,
+          [tool("overflow.mjs", "scripts/overflow.ts"), out, "--json"],
+          { maxBuffer: 32 * 1024 * 1024 }
+        );
+        const f = JSON.parse(stdout);
+        if (!f.ran) {
+          checks.push({ name: "page fit", ok: true, detail: `not measured \u2014 ${f.why ?? "no browser"}` });
+        } else {
+          checks.push({
+            name: "page fit",
+            ok: f.errors.length === 0,
+            detail: f.errors.length === 0 ? `${f.pages} pages measured, ${f.texts} pieces of text, nothing off the sheet` : `${f.errors.length} thing(s) that do not fit across ${f.pages} pages`,
+            fix: f.errors.map((e) => `${e.page}: ${e.detail}`).join("\n                ")
+          });
+          if (f.warnings.length > 0) {
+            checks.push({
+              name: "page fit notes",
+              ok: true,
+              detail: `${f.warnings.length} thing(s) worth a look \u2014 tight, not broken`,
+              fix: f.warnings.map((w) => `${w.page}: ${w.detail}`).join("\n                ")
+            });
+          }
+        }
+      } catch (e) {
+        checks.push({
+          name: "page fit",
+          ok: true,
+          detail: "not measured \u2014 the browser check could not run",
+          fix: e.message.split("\n")[0] ?? ""
+        });
+      }
+    }
     const failed = checks.filter((c) => !c.ok);
     if (asJson) {
       console.log(JSON.stringify({ ok: failed.length === 0, checks }, null, 2));

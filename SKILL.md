@@ -351,7 +351,8 @@ skill, not an application — nothing here is a user-facing program.
 
 | Command | File | What it does |
 |---|---|---|
-| `node dist/doctor.mjs <lesson.md>` | `scripts/doctor.ts` | **Is this book finished?** Runs prep, build and motion and returns ONE verdict with an exit code — the command to run before you hand anything over. `--json` to branch on the answer. It never judges the WRITING: green means nothing is broken, not that the book is good. |
+| `node dist/doctor.mjs <lesson.md>` | `scripts/doctor.ts` | **Is this book finished?** Runs prep, build, motion and page fit and returns ONE verdict with an exit code — the command to run before you hand anything over. `--json` to branch on the answer. It never judges the WRITING: green means nothing is broken, not that the book is good. |
+| `node dist/overflow.mjs <book.html>` | `scripts/overflow.ts` | **Does every page fit?** The only check that opens a browser. It walks every spread of the built book and measures the painted glyphs, so "does this page fit" is answered by measurement rather than by the character count `prep` uses. Four faults: off the sheet, cut off by a clipping box, text over text, type below the floor. `doctor` runs it for you. |
 | `node dist/build.mjs --version` | — | **Which copy is this?** Version plus every layout the installed copy actually knows about, read from the code. Answers "why have I not got the new layouts?" without anyone having to work out whether they are running a checkout, a plugin cache or a zip. `--json` too. |
 | `node dist/prep.mjs` | `scripts/prep.ts` | Analyses raw content and says how to chunk it, and audits the reveal markers already in it. Reports, never rewrites. `--json` for machine use. |
 | `node dist/build.mjs` | `dist/build.mjs` | Markdown → one standalone HTML book. **No install needed.** `src/build.ts` is the same thing from source, for contributors. |

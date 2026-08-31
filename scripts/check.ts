@@ -1979,6 +1979,72 @@ check('book: shipped grain filter resolves',
     'a riffle wants a turn per step, not a run of cuts')
 }
 
+// ── does every page actually fit? ───────────────────────────────────────────
+//
+// `prep` answers "will this page fit" by counting characters against a budget,
+// which is a guess made before a browser has laid anything out. `overflow`
+// opens the built book and measures the painted glyphs instead. These run its
+// four detectors against a book with the fault planted in it, because a
+// detector nobody has seen fire is a detector nobody should trust — and the
+// first version of this one reported that fifty pages and four pieces of text
+// all fitted perfectly, having measured a closed book.
+{
+  const dir = await mkdtemp(join(tmpdir(), 'tys-fit-'))
+  const lesson = join(dir, 'l.md')
+  await writeFile(lesson, ['# A page', '', 'One paragraph, comfortably inside the sheet.'].join('\n'))
+  const book = join(dir, 'book.html')
+  await runScript('dist/build.mjs', [lesson, book, '--quiet'])
+  const clean = await readFile(book, 'utf8')
+
+  const plant = async (name: string, markup: string): Promise<string> => {
+    const at = clean.indexOf('<div class="reveal">') + '<div class="reveal">'.length
+    const file = join(dir, `${name}.html`)
+    await writeFile(file, clean.slice(0, at) + markup + clean.slice(at))
+    return file
+  }
+  const measure = async (file: string): Promise<{ ran: boolean; why?: string; errors: Array<{ kind: string }> }> => {
+    const r = await runScript('dist/overflow.mjs', [file, '--json'])
+    try { return JSON.parse(r.out) } catch { return { ran: false, why: r.out.slice(0, 120), errors: [] } }
+  }
+
+  const base = await measure(book)
+  if (!base.ran) {
+    // NOT SILENTLY SKIPPED. A machine with no browser cannot run these, and
+    // saying so is the difference between "we checked" and "we did not".
+    console.log(`  skip  page fit: not measured — ${base.why ?? 'no browser on this machine'}`)
+  } else {
+    check('overflow: a page that fits reports nothing',
+      base.errors.length === 0,
+      `a plain one-paragraph page was reported as broken: ${JSON.stringify(base.errors).slice(0, 200)}`)
+
+    const cases: Array<[string, string, string]> = [
+      ['off', '<p style="margin-left:900px;white-space:nowrap">planted line running off the sheet</p>', 'text-off-page'],
+      ['clip', '<div style="overflow:hidden;height:6px"><p>planted text cut off by its box</p></div>', 'text-clipped'],
+      ['over', '<div style="position:relative;height:40px">'
+        + '<span style="position:absolute;left:0;top:0">PLANTED OVERLAP ONE</span>'
+        + '<span style="position:absolute;left:0;top:0">PLANTED OVERLAP TWO</span></div>', 'text-collision'],
+      ['tiny', '<p style="font-size:6px">planted microscopic caption</p>', 'text-too-small'],
+    ]
+    for (const [name, markup, kind] of cases) {
+      const r = await measure(await plant(name, markup))
+      check(`overflow: it catches ${kind}`,
+        r.errors.some((e) => e.kind === kind),
+        `the fault was planted and not reported — found ${JSON.stringify(r.errors.map((e) => e.kind))}`)
+    }
+  }
+  await rm(dir, { recursive: true, force: true })
+
+  const doctor = await readFile(join(ROOT, 'scripts', 'doctor.ts'), 'utf8')
+  check('doctor: page fit is one of its checks',
+    /name: 'page fit'/.test(doctor) && /overflow\.mjs/.test(doctor),
+    'doctor still answers "is this book finished?" without ever measuring whether a page fits')
+  // A missing browser must never turn into a broken book. The whole point of
+  // the fourth check is that it is additive.
+  check('doctor: a machine with no browser still gets a verdict',
+    /ok: true, detail: `not measured/.test(doctor),
+    'a book on a machine without Chrome would be reported as failing, which is a lie about the book')
+}
+
 // ── dg-bar grows the way the grammars say it does ───────────────────────────
 //
 // The runtime scaled X from the left edge, always. Correct for a horizontal bar

@@ -185,6 +185,10 @@ if (runDirectly) {
     // the question rather than raising the floor, which is not a decision this
     // kit should make on a user's behalf.
     { entry: 'scripts/prep.ts', out: 'dist/prep.mjs' },
+    // Bundled for the same reason as prep and doctor: it is a command a person
+    // runs, and `doctor` shells out to it. An unbundled one would be raw
+    // TypeScript on a Node that may not strip types.
+    { entry: 'scripts/overflow.ts', out: 'dist/overflow.mjs' },
   ]
 
   await mkdir(join(ROOT, 'dist'), { recursive: true })
