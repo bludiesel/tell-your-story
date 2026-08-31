@@ -278,6 +278,14 @@ material.
 <td><b>A fishbone</b>, drawn by hand from its grammar and animated by the four class names — the spine and bones draw themselves, the effect box lands, the labels follow.</td>
 <td><b>A quadrant</b> where the corner names <i>are</i> the recommendation. <b>41 diagram grammars</b> ship with the kit; the runtime knows none of them by name.</td>
 </tr>
+<tr>
+<td><img src="docs/screenshots/t-blueprint.jpg" alt="An untreated page facing a blueprint page: grid ground, a drawing frame, a dimension line and a stamped title block"></td>
+<td><img src="docs/screenshots/t-specimen.jpg" alt="A field-guide plate page: double rule, Fig. 1 numbering, foxing and a specimen pin"></td>
+</tr>
+<tr>
+<td><b>Page treatments.</b> A layout is what a page contains; a treatment is what it looks like it was printed on. <code>## Isolating a line {.blueprint}</code> and the page becomes a drafting sheet — facing an ordinary one, and still the same book.</td>
+<td><b>Three of them</b> — <code>{.specimen}</code>, <code>{.blueprint}</code>, <code>{.press}</code> — every mark drawn from a token the theme already defines, so a rebrand carries them along and no treatment owns a colour.</td>
+</tr>
 </table>
 
 ### It is a WORKBOOK, not just a book
@@ -353,7 +361,7 @@ nothing.
 
 <div align="center">
 
-<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 229 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 240 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
 
 </div>
 
@@ -367,7 +375,7 @@ A built book is one file. The tool that builds it is nearly as lean:
 | Fonts | subset and embedded; a book needs no network |
 
 Every number on that card is measured on this commit, not rounded up for the
-graphic: `229` is what `node scripts/check.ts` prints, `22` is the length of
+graphic: `240` is what `node scripts/check.ts` prints, `22` is the length of
 `LAYOUTS` in `src/layout.ts` with all seventeen proved reachable by
 `scripts/verify.ts`, and `1` is the entire point of the project.
 

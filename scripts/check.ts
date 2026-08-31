@@ -2014,6 +2014,92 @@ check('book: shipped grain filter resolves',
     'the runtime keeps comparable marks honest and nothing tells an author to keep their own drawings honest')
 }
 
+// ── page treatments ─────────────────────────────────────────────────────────
+//
+// A treatment is what a page looks like it was PRINTED on; a layout is what it
+// contains. Keeping them apart is what stops the layout list doubling every
+// time somebody wants a new look — and it is only safe if the two namespaces
+// cannot collide, which is what most of these hold.
+{
+  const css = await readFile(join(ROOT, 'src', 'runtime', 'treatments.css'), 'utf8')
+
+  // 1. THE SAME RULE THE DIAGRAMS LIVE UNDER. A treatment that carried its own
+  // colours would look right in the theme it was written against and wrong in
+  // every other — and it would put back exactly what was deliberately left
+  // behind when these were adapted: those design languages ARE their palettes.
+  const literals = [...css.matchAll(/#[0-9a-f]{3,8}\b|\brgba?\(|\bhsla?\(/gi)]
+    .map((m) => m[0])
+  check('treatments: no treatment carries a colour of its own',
+    literals.length === 0,
+    `treatments.css hard-codes ${[...new Set(literals)].join(' ')} — every mark must come from a theme token`)
+
+  // 2. NOT THE BRAND MARK'S SLOT. `.page::after` is already the mark printed
+  // into the footer, at 16% opacity. The first version of this file put the
+  // frame there: it inherited that opacity and drew a border that was invisible
+  // on screen while looking perfectly correct in the stylesheet, and it would
+  // have cost the brand mark on every treated page.
+  check('treatments: the devices do not fight the brand mark for a slot',
+    // NO SPACE BEFORE `::after`. The first version of this check matched
+    // `.page.t-specimen figure:first-of-type::after` — a figure's pseudo-
+    // element, on a page, which is fine — and failed a correct file. What is
+    // forbidden is a rule whose ::after lands on the PAGE itself.
+    !/^\s*\.page[.\w-]*::after\s*[,{]/m.test(css) && /\.dress::after/.test(css),
+    'a treatment is drawing on .page::after, which already carries the printed brand mark')
+
+  const layout = await readFile(join(ROOT, 'src', 'layout.ts'), 'utf8')
+  const names = [...(/export const TREATMENTS = new Set\(\[([^\]]*)\]/.exec(layout)?.[1] ?? '')
+    .matchAll(/'([a-z-]+)'/g)].map((m) => m[1]!)
+  const layoutNames = [...(/export const LAYOUTS = \[([\s\S]*?)\] as const/.exec(layout)?.[1] ?? '')
+    .matchAll(/'([a-z-]+)'/g)].map((m) => m[1]!)
+  const clash = names.filter((n) => layoutNames.includes(n))
+  check(`treatments: all ${names.length} of them are namespaced away from the ${layoutNames.length} layouts`,
+    names.length > 0 && layoutNames.length > 0 && clash.length === 0,
+    `${clash.join(' ')} is both a layout and a treatment — a page wears its layout name as a class, ` +
+    'so one of the two would end up styling the whole sheet')
+
+  const book = await readFile(join(ROOT, 'src', 'book.ts'), 'utf8')
+  check('treatments: the class is prefixed rather than bare',
+    /t-\$\{page\.treatment\}/.test(book),
+    'the treatment lands as a bare class name, which is the collision this kit has already had twice')
+
+  // 3. BEHAVIOURAL — one book, all three, plus a misspelt one.
+  const dir = await mkdtemp(join(tmpdir(), 'tys-dress-'))
+  const md = join(dir, 't.md')
+  await writeFile(md, [
+    '# Drafting {.blueprint}', '', 'A page.', '',
+    '---', '', '# Plate {.specimen}', '', 'A page.', '',
+    '---', '', '# Impression {.press}', '', 'A page.', '',
+    '---', '', '# Typo {.bluprint}', '', 'A page.',
+  ].join('\n'))
+  const out = join(dir, 't.html')
+  const built = await runScript('dist/build.mjs', [md, out, '--quiet'])
+  check('treatments: a book using all three builds',
+    built.code === 0, `it did not build:\n${built.out.split('\n').slice(0, 5).join('\n')}`)
+  const html = await readFile(out, 'utf8')
+
+  for (const name of names) {
+    check(`treatments: a page asking for ${name} gets it`,
+      new RegExp(`class="page [^"]*t-${name}[^"]*"`).test(html),
+      `no page carries t-${name}, so the modifier was read and thrown away`)
+  }
+  // Only a RECOGNISED one is stripped. The misspelt one below is supposed to
+  // survive, so a blanket "no braces in a heading" test contradicts it — which
+  // it did, on the first run, failing a file that was behaving correctly.
+  const headings = [...html.matchAll(/data-slot="heading">([^<]*)/g)].map((m) => m[1]!)
+  check('treatments: a recognised modifier is taken out of the printed title',
+    !headings.some((h) => names.some((n) => h.includes(`{.${n}}`))),
+    `the braces are printed in the header band: ${headings.filter((h) => h.includes('{.')).join(' / ')}`)
+  // A TYPO MUST BE VISIBLE. Swallowing `{.bluprint}` would leave an author with
+  // a page that has no treatment, no error and nothing to look at.
+  check('treatments: a misspelt one stays on the page where it can be seen',
+    /\{\.bluprint\}/.test(html) && !/t-bluprint/.test(html),
+    'an unrecognised modifier was silently eaten — the author gets no treatment and no clue why')
+  check('treatments: the blueprint stamp and its crosses are real elements',
+    (html.match(/class="reg /g) ?? []).length === 3 && /class="titleblock"/.test(html),
+    'the drafting sheet has no title block or the wrong number of registration crosses')
+  await rm(dir, { recursive: true, force: true })
+}
+
 // ── the four generated data forms ───────────────────────────────────────────
 //
 // A waffle, a pictogram, a progress meter and a stat row are common enough that

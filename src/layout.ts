@@ -34,6 +34,25 @@ import { parseHTML } from 'linkedom'
  * limitation, and it is why selection below is ordered rather than additive.
  * A twenty-third layout is a design decision, not an authoring one.
  */
+/**
+ * What a page can be DRESSED as, on top of what it contains.
+ *
+ * A layout is what is on the page; a treatment is what it looks like it was
+ * printed on. Orthogonal on purpose — a checklist can be a blueprint — because
+ * folding them together would double the layout list every time somebody wants
+ * a new look.
+ *
+ *   specimen   a field-guide plate: double rule, Fig. N, foxing, a pin
+ *   blueprint  a drafting sheet: grid, registration crosses, a title block
+ *   press      a misregistered impression: two inks a hair apart, grain
+ *
+ * Adapted from three of the design languages in epic-infographics (MIT). Their
+ * palettes and fonts are two thirds of what makes those styles look like
+ * themselves and are exactly the two things this kit cannot take, so every mark
+ * a treatment draws comes from a token the theme already defines.
+ */
+export const TREATMENTS = new Set(['specimen', 'blueprint', 'press'])
+
 export const LAYOUTS = [
   'cover', 'contents', 'divider', 'opener', 'prose', 'has-sticky', 'marginalia',
   'plate', 'half-bleed', 'full-bleed', 'ptable', 'barchart', 'timeline', 'compare',

@@ -344,6 +344,44 @@ code. Build it as inline SVG so the existing GSAP timeline can animate only
 the meaningful parts; keep it transform/opacity based and tear it down when
 the reader leaves the spread.
 
+## Page treatments — what a page is DRESSED as
+
+A layout is what a page CONTAINS. A treatment is what it looks like it was
+printed on. They are separate on purpose, so a checklist can be a blueprint
+without the layout list doubling every time somebody wants a new look.
+
+Write it on the heading:
+
+```markdown
+## Isolating a line {.blueprint}
+```
+
+| Treatment | What the page becomes | Devices it draws |
+|---|---|---|
+| `{.specimen}` | A field-guide plate | Double rule, `Fig. N.` on every figure, a caption strip at the foot indexing them, foxing, a specimen pin, an annotated dimension |
+| `{.blueprint}` | A drafting sheet | Grid ground, a double-rule frame, three registration crosses, a stamped title block, dimension lines |
+| `{.press}` | A misregistered impression | The second ink a hair behind the first on display type, grain over the whole sheet |
+
+Two classes are offered rather than applied, for pages that want them:
+`class="hatch"` (drafting shading) on a blueprint, `class="halftone"` (a dot
+screen) on a press page. Applied automatically they would be a texture rather
+than a device.
+
+**Every mark comes from a token the theme already defines.** A treatment has no
+colours of its own, so a rebrand carries all three with it and a check refuses
+the file if a hex appears in it. That constraint is also why three quite
+different dresses still read as one book.
+
+A misspelt modifier — `{.bluprint}` — is left printed in the heading rather
+than silently swallowed. Ugly on purpose: a treatment that quietly does nothing
+is a bug an author cannot see.
+
+Adapted from three of the design languages in
+[epic-infographics](https://github.com/OrRon/EpicInfographics) (MIT). Their
+palettes and their Google Fonts are two thirds of what makes those styles look
+like themselves, and are exactly what this kit cannot take — so what came
+across is the **signature devices**, which never needed a colour.
+
 ## Read your own book before you hand it over
 
 `doctor` answers whether anything is BROKEN. Nothing in it can tell you whether

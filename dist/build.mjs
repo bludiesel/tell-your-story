@@ -37145,6 +37145,7 @@ function barsDiagram(rows, c) {
 }
 
 // src/layout.ts
+var TREATMENTS = /* @__PURE__ */ new Set(["specimen", "blueprint", "press"]);
 var LAYOUTS = [
   "cover",
   "contents",
@@ -37402,8 +37403,15 @@ async function buildPages(body, md, store, baseDir, diagramColours) {
     const kicker = kickMatch?.[1]?.trim() ?? section;
     const withoutKick = kickMatch ? afterSection.replace(kickMatch[0], "") : afterSection;
     const headingMatch = withoutKick.match(/^#{1,3}\s+(.+)$/m);
-    const rawTitle = headingMatch?.[1]?.trim() ?? "";
+    let rawTitle = headingMatch?.[1]?.trim() ?? "";
     const content = headingMatch ? withoutKick.replace(headingMatch[0], "") : withoutKick;
+    let treatment;
+    rawTitle = rawTitle.replace(/\{\.([a-z-]+)\}/gi, (whole, name) => {
+      const key2 = name.toLowerCase();
+      if (!TREATMENTS.has(key2)) return whole;
+      treatment = key2;
+      return "";
+    }).trim();
     let rendered = md.render(content.trim());
     if (diagramColours) rendered = renderDiagrams(rendered, diagramColours);
     const html2 = await internImages(rendered, store, baseDir, `page ${i + 1}`);
@@ -37412,6 +37420,7 @@ async function buildPages(body, md, store, baseDir, diagramColours) {
       title: rawTitle.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
       kicker,
       section,
+      treatment,
       kind: "content"
     });
   }
@@ -37484,6 +37493,28 @@ function renderDiagrams(html2, c) {
     }
   );
 }
+function treatmentFurniture(page, index, built) {
+  if (!page.treatment) return "";
+  const dress = '<div class="dress"></div>';
+  if (page.treatment === "blueprint") {
+    const crosses = ["tl", "tr", "bl"].map((c) => `<span class="reg ${c}"></span>`).join("");
+    const rows = [
+      page.title ? `<b>${esc2(page.title)}</b>` : "",
+      `<span>SHEET ${String(index + 1).padStart(3, "0")}</span>`,
+      page.section ? `<span>${esc2(page.section.toUpperCase())}</span>` : ""
+    ].filter(Boolean).join("");
+    return `${dress}${crosses}<div class="titleblock">${rows}</div>`;
+  }
+  if (page.treatment === "specimen") {
+    const alts = [...built.matchAll(/<figure\b[^>]*>[\s\S]*?<img\b[^>]*\balt="([^"]*)"/g)].map((m) => m[1]).filter(Boolean);
+    const labels = [...built.matchAll(/<svg\b[^>]*\baria-label="([^"]*)"/g)].map((m) => m[1]);
+    const kinds = labels.length > 0 ? labels : [...built.matchAll(/<figure class="diagram diagram-([a-z-]+)"/g)].map((m) => m[1]);
+    const captions = [...alts, ...kinds];
+    const list2 = captions.map((c, i) => `Fig. ${i + 1}. ${esc2(String(c))}`).join(" \u2014 ");
+    return dress + (captions.length === 0 ? "" : `<div class="plate-foot">${list2}</div>`);
+  }
+  return dress;
+}
 function pageHtml(page, index, total) {
   const band = page.title ? `<div class="band${index % 2 === 1 ? " r" : ""}">
         ${page.kicker ? `<span class="bk" data-slot="eyebrow">${esc2(page.kicker)}</span>` : ""}
@@ -37493,14 +37524,15 @@ function pageHtml(page, index, total) {
   const side = index % 2 === 1 ? "pr" : "pl";
   const built = renderLayouts(page.html);
   const layout = pickLayout(built, page.kind);
-  const cls = `page ${side} ${layout}${hard && layout !== "divider" ? " divider" : ""}`;
+  const dress = page.treatment ? ` t-${page.treatment}` : "";
+  const cls = `page ${side} ${layout}${hard && layout !== "divider" ? " divider" : ""}${dress}`;
   return `<div class="${cls}" data-page="${index + 1}"
   data-stock="${hard ? "hard" : "soft"}" data-density="${hard ? "hard" : "soft"}"
   data-layout="${layout}" data-screen-label="${esc2(screenLabel(page.title, index, layout))}">
   <div class="half">
     ${hard ? "" : band}
     <div class="below"><div class="reveal">${tagSlots(attachStickies(built))}</div></div>
-  </div>${page.aside ?? ""}
+  </div>${treatmentFurniture(page, index, built)}${page.aside ?? ""}
 </div>`;
 }
 function curtainStage(meta) {
@@ -38446,7 +38478,7 @@ async function main() {
       // It wins by cascade position rather than by `!important`, which keeps
       // both files readable and leaves book.css owning everything the
       // catalogue does not speak to.
-      css: await pageFlipCss() + "\n" + await readFile4(join3(SKILL_ROOT, "src/runtime/book.css"), "utf8") + "\n" + await readFile4(join3(SKILL_ROOT, "src/runtime/curtain.css"), "utf8") + "\n" + await readFile4(join3(SKILL_ROOT, "src/runtime/layouts.css"), "utf8")
+      css: await pageFlipCss() + "\n" + await readFile4(join3(SKILL_ROOT, "src/runtime/book.css"), "utf8") + "\n" + await readFile4(join3(SKILL_ROOT, "src/runtime/curtain.css"), "utf8") + "\n" + await readFile4(join3(SKILL_ROOT, "src/runtime/layouts.css"), "utf8") + "\n" + await readFile4(join3(SKILL_ROOT, "src/runtime/treatments.css"), "utf8")
     });
     let bookHtml = injectScript(rendered.html, "__JS__", await bundleRuntime());
     const missing = store.danglingRefs(bookHtml);

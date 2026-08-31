@@ -505,7 +505,10 @@ async function main(): Promise<void> {
       css: await pageFlipCss()
          + '\n' + await readFile(join(SKILL_ROOT, 'src/runtime/book.css'), 'utf8')
          + '\n' + await readFile(join(SKILL_ROOT, 'src/runtime/curtain.css'), 'utf8')
-         + '\n' + await readFile(join(SKILL_ROOT, 'src/runtime/layouts.css'), 'utf8'),
+         + '\n' + await readFile(join(SKILL_ROOT, 'src/runtime/layouts.css'), 'utf8')
+         // LAST, so a treatment can override a layout's own surface without
+         // reaching for !important — a dress goes on over the clothes.
+         + '\n' + await readFile(join(SKILL_ROOT, 'src/runtime/treatments.css'), 'utf8'),
     })
     let bookHtml = injectScript(rendered.html, '__JS__', await bundleRuntime())
 

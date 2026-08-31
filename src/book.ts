@@ -15,7 +15,9 @@ import {
   barsDiagram, cycleDiagram, flowDiagram, pictogramDiagram, progressDiagram,
   statsDiagram, waffleDiagram, type DiagramColours,
 } from './svg.ts'
-import { attachStickies, pickLayout, renderLayouts, screenLabel, tagSlots } from './layout.ts'
+import {
+  attachStickies, pickLayout, renderLayouts, screenLabel, tagSlots, TREATMENTS,
+} from './layout.ts'
 
 type Renderer = InstanceType<typeof MarkdownIt>
 
@@ -25,6 +27,12 @@ export interface BookPage {
   kicker?: string
   /** Set by a `>> Name` line: this page opens a new section. */
   section?: string
+  /**
+   * What the page is DRESSED as, from `{.blueprint}` on its heading. Separate
+   * from the layout, which is what the page CONTAINS — the two are orthogonal
+   * so a checklist can be a blueprint without doubling the layout list.
+   */
+  treatment?: string
   /**
    * Markup placed OUTSIDE the paper block, as a sibling of `.half`. Used by the
    * glued fore-edge tab, which has to hang past the page edge — anything inside
@@ -90,8 +98,26 @@ export async function buildPages(
     // The first heading becomes the band title and is removed from the body,
     // so it is not printed twice.
     const headingMatch = withoutKick.match(/^#{1,3}\s+(.+)$/m)
-    const rawTitle = headingMatch?.[1]?.trim() ?? ''
+    let rawTitle = headingMatch?.[1]?.trim() ?? ''
     const content = headingMatch ? withoutKick.replace(headingMatch[0], '') : withoutKick
+
+    // A TREATMENT rides on the heading — `## Isolating a line {.blueprint}`.
+    //
+    // An UNRECOGNISED modifier is left in the title on purpose. Silently
+    // swallowing `{.bluprint}` would give the author a page with no treatment,
+    // no error, and nothing to look at; leaving the braces printed in the
+    // heading is ugly, which is exactly what makes the typo findable.
+    // Taken here rather than by markdown-it-attrs, because the heading is
+    // lifted out of the body and into the page's header band before any
+    // renderer sees it; attrs would hang a class on an element that is about
+    // to be thrown away.
+    let treatment: string | undefined
+    rawTitle = rawTitle.replace(/\{\.([a-z-]+)\}/gi, (whole: string, name: string) => {
+      const key = name.toLowerCase()
+      if (!TREATMENTS.has(key)) return whole
+      treatment = key
+      return ''
+    }).trim()
 
     let rendered = md.render(content.trim())
     if (diagramColours) rendered = renderDiagrams(rendered, diagramColours)
@@ -102,6 +128,7 @@ export async function buildPages(
       title: rawTitle.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
       kicker,
       section,
+      treatment,
       kind: 'content',
     })
   }
@@ -237,6 +264,63 @@ export function renderDiagrams(html: string, c: DiagramColours): string {
 }
 
 /** One page of the book: header band + content, wrapped for page-flip. */
+/**
+ * The furniture a treatment needs that CSS cannot draw on its own.
+ *
+ * A grid, a frame, a grain and a misregistration are all one background away
+ * and live entirely in `treatments.css`. Three devices are not: registration
+ * crosses have to be real elements to sit at three named corners, a title block
+ * has ROWS, and a plate's caption strip is a list of the figures that happen to
+ * be on that page. Those are built here.
+ *
+ * Everything below reads from what the page already is — its title, its folio,
+ * its section, its own figures. Nothing is invented: a drawing number that was
+ * made up would be a fabricated record printed in a stamp that exists to make
+ * things look official, which is the one place a plausible-looking lie does
+ * real damage.
+ */
+function treatmentFurniture(page: BookPage, index: number, built: string): string {
+  if (!page.treatment) return ''
+  // `.dress` is where every drawn device lives — see the head of
+  // treatments.css for why it cannot be the page's own pseudo-elements.
+  const dress = '<div class="dress"></div>'
+
+  if (page.treatment === 'blueprint') {
+    const crosses = ['tl', 'tr', 'bl'].map((c) => `<span class="reg ${c}"></span>`).join('')
+    // Three rows, all of them true. SHEET is the folio the reader can see at
+    // the foot of the page, so the stamp and the page agree.
+    const rows = [
+      page.title ? `<b>${esc(page.title)}</b>` : '',
+      `<span>SHEET ${String(index + 1).padStart(3, '0')}</span>`,
+      page.section ? `<span>${esc(page.section.toUpperCase())}</span>` : '',
+    ].filter(Boolean).join('')
+    return `${dress}${crosses}<div class="titleblock">${rows}</div>`
+  }
+
+  if (page.treatment === 'specimen') {
+    // The caption strip indexes the page's own figures, so it cannot disagree
+    // with them. A page with no figure gets no strip — an empty index is worse
+    // than none, and this is the same reason the contents page is generated
+    // rather than written.
+    const alts = [...built.matchAll(/<figure\b[^>]*>[\s\S]*?<img\b[^>]*\balt="([^"]*)"/g)]
+      .map((m) => m[1]).filter(Boolean)
+    // A DIAGRAM'S OWN WORDS, NOT ITS TYPE. Every diagram carries an
+    // `aria-label` saying what it shows — the same string a screen reader gets
+    // — so the caption strip reads "Fig. 1. Is the line dead?" rather than
+    // "Fig. 1. flowchart", which is the machine's name for it and tells a
+    // reader nothing they cannot already see.
+    const labels = [...built.matchAll(/<svg\b[^>]*\baria-label="([^"]*)"/g)].map((m) => m[1])
+    const kinds = labels.length > 0
+      ? labels
+      : [...built.matchAll(/<figure class="diagram diagram-([a-z-]+)"/g)].map((m) => m[1])
+    const captions = [...alts, ...kinds]
+    const list = captions.map((c, i) => `Fig. ${i + 1}. ${esc(String(c))}`).join(' — ')
+    return dress + (captions.length === 0 ? '' : `<div class="plate-foot">${list}</div>`)
+  }
+
+  return dress
+}
+
 function pageHtml(page: BookPage, index: number, total: number): string {
   // A page's heading and eyebrow are PART OF THE PAGE, not something it
   // acquires: printed paper does not grow its own title while you look at it.
@@ -262,7 +346,13 @@ function pageHtml(page: BookPage, index: number, total: number): string {
   // `.page.full-bleed`, and `.page.cover` / `.page.divider` which already
   // existed — resolve without a second source of truth deciding which pages
   // get which class.
-  const cls = `page ${side} ${layout}${hard && layout !== 'divider' ? ' divider' : ''}`
+  // THE `t-` PREFIX IS NOT DECORATION. A page already wears its layout name as
+  // a class, so a treatment called `plate` would collide with the plate LAYOUT
+  // and style the whole sheet — which is exactly the bug that once washed out a
+  // page's header band and took three wrong diagnoses to find. Treatments get
+  // their own namespace so it cannot happen again.
+  const dress = page.treatment ? ` t-${page.treatment}` : ''
+  const cls = `page ${side} ${layout}${hard && layout !== 'divider' ? ' divider' : ''}${dress}`
 
   // TWO NAMES FOR ONE FACT, AND BOTH ARE LOAD-BEARING.
   //
@@ -284,7 +374,7 @@ function pageHtml(page: BookPage, index: number, total: number): string {
   <div class="half">
     ${hard ? '' : band}
     <div class="below"><div class="reveal">${tagSlots(attachStickies(built))}</div></div>
-  </div>${page.aside ?? ''}
+  </div>${treatmentFurniture(page, index, built)}${page.aside ?? ''}
 </div>`
 }
 

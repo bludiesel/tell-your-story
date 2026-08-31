@@ -156,3 +156,24 @@ which of our own things — stickies, fore-edge tabs, drop caps — overhang on
 purpose.
 
 We did not take their design languages, canvas presets, or render pipeline.
+
+## Page treatments — the same project's design languages
+
+`src/runtime/treatments.css` **adapts** three of the twelve design languages in
+epic-infographics (MIT): `naturalist-plate`, `blueprint` and `retro-print`.
+
+Each of those files has eight sections, and two of them — the palette and the
+Google Fonts link — are two thirds of what makes the style look like itself and
+are exactly the two this kit cannot accept: the build refuses a hex, and a book
+is one offline file that carries its own type. So what came across is the other
+six, and above all the **signature devices**: the plate frame and figure
+system, the registration crosses and title block, the misregistration and the
+halftone. None of them ever needed a colour of their own, which is why all
+three survive being drawn entirely in this kit's tokens.
+
+Three things were changed rather than copied, because a book is not a poster:
+the blueprint's white-on-blue inversion is dropped (a page that eats toner
+cannot be written on, and this is a workbook); the title block moves to the
+inner corner and swaps sides with the leaf, because the outer corner already
+carries the printed brand mark; and every frame clears the header band, which a
+standalone canvas does not have.

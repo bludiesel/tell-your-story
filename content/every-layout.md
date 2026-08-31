@@ -534,6 +534,74 @@ fit is how a chart stops being readable.
 
 ---
 
+>> Treatments
+
+> what a page is dressed as
+
+## Ordinary
+
+Nothing on this page is treated, so the three that follow have a fair
+neighbour. A treatment is what a page looks like it was PRINTED on; the layout
+is what it contains. The two are separate, so a checklist can be a blueprint.
+
+---
+
+> the drafting sheet
+
+## Isolating a line {.blueprint}
+
+:::steps Before the permit is signed
+1. Close the upstream valve
+2. Watch the gauge fall — do not assume
+3. Prove the line is dead downstream
+:::
+
+<span class="dim">sheet 1 of 1 · not to scale</span>
+
+---
+
+> the field guide
+
+## The relief valve {.specimen}
+
+:::diagram flowchart
+<svg viewBox="228 16 384 200" role="img" aria-label="Is the line dead?">
+  <g fill="none" stroke="currentColor" stroke-width="1.5">
+    <path class="dg-link" d="M320 74 L320 108"/>
+    <path class="dg-link" stroke="var(--accent-ink)" d="M394 130 L520 130 L520 160"/>
+  </g>
+  <rect class="dg-node" x="240" y="30" width="160" height="44" rx="22"
+        fill="var(--paper-2)" stroke="currentColor"/>
+  <path class="dg-node" d="M320 108 L394 130 L320 152 L246 130 z"
+        fill="var(--paper-2)" stroke="currentColor"/>
+  <rect class="dg-node" x="440" y="160" width="160" height="44" rx="8"
+        fill="var(--paper-2)" stroke="var(--accent-ink)"/>
+  <g class="dg-label" text-anchor="middle" font-size="13" fill="currentColor">
+    <text x="320" y="57">Gauge read</text>
+    <text x="320" y="135">Fallen to zero?</text>
+    <text x="520" y="187">Stop. Ask.</text>
+  </g>
+</svg>
+:::
+
+<span class="dim">bore 50 mm · rated 16 bar</span>
+
+---
+
+> the misregistered impression
+
+## Two inks, a hair apart {.press}
+
+:::big
+The second ink prints a hair behind the first, always the same way.
+:::
+
+A press is a machine, so the offset never wanders. One direction, one
+distance, everywhere — an offset that drifts reads as a mistake rather than
+as a process.
+
+---
+
 > in this order
 
 ## Steps

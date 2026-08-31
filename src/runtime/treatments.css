@@ -1,0 +1,324 @@
+/* ════════════════════════════════════════════════════════════════════════
+   PAGE TREATMENTS — what a page is DRESSED as, on top of what it is
+   ════════════════════════════════════════════════════════════════════════
+
+   A layout decides what a page CONTAINS: a checklist, a plate, a timeline.
+   A treatment decides what it looks like it was printed on. The two are
+   orthogonal on purpose — a checklist can be a blueprint, a prose page can be
+   a specimen sheet — and keeping them separate is what stops the layout list
+   from doubling every time somebody wants a new look.
+
+   Written on a heading:
+
+       ## Isolating a line {.blueprint}
+
+   which lands as `t-blueprint` on the page element.
+
+   WHY THE `t-` PREFIX, WHICH LOOKS LIKE NOISE. A page already wears its layout
+   name as a class — `<div class="page pl plate">` — so a bare `.plate` rule
+   styles the whole page rather than the picture on it. That has cost real time
+   twice in this kit: once when a `barchart` rule leaked, once when a `.plate`
+   rule washed out a page's whole header band, which took three wrong diagnoses
+   to find. Treatments live in their own namespace so the collision cannot
+   happen a third time.
+
+   Adapted from three of the design languages in epic-infographics (MIT) — see
+   CREDITS.md. What was taken is the SIGNATURE DEVICES: the plate frame, the
+   figure system, the registration crosses, the title block, the halftone, the
+   misregistered impression. What was deliberately NOT taken is those files'
+   palettes and their Google Fonts, which are two thirds of what makes them
+   look like themselves and exactly the two things this kit cannot accept — the
+   build refuses a hex, and a book is one offline file.
+
+   So every mark below is drawn from a token the theme already defines. A
+   rebrand carries the treatments with it; nothing here needs a colour of its
+   own. That constraint is also why these read as three dresses on one book
+   rather than three different books.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* EVERY DEVICE HANGS OFF `.dress`, NOT OFF THE PAGE.
+   `.page::after` is ALREADY the brand mark printed into the footer, at 16%
+   opacity. The first version of this file put the frame there, inherited that
+   opacity, and drew a 1.5px border that was invisible on screen while looking
+   perfectly correct in the stylesheet — and it would have taken the brand mark
+   off every treated page as the price. A treatment gets its own element and
+   its own two pseudo-elements; nothing here competes for a slot that is
+   already carrying something. */
+.dress {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.dress::before,
+.dress::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Content above the furniture. Without this the crosses and the grid paint
+   over the words, which is the difference between a treatment and a mess. */
+.page[class*='t-'] > .half,
+.page[class*='t-'] > .band { position: relative; z-index: 1; }
+
+
+/* ── SPECIMEN — the field-guide plate ───────────────────────────────────────
+   The one closest to what this book already is, so it is mostly addition: a
+   double rule holding the page, figure numbers, and the small evidence of age
+   that stops a page looking freshly generated.                              */
+
+.page.t-specimen .dress::before {
+  /* The double rule. Two borders 6px apart — one element, because a second
+     pseudo-element is needed for the foxing below. */
+  /* Clear of the band, for the reason spelled out under the blueprint frame. */
+  top: 15%;
+  right: calc(var(--sp-3) * 0.8);
+  bottom: calc(var(--sp-3) * 0.8);
+  left: calc(var(--sp-3) * 0.8);
+  border: 1.5px solid var(--ink-soft);
+  box-shadow: inset 0 0 0 6px var(--paper), inset 0 0 0 7px var(--rule);
+}
+
+.page.t-specimen .dress::after {
+  /* FOXING — the brown blotching of old paper. Four radial gradients at very
+     low opacity, placed off the grid so they read as accident rather than as
+     pattern. This is the whole trick of the style: paper that has been
+     somewhere. */
+  background:
+    radial-gradient(circle at 18% 24%, var(--paper-edge-3) 0, transparent 4.5%),
+    radial-gradient(circle at 73% 12%, var(--paper-edge-3) 0, transparent 3%),
+    radial-gradient(circle at 61% 78%, var(--paper-edge-3) 0, transparent 5.5%),
+    radial-gradient(circle at 27% 91%, var(--paper-edge-3) 0, transparent 3.5%);
+  /* Small and faint. At twice this size they stopped reading as foxing and
+     started reading as water damage, which is a different and much less
+     flattering story about the book. */
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+}
+
+/* Fig. N. — the numbering that makes a drawing a specimen rather than a
+   picture. Applied by the layout pass to any figure on a treated page, so an
+   author writes nothing and the numbers cannot get out of order. */
+.page.t-specimen { counter-reset: fig; }
+.page.t-specimen figure { counter-increment: fig; position: relative; }
+.page.t-specimen figure::before {
+  content: 'Fig. ' counter(fig) '.';
+  display: block;
+  margin-bottom: 0.35rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The caption strip at the foot: the plate's index of its own figures. */
+.page.t-specimen .plate-foot {
+  position: absolute;
+  left: calc(var(--sp-3) * 1.6);
+  right: calc(var(--sp-3) * 1.6);
+  bottom: calc(var(--sp-4) + 0.6rem);
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--rule);
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--text-muted);
+  z-index: 1;
+}
+
+/* THE SPECIMEN PIN — the collector's hand, made visible. A drawn pin head with
+   its own small shadow, pushed through one corner of the first figure. It is
+   the one purely decorative thing in this file and it earns its place: it is
+   what turns a page of paper into somebody's page of paper. */
+.page.t-specimen figure:first-of-type::after {
+  content: '';
+  position: absolute;
+  top: 0.9rem;
+  right: 1.1rem;
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow:
+    0 0 0 1.5px var(--paper),
+    0.14rem 0.2rem 0 -0.06rem var(--rule-strong);
+}
+
+/* An annotated dimension: a real measurement, drawn. Serifed ends and the
+   value in the mono face, which is what a measurement looks like everywhere
+   else in engineering. */
+.page.t-specimen .dim,
+.page.t-blueprint .dim {
+  display: block;
+  position: relative;
+  margin: 0.5rem 0 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.page.t-specimen .dim::before,
+.page.t-specimen .dim::after,
+.page.t-blueprint .dim::before,
+.page.t-blueprint .dim::after {
+  content: '';
+  position: absolute;
+  top: -0.24rem;
+  width: 1px;
+  height: 0.5rem;
+  background: var(--ink-soft);
+}
+.page.t-specimen .dim::before,
+.page.t-blueprint .dim::before { left: 0; }
+.page.t-specimen .dim::after,
+.page.t-blueprint .dim::after { right: 0; }
+
+
+/* ── BLUEPRINT — the drafting sheet ─────────────────────────────────────────
+   The furthest from what the book already does, which is why it is the honest
+   test of whether a treatment layer works at all: if a blueprint page can face
+   an ordinary one and still read as the same book, the idea holds.
+
+   Note what is NOT here: the white-on-blue inversion their file specifies. On
+   a lit poster that is the whole style; in a printed book it would be a page
+   that eats toner and cannot be written on, and this is a WORKBOOK. The
+   drafting language survives the translation; the ink colour does not.       */
+
+.page.t-blueprint .dress::before {
+  /* The grid. 40px cells in their file, scaled here to the page: it is paper
+     texture, not a chart grid, so it stays under the legibility threshold and
+     the ruled lines the book already draws still read through it. */
+  background-image:
+    linear-gradient(to right, var(--rule-strong) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rule-strong) 1px, transparent 1px);
+  background-size: 1.6rem 1.6rem;
+  /* Faint, but not invisible. The first attempt used the hairline tone at half
+     opacity, which on this paper is nothing at all — the same lesson the
+     waffle's empty cells taught an hour earlier: a token chosen for one job is
+     not automatically visible in another. */
+  opacity: 0.55;
+}
+
+.page.t-blueprint .dress::after {
+  /* The double-rule frame, tighter than the specimen's — a drawing sheet's
+     border sits close to the edge because the sheet is the drawing. */
+  /* CLEAR OF THE HEADER BAND. The band is opaque and covers the top eighth of
+     the sheet, so a frame drawn at the page's own corners has its top edge and
+     two of its three registration crosses hidden behind it — they measured at
+     y=16 on a page whose band runs to y=105. The drawing area starts below the
+     band, and so does the drawing's frame. */
+  top: 15%;
+  right: var(--sp-2);
+  bottom: var(--sp-2);
+  left: var(--sp-2);
+  border: 1.5px solid var(--ink-soft);
+  box-shadow: inset 0 0 0 4px transparent, inset 0 0 0 5px var(--rule);
+}
+
+/* REGISTRATION CROSSES at three corners. Three, not four: a printer's sheet
+   carries them where the plates need aligning, and the fourth corner is where
+   the title block goes. Drawn as two spans so each cross is one element. */
+.page.t-blueprint .reg {
+  position: absolute;
+  width: 0.7rem;
+  height: 0.7rem;
+  z-index: 1;
+  pointer-events: none;
+}
+.page.t-blueprint .reg::before,
+
+.page.t-blueprint .reg::before { left: 50%; top: 0; width: 1px; height: 100%; }
+.page.t-blueprint .reg::after { top: 50%; left: 0; height: 1px; width: 100%; }
+.page.t-blueprint .reg.tl { top: calc(15% + 0.6rem); left: calc(var(--sp-2) + 0.6rem); }
+.page.t-blueprint .reg.tr { top: calc(15% + 0.6rem); right: calc(var(--sp-2) + 0.6rem); }
+.page.t-blueprint .reg.bl { bottom: calc(var(--sp-2) + 0.6rem); left: calc(var(--sp-2) + 0.6rem); }
+
+/* THE TITLE BLOCK — the footer IS the device. A stamped box bottom-right with
+   the rows a drawing carries: what it is, its number, its scale, its date.
+   Everything in the mono face, because that is what a stamp looks like. */
+.page.t-blueprint .titleblock {
+  /* THE INNER CORNER, MIRRORED. Their file stamps it bottom-right, which is
+     correct on a standalone sheet and wrong in a bound book: the outer bottom
+     corner already carries the printed brand mark, and on a right-hand page a
+     right-stamped block would sit on top of it. So the stamp takes the corner
+     nearest the gutter, and swaps sides with the leaf — the same reasoning, and
+     the same `pl`/`pr` switch, that the brand mark itself uses. */
+  position: absolute;
+  right: calc(var(--sp-2) + 0.7rem);
+  bottom: calc(var(--sp-4) + 0.7rem);
+  min-width: 9.5rem;
+  padding: 0.42rem 0.6rem;
+  border: 1.5px solid var(--ink-soft);
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--rule);
+  background: var(--paper-2);
+  font-family: var(--font-mono);
+  /* A stamp is small by nature, and 0.6rem landed at 9.6px — under the book's
+     comfort floor, which the page-fit checker said so the moment this page was
+     first built. A stamp nobody can read is a decoration. */
+  font-size: 0.64rem;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  z-index: 1;
+}
+.page.t-blueprint .titleblock b {
+  display: block;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.page.t-blueprint .titleblock span { display: block; white-space: nowrap; }
+.page.pr.t-blueprint .titleblock { right: auto; left: calc(var(--sp-2) + 0.7rem); }
+
+/* Hatch fill — drafting shading, and a second encoding that survives a
+   one-colour print. Offered as a class rather than applied, because a page
+   that hatches everything has drawn a texture, not a diagram. */
+.page.t-blueprint .hatch {
+  background-image: repeating-linear-gradient(
+    45deg, var(--rule-strong) 0 1px, transparent 1px 6px);
+}
+
+
+/* ── PRESS — the misregistered impression ───────────────────────────────────
+   The cheapest of the three and the most characterful: two ink layers that do
+   not quite line up, and grain over everything. Entirely a texture question,
+   so it changes nothing about where anything sits.                          */
+
+.page.t-press .dress::after {
+  /* Grain over the whole sheet. `--grain` is the kit's own noise texture, so
+     this is the same paper the rest of the book is printed on, turned up. */
+  background-image: var(--grain);
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+}
+
+/* THE MISREGISTRATION. One ink prints a hair behind the other — always the
+   same direction and the same distance, because a press is a machine and an
+   inconsistent offset reads as a mistake rather than as a process.
+
+   Display type only. Body copy set with a coloured ghost behind it is not
+   vintage printing, it is unreadable text, and this is a book people are
+   meant to read. */
+.page.t-press .bt,
+.page.t-press .statement p,
+.page.t-press h2 {
+  text-shadow: 0.11em 0.08em 0 var(--accent-soft);
+}
+
+/* Halftone — a dot screen as a block's fill or as a cast shadow. Offered, not
+   applied, for the same reason as the hatch. */
+.page.t-press .halftone {
+  background-image: radial-gradient(var(--rule-strong) 22%, transparent 23%);
+  background-size: 0.32rem 0.32rem;
+}
+
+/* Reduced motion changes nothing here — none of these move. Worth saying so
+   explicitly: the treatments are printing, not animation, and a reader who has
+   asked for less movement should still get the whole design. */

@@ -195,7 +195,12 @@ const nextPage = '(()=>{const b=[...document.querySelectorAll(".chrome button")]
  */
 const matches = async (name) => {
   if (!name.startsWith('.')) return (await onScreen()).includes(name)
-  return await evaluate(`${SPREAD}.some(e=>e.querySelector(${JSON.stringify(name)}))`)
+  // The leaf ITSELF may be the match. A page treatment is a class on the page
+  // element — `.t-blueprint` — and `querySelector` only looks at descendants,
+  // so a selector naming the sheet rather than something on it would never be
+  // found and the walk would run to the end of the book saying so.
+  return await evaluate(
+    `${SPREAD}.some(e=>e.matches(${JSON.stringify(name)})||e.querySelector(${JSON.stringify(name)}))`)
 }
 
 /**
