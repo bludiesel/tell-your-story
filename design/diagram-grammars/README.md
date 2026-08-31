@@ -59,7 +59,7 @@ flow chart — with no code anywhere that knows what a Sankey is.
 |---|---|
 | `dg-link` | **Draws itself** — the stroke runs along its own path. Put it on every line, edge, arrow and connector |
 | `dg-node` | Pops in, staggered, with a slight overshoot. Boxes, circles, any shape that IS a thing |
-| `dg-bar` | **Grows from its baseline** — a bar chart reads as measurement, so it measures |
+| `dg-bar` | **Grows from its baseline** — a bar chart reads as measurement, so it measures. Bars sharing a bottom edge grow upward as columns; anything else grows rightward. Only for a shape whose baseline is one of its own edges — a polar wedge grows from the chart's centre, so it takes `dg-node` |
 | `dg-label` | Fades in last, staggered. Text |
 
 Untagged shapes simply appear with the page. That is a valid choice for

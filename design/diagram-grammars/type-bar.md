@@ -42,6 +42,14 @@ bar chart read as measurement rather than as coloured rectangles ·
 `dg-label` on values and category names · `dg-link` on the axis line if you
 draw one.
 
+**Which edge is the baseline is worked out from the bars, not guessed.** Bars
+that all share a bottom edge are columns and grow upward; anything else grows
+rightward from its left edge. That is decided by geometry rather than by shape,
+because a bar chart's smallest bar is often taller than it is wide and the data
+must never choose the animation. **A lone bar has no baseline to share** — it
+grows rightward unless you say otherwise with `data-grow="up"` on the bar or on
+the `<svg>`.
+
 ## Anti-patterns
 
 - A three-dimensional bar. It adds nothing and misreports every value.

@@ -675,12 +675,36 @@ function boot(): void {
             duration: 0.42, ease: 'back.out(1.7)', stagger: 0.08,
           }, at + 0.11)
         }
-        // A bar chart reads as measurement, so bars GROW from the baseline.
+        // A bar chart reads as measurement, so bars GROW from the baseline —
+        // and WHICH edge is the baseline is decided by the bars themselves.
+        //
+        // This used to be `scaleX` from the left, always. Correct for a
+        // horizontal bar chart and for a gantt, and wrong for a column chart,
+        // where a column that grows sideways out of the axis reads as a bug.
+        //
+        // The obvious fix — pick the axis from each bar's aspect ratio — is a
+        // trap: a bar chart's smallest bar is often narrower than it is tall
+        // (2.8px wide by 20px on a 1-in-100 value), so the data would decide
+        // the animation and one short bar would grow the wrong way.
+        //
+        // What actually defines the chart type is the SHARED BASELINE. Bars in
+        // a horizontal chart all start at the same left edge; columns all stand
+        // on the same bottom edge. That is geometry, not data, so it holds for
+        // every value including zero. `data-grow` overrides it for the single
+        // bar, where there is no baseline to share and no way to tell.
         if (bars.length) {
-          tl.from(bars, {
-            scaleX: 0, transformOrigin: '0% 50%',
-            duration: 0.6, ease: 'power3.out', stagger: 0.09,
-          }, at + 0.16)
+          const boxes = [...bars].map((b) => b.getBBox())
+          const same = (v: number[]) => Math.max(...v) - Math.min(...v) < 0.5
+          const declared = fig.querySelector('[data-grow]')?.getAttribute('data-grow')
+          const up = declared
+            ? declared === 'up'
+            : boxes.length > 1
+              && same(boxes.map((b) => b.y + b.height))
+              && !same(boxes.map((b) => b.x))
+          tl.from(bars, up
+            ? { scaleY: 0, transformOrigin: '50% 100%', duration: 0.6, ease: 'power3.out', stagger: 0.09 }
+            : { scaleX: 0, transformOrigin: '0% 50%', duration: 0.6, ease: 'power3.out', stagger: 0.09 },
+            at + 0.16)
         }
         if (labels.length) {
           tl.from(labels, { opacity: 0, duration: 0.3, stagger: 0.05 }, at + 0.36)

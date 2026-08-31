@@ -31,9 +31,16 @@ last comes the first again; if that is untrue, use a `bar` chart.
 
 ## Tag it
 
-`dg-bar` on every wedge — it grows from the centre, which reads as measurement
-radiating out · `dg-link` on the rings · `dg-label` on bearings and the ring
-value.
+**`dg-node` on every wedge**, not `dg-bar` · `dg-link` on the rings ·
+`dg-label` on bearings and the ring value.
+
+`dg-bar` is the wrong tag here and it is worth saying why: it grows a shape
+from one EDGE of itself. A wedge grows from the chart's centre — a point that
+is nowhere near its own bounding box for most bearings, and that nothing in the
+runtime can know. Tagged `dg-bar`, a wedge stretches sideways instead of
+radiating, which reads as a rendering fault. `dg-node` pops each wedge in
+around the circle in turn, which is both correct and a better fit for a chart
+whose whole subject is direction.
 
 ## Anti-patterns
 

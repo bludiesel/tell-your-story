@@ -1979,6 +1979,50 @@ check('book: shipped grain filter resolves',
     'a riffle wants a turn per step, not a run of cuts')
 }
 
+// ── dg-bar grows the way the grammars say it does ───────────────────────────
+//
+// The runtime scaled X from the left edge, always. Correct for a horizontal bar
+// chart, and wrong for the two other things the grammars send here: a column
+// chart, where a column that grows sideways out of its axis reads as a fault,
+// and a polar wedge, which grows from the chart's centre — a point that is not
+// on its own bounding box and that nothing in the runtime can know.
+//
+// Both grammars were written on the same day as this check and both described
+// an animation that did something else. So the runtime learned to find its own
+// baseline, polar was moved to `dg-node`, and these hold the three of them
+// together.
+{
+  const runtime = await readFile(join(ROOT, 'src', 'runtime', 'book.ts'), 'utf8')
+  const branch = /if \(bars\.length\) \{[\s\S]*?\n        \}/.exec(runtime)?.[0] ?? ''
+  check('dg-bar: it can grow upward as well as rightward',
+    /scaleY: 0/.test(branch) && /scaleX: 0/.test(branch),
+    'only one axis is implemented — a column chart grows sideways out of its own axis')
+  // The aspect-ratio version of this passed a naive check and was still wrong:
+  // a 1-in-100 bar is 2.8px wide by 20px tall, so the DATA would have picked the
+  // axis and one short bar in a chart would have grown the wrong way. What
+  // defines the chart is the shared baseline, which is true at every value.
+  check('dg-bar: the axis comes from the shared baseline, not from one bar\'s shape',
+    /b\.y \+ b\.height/.test(branch) && /boxes\.length > 1/.test(branch),
+    'the growth axis is decided per bar rather than from the baseline the bars share — ' +
+    'a chart\'s smallest bar is often taller than it is wide, so the data would choose the animation')
+  check('dg-bar: a lone bar can be told which way to grow',
+    /data-grow/.test(branch),
+    'a single bar has no baseline to share and no way to override the guess')
+
+  const polar = await readFile(join(ROOT, 'design', 'diagram-grammars', 'type-polar.md'), 'utf8')
+  const tagIt = /## Tag it\n([\s\S]*?)\n## /.exec(polar)?.[1] ?? ''
+  check('dg-bar: polar does not tag its wedges as bars',
+    /dg-node/.test(tagIt) && !/`dg-bar` on every wedge/.test(polar),
+    'the polar grammar still sends wedges to dg-bar, which grows a shape from its own edge — ' +
+    'a wedge would stretch sideways instead of radiating')
+
+  const grammarIndex = await readFile(join(ROOT, 'design', 'diagram-grammars', 'README.md'), 'utf8')
+  const row = /\| `dg-bar` \|[^\n]*/.exec(grammarIndex)?.[0] ?? ''
+  check('dg-bar: the grammar index describes both directions',
+    /upward/.test(row) && /rightward/.test(row),
+    'the index still promises one direction, so anyone drawing a column chart from it is misled')
+}
+
 // ── a skip must never strand content half-faded ─────────────────────────────
 //
 // `End` means "show me the rest of this page". It used to be obeyed the instant
