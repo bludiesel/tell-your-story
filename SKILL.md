@@ -424,7 +424,20 @@ Three rules that matter:
 
 ## Diagrams beyond the three generated ones
 
-`:::diagram flow|cycle|bars` writes itself from a line of text. For anything
+**Seven types write themselves from a line of text** — `flow`, `cycle`, `bars`,
+and four for data:
+
+| Block | Write | Draws |
+|---|---|---|
+| `:::diagram waffle` | `62 of 100 \| caption` | a hundred squares, 62 filled — the reader can count the claim |
+| `:::diagram pictogram` | `7 in 10 \| caption` | ten figures, seven filled — a proportion about people |
+| `:::diagram progress` | `Signed off \| 62` per line | ratios against a shared track, each against its own limit |
+| `:::diagram stats` | `12 \| incidents` per line | two to four headline figures, ruled between not boxed |
+
+The empty half of a waffle and a pictogram is drawn, not omitted: "62 of 100"
+is only a claim if the reader can see the 100.
+
+For anything
 else — a decision with branches, a swimlane, a fishbone, a pyramid — **draw the
 SVG and put it in the block**:
 
@@ -435,7 +448,7 @@ SVG and put it in the block**:
 ````
 
 The layout rules live in [`design/diagram-grammars/`](design/diagram-grammars/)
-— **39 grammars, one short file per type**, adapted from
+— **41 grammars, one short file per type**, adapted from
 [diagram-design](https://github.com/cathrynlavery/diagram-design) (MIT). **Read
 only the one you are drawing.** Each gives what it is best for, what it is *not*
 for, the geometry, the numbers, and the anti-patterns worth naming. The

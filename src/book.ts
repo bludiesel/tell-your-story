@@ -11,7 +11,10 @@
 import type MarkdownIt from 'markdown-it'
 import type { AssetStore } from './assets.ts'
 import { internImages } from './markdown.ts'
-import { barsDiagram, cycleDiagram, flowDiagram, type DiagramColours } from './svg.ts'
+import {
+  barsDiagram, cycleDiagram, flowDiagram, pictogramDiagram, progressDiagram,
+  statsDiagram, waffleDiagram, type DiagramColours,
+} from './svg.ts'
 import { attachStickies, pickLayout, renderLayouts, screenLabel, tagSlots } from './layout.ts'
 
 type Renderer = InstanceType<typeof MarkdownIt>
@@ -187,8 +190,37 @@ export function renderDiagrams(html: string, c: DiagramColours): string {
       const text = inner.replace(/<[^>]+>/g, '\n').replace(/&amp;/g, '&')
       const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
 
+      /** `62 of 80`, `62%`, or a bare `62` — all mean the same thing. */
+      const share = (line: string): [number, number] => {
+        const of = /^\s*([\d.]+)\s*(?:of|in|\/)\s*([\d.]+)/i.exec(line)
+        if (of) return [Number(of[1]), Number(of[2])]
+        const pct = /([\d.]+)/.exec(line)
+        return [Number(pct?.[1] ?? 0), 100]
+      }
+      /** Everything after the number, minus a leading pipe: the caption. */
+      const caption = (line: string): string =>
+        (line.split('|')[1] ?? '').trim()
+
       let svg = ''
-      if (kind.startsWith('cycle')) {
+      if (kind.startsWith('waffle')) {
+        const [f, t] = share(lines[0] ?? '')
+        svg = waffleDiagram(f, t, caption(lines[0] ?? ''), c)
+      } else if (kind.startsWith('pictogram')) {
+        const [f, t] = share(lines[0] ?? '')
+        svg = pictogramDiagram(f, t, caption(lines[0] ?? ''), c)
+      } else if (kind.startsWith('progress')) {
+        const rows = lines.map((l) => {
+          const [label, v] = l.split('|').map((x) => x.trim())
+          return [label ?? '', Number((v ?? '0').replace('%', ''))] as [string, number]
+        })
+        svg = progressDiagram(rows, c)
+      } else if (kind.startsWith('stats')) {
+        const rows = lines.map((l) => {
+          const [value, note] = l.split('|').map((x) => x.trim())
+          return [value ?? '', note ?? ''] as [string, string]
+        })
+        svg = statsDiagram(rows, c)
+      } else if (kind.startsWith('cycle')) {
         svg = cycleDiagram(lines.flatMap((l) => l.split('|').map((x) => x.trim())), c)
       } else if (kind.startsWith('bars')) {
         const rows = lines.map((l) => {

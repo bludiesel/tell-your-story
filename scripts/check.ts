@@ -1979,6 +1979,65 @@ check('book: shipped grain filter resolves',
     'a riffle wants a turn per step, not a run of cuts')
 }
 
+// ── the four generated data forms ───────────────────────────────────────────
+//
+// A waffle, a pictogram, a progress meter and a stat row are common enough that
+// hand-drawing them is wasted effort and a chance to get the arithmetic wrong.
+// These build one of each and count what came out, because the fault worth
+// catching here is silent: a form that draws the FILLED half correctly and the
+// empty half invisibly still looks like a chart.
+{
+  const dir = await mkdtemp(join(tmpdir(), 'tys-forms-'))
+  const md = join(dir, 'f.md')
+  await writeFile(md, [
+    '# Forms', '',
+    ':::diagram waffle', '62 of 100 | caption', ':::', '',
+    ':::diagram pictogram', '7 in 10 | caption', ':::', '',
+    ':::diagram progress', 'One | 62', 'Two | 88', ':::', '',
+    ':::diagram stats', '12 | incidents', '3 | permits', ':::',
+  ].join('\n'))
+  const out = join(dir, 'f.html')
+  const r = await runScript('dist/build.mjs', [md, out, '--quiet'])
+  check('forms: a book using all four generated forms builds',
+    r.code === 0, `it did not build:\n${r.out.split('\n').slice(0, 5).join('\n')}`)
+  const html = await readFile(out, 'utf8')
+  const figure = (kind: string): string => {
+    const i = html.indexOf(`diagram-${kind}`)
+    return i < 0 ? '' : html.slice(i, html.indexOf('</figure>', i))
+  }
+
+  const waffle = figure('waffle')
+  const cells = (waffle.match(/<rect/g) ?? []).length
+  const outlined = (waffle.match(/fill="none"/g) ?? []).length
+  check('forms: a waffle draws the whole hundred, not just the filled part',
+    cells === 100 && outlined === 38,
+    `${cells} cells, ${outlined} of them outlined — "62 of 100" is only a claim if the reader can see the 100`)
+  // THE BUG THIS GUARDS. The empty cells were drawn as a faint fill in the node
+  // tone, which sits a hair off the paper: all 38 rendered as nothing and the
+  // grid read as "62 of 62". Outlining them in that same tone changed nothing.
+  // They are stroked in the EDGE tone, which is the one meant to be seen.
+  check('forms: the empty cells are outlined in a tone that shows on paper',
+    /stroke="[^"]+"[^>]*fill="none"|fill="none"[^>]*stroke="[^"]+"/.test(waffle)
+      && !/fill="none"[^>]*stroke="none"/.test(waffle),
+    'the empty cells have no visible outline, so the grid reads as though everything is filled')
+
+  const picto = figure('pictogram')
+  check('forms: a pictogram draws the empty figures too',
+    (picto.match(/fill="none"/g) ?? []).length === 6,
+    'the three unfilled figures are missing, which turns "7 in 10" into a picture of seven people')
+
+  const progress = figure('progress')
+  check('forms: a progress meter draws a track behind every bar',
+    (progress.match(/dg-bar/g) ?? []).length === 2 && (progress.match(/dg-node/g) ?? []).length === 2,
+    'the empty part of the track is the subject — a meter without one is a bar chart')
+
+  const stats = figure('stats')
+  check('forms: a stat row rules between the figures rather than boxing them',
+    (stats.match(/<line/g) ?? []).length === 1 && !/<rect/.test(stats),
+    'boxes turn three facts into three cards, which is the dashboard look the kit avoids')
+  await rm(dir, { recursive: true, force: true })
+}
+
 // ── does every page actually fit? ───────────────────────────────────────────
 //
 // `prep` answers "will this page fit" by counting characters against a budget,

@@ -132,31 +132,32 @@ const settle = async (quietMs = 500, ms = 12000) => {
 }
 
 /**
- * Nothing on the spread is caught halfway through a fade.
+ * WHY THERE IS NO "IS ANYTHING STILL FADING" TEST HERE.
  *
- * Stability alone is not enough: a tween killed mid-flight is perfectly stable
- * at 0.1969 forever, and that is exactly what a skipped reveal used to leave
- * behind. A page is finished when every animated thing on it is all the way in
- * or all the way out — so this is the condition worth waiting for, and a
- * timeout here is worth SAYING rather than quietly photographing.
+ * There was one, and it could not be made to work. It looked for an element
+ * left part-way through its reveal — the real fault that once froze a diagram's
+ * labels at opacity 0.1969 for good. The trouble is telling that apart from a
+ * shape that is MEANT to be part-transparent: a progress meter's track at 0.35,
+ * a donut's quietest segment at 0.55.
+ *
+ * Reading the computed value cannot separate them. Nor can reading the inline
+ * style, which was the promising idea and is wrong twice over: svg.js writes
+ * `.opacity()` into the style rather than the attribute, and GSAP writes an
+ * element's finished value back into the style when its tween ends. The two
+ * cases end up as the same string in the same place, and the only thing that
+ * differs — what the author meant — is no longer in the DOM by then.
+ *
+ * Stability does not separate them either: a stuck tween is perfectly stable,
+ * which is both why it is worth catching and why `settle()` below cannot catch
+ * it.
+ *
+ * It reported three finished spreads as broken and every picture it complained
+ * about was correct. A warning that usually means nothing is a warning people
+ * stop reading. The fault it was aimed at is fixed at source — a skip is held
+ * across a turn and completes the arrival timeline before starting its own —
+ * and three checks in `check.ts` hold that behaviour in place, which is where
+ * a guarantee belongs.
  */
-const whole = async (ms = 15000) => {
-  // Two conditions, because either alone has a hole in it. Anything on the page
-  // caught between transparent and solid is mid-fade. And a diagram's shapes and
-  // labels must end up VISIBLE — treating a fully-transparent one as "finished"
-  // is how a picture of an empty page passed this test and got committed.
-  const partial = `(()=>${SPREAD}.flatMap(e=>[` +
-    `...[...e.querySelectorAll('.reveal *')].map(n=>parseFloat(getComputedStyle(n).opacity))` +
-    `.filter(o=>o>0.02&&o<0.98),` +
-    `...[...e.querySelectorAll('.dg-node,.dg-label')].map(n=>parseFloat(getComputedStyle(n).opacity))` +
-    `.filter(o=>o<0.98)]).length)()`
-  const until = Date.now() + ms
-  while (Date.now() < until) {
-    if (await evaluate(partial) === 0) return true
-    await sleep(200)
-  }
-  return false
-}
 
 /** Wait for the book to SAY it is in a state, rather than sleeping a guess. */
 const waitFor = async (cls, ms = 15000) => {
@@ -232,10 +233,19 @@ const shot = async (name) => {
 }
 
 const found = new Set()
+let completed = null
 console.log('')
 for (let press = 0; press < 90 && found.size < wanted.length; press++) {
   for (const layout of wanted) {
     if (found.has(layout) || !await matches(layout)) continue
+    // ONCE PER SPREAD, NOT ONCE PER TARGET. Two wanted layouts often sit on the
+    // same spread — a donut facing a stat row — and pressing End a second time
+    // on a page that has already finished starts nothing, settles instantly,
+    // and leaves the completeness test looking at a moment that never existed.
+    // It reported a spread as unfinished immediately after photographing that
+    // same spread cleanly.
+    const spreadKey = (await onScreen()).join('|')
+    if (spreadKey === completed) { await shot(layout); found.add(layout); continue }
     // PRESS THROUGH THE REVEALS FIRST. A checklist shot on arrival is a picture
     // of empty boxes; the ticks are the thing worth showing.
     // `End` COMPLETES THE PAGE'S REVEALS WITHOUT TURNING IT — DESIGN.md's
@@ -253,7 +263,6 @@ for (let press = 0; press < 90 && found.size < wanted.length; press++) {
     await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'End', code: 'End', windowsVirtualKeyCode: 35 })
     await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'End', code: 'End', windowsVirtualKeyCode: 35 })
     await settle()
-    if (!await whole()) console.log('    (something on this spread never finished arriving — check the picture)')
     await shot(layout)
     found.add(layout)
   }

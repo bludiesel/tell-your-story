@@ -37016,6 +37016,105 @@ function cycleDiagram(steps, c) {
   });
   return draw.svg();
 }
+function waffleDiagram(filled, total, note, c) {
+  const cols = 10;
+  const rows = Math.max(1, Math.ceil(total / cols));
+  const cell = 26, gap = 5;
+  const gridW = cols * cell + (cols - 1) * gap;
+  const width2 = 460;
+  const height2 = rows * cell + (rows - 1) * gap + (note ? 78 : 18);
+  const draw = canvas(width2, height2).viewbox(0, 0, width2, height2);
+  const x0 = (width2 - gridW) / 2;
+  const top = note ? 64 : 8;
+  for (let i = 0; i < total; i++) {
+    const col = i % cols;
+    const row = rows - 1 - Math.floor(i / cols);
+    const cellRect = draw.rect(cell, cell).radius(4).move(x0 + col * (cell + gap), top + row * (cell + gap)).addClass("dg-node");
+    if (i < filled) cellRect.fill(c.accent);
+    else cellRect.fill("none").stroke({ color: c.nodeEdge, width: 1.4 });
+  }
+  if (note) {
+    const pct = Math.round(filled / Math.max(total, 1) * 100);
+    label(draw, `${pct}%`, x0, 22, { size: 30, fill: c.accent, weight: "700", anchor: "start" }).addClass("dg-label");
+    label(draw, note, x0, 48, { size: 14, fill: c.text, anchor: "start" }).addClass("dg-label");
+  }
+  return draw.svg();
+}
+function pictogramDiagram(filled, total, note, c) {
+  const n = Math.max(1, Math.min(total, 20));
+  const on2 = Math.round(Math.max(0, Math.min(filled, n)));
+  const size2 = 34, gap = 12;
+  const perRow = Math.min(n, 10);
+  const rows = Math.ceil(n / perRow);
+  const width2 = 460;
+  const gridW = perRow * size2 + (perRow - 1) * gap;
+  const height2 = rows * (size2 * 1.5) + (note ? 68 : 10);
+  const draw = canvas(width2, height2).viewbox(0, 0, width2, height2);
+  const x0 = (width2 - gridW) / 2;
+  const top = note ? 58 : 4;
+  for (let i = 0; i < n; i++) {
+    const col = i % perRow;
+    const row = Math.floor(i / perRow);
+    const x2 = x0 + col * (size2 + gap);
+    const y2 = top + row * (size2 * 1.5);
+    const lit = i < on2;
+    const g = draw.group().addClass("dg-node");
+    const head = g.circle(size2 * 0.42).move(x2 + size2 * 0.29, y2);
+    const body = g.path(`M${x2} ${y2 + size2 * 0.95} a ${size2 * 0.5} ${size2 * 0.62} 0 0 1 ${size2} 0 z`);
+    for (const shape of [head, body]) {
+      if (lit) shape.fill(c.accent);
+      else shape.fill("none").stroke({ color: c.nodeEdge, width: 1.4 });
+    }
+  }
+  if (note) {
+    label(
+      draw,
+      `${on2} in ${n}`,
+      x0,
+      18,
+      { size: 26, fill: c.accent, weight: "700", anchor: "start" }
+    ).addClass("dg-label");
+    label(draw, note, x0, 42, { size: 14, fill: c.text, anchor: "start" }).addClass("dg-label");
+  }
+  return draw.svg();
+}
+function progressDiagram(rows, c) {
+  const width2 = 460, rowH = 52, labelW = 150;
+  const height2 = Math.max(rows.length, 1) * rowH + 8;
+  const trackW = width2 - labelW - 56;
+  const draw = canvas(width2, height2).viewbox(0, 0, width2, height2);
+  rows.forEach(([name, pct], i) => {
+    const v = Math.max(0, Math.min(pct, 100));
+    const y2 = i * rowH + 14;
+    label(draw, name, labelW - 12, y2 + 9, { size: 13, fill: c.text, anchor: "end" }).addClass("dg-label");
+    draw.rect(trackW, 18).radius(9).move(labelW, y2).fill(c.node).opacity(0.35).addClass("dg-node");
+    draw.rect(Math.max(v / 100 * trackW, 2), 18).radius(9).move(labelW, y2).fill(i === 0 ? c.accent : c.link).addClass("dg-bar");
+    label(
+      draw,
+      `${Math.round(v)}%`,
+      labelW + trackW + 10,
+      y2 + 9,
+      { size: 13, fill: c.text, weight: "600", anchor: "start" }
+    ).addClass("dg-label");
+  });
+  return draw.svg();
+}
+function statsDiagram(rows, c) {
+  const cells = rows.slice(0, 4);
+  const n = Math.max(cells.length, 1);
+  const width2 = 460, height2 = 132;
+  const draw = canvas(width2, height2).viewbox(0, 0, width2, height2);
+  const slot = width2 / n;
+  cells.forEach(([value, note], i) => {
+    const cx2 = slot * i + slot / 2;
+    if (i > 0) {
+      draw.line(slot * i, 24, slot * i, height2 - 24).stroke({ color: c.node, width: 1 }).addClass("dg-link");
+    }
+    label(draw, value, cx2, 54, { size: 44, fill: i === 0 ? c.accent : c.text, weight: "700" }).addClass("dg-label");
+    label(draw, note, cx2, 100, { size: 13, fill: c.text }).addClass("dg-label");
+  });
+  return draw.svg();
+}
 function barsDiagram(rows, c) {
   const n = Math.max(rows.length, 1);
   const width2 = 460, rowH = 46, labelW = 130, height2 = n * rowH + 10;
@@ -37344,8 +37443,33 @@ function renderDiagrams(html2, c) {
       }
       const text2 = inner.replace(/<[^>]+>/g, "\n").replace(/&amp;/g, "&");
       const lines = text2.split("\n").map((l) => l.trim()).filter(Boolean);
+      const share = (line) => {
+        const of = /^\s*([\d.]+)\s*(?:of|in|\/)\s*([\d.]+)/i.exec(line);
+        if (of) return [Number(of[1]), Number(of[2])];
+        const pct = /([\d.]+)/.exec(line);
+        return [Number(pct?.[1] ?? 0), 100];
+      };
+      const caption = (line) => (line.split("|")[1] ?? "").trim();
       let svg2 = "";
-      if (kind.startsWith("cycle")) {
+      if (kind.startsWith("waffle")) {
+        const [f, t] = share(lines[0] ?? "");
+        svg2 = waffleDiagram(f, t, caption(lines[0] ?? ""), c);
+      } else if (kind.startsWith("pictogram")) {
+        const [f, t] = share(lines[0] ?? "");
+        svg2 = pictogramDiagram(f, t, caption(lines[0] ?? ""), c);
+      } else if (kind.startsWith("progress")) {
+        const rows = lines.map((l) => {
+          const [label2, v] = l.split("|").map((x2) => x2.trim());
+          return [label2 ?? "", Number((v ?? "0").replace("%", ""))];
+        });
+        svg2 = progressDiagram(rows, c);
+      } else if (kind.startsWith("stats")) {
+        const rows = lines.map((l) => {
+          const [value, note] = l.split("|").map((x2) => x2.trim());
+          return [value ?? "", note ?? ""];
+        });
+        svg2 = statsDiagram(rows, c);
+      } else if (kind.startsWith("cycle")) {
         svg2 = cycleDiagram(lines.flatMap((l) => l.split("|").map((x2) => x2.trim())), c);
       } else if (kind.startsWith("bars")) {
         const rows = lines.map((l) => {

@@ -273,6 +273,176 @@ export function cycleDiagram(steps: string[], c: DiagramColours): string {
 }
 
 /** Horizontal bars for comparing a handful of values. */
+/**
+ * A percentage as a grid of squares. `62%`, or `62 of 80`.
+ *
+ * WHY NOT A PIE. A reader cannot compare two angles, and cannot read one at
+ * all without a number printed beside it — so a pie is a picture of a number
+ * you had to write down anyway. Squares are countable: ten across means the
+ * reader can verify the claim by eye, which on a safety page is the difference
+ * between being told and being shown.
+ *
+ * Fills bottom-left upward, the way a tank fills, because a grid that fills
+ * downward reads as a countdown.
+ */
+export function waffleDiagram(filled: number, total: number, note: string, c: DiagramColours): string {
+  const cols = 10
+  const rows = Math.max(1, Math.ceil(total / cols))
+  const cell = 26, gap = 5
+  const gridW = cols * cell + (cols - 1) * gap
+  const width = 460
+  const height = rows * cell + (rows - 1) * gap + (note ? 78 : 18)
+  const draw = canvas(width, height).viewbox(0, 0, width, height)
+  const x0 = (width - gridW) / 2
+  const top = note ? 64 : 8
+
+  for (let i = 0; i < total; i++) {
+    const col = i % cols
+    const row = rows - 1 - Math.floor(i / cols)
+    // THE EMPTY CELLS ARE HALF THE POINT — "62 of 100" is only a claim if the
+    // reader can see the 100. Drawn first as a faint FILL they disappeared
+    // entirely — the node tone sits a hair off the paper, so 38 of them
+    // rendered as nothing and the grid read as "62 of 62". Outlining them in
+    // that same tone changed nothing, for the same reason. The edge tone is the
+    // one that is meant to be SEEN against paper; an outline in it survives a
+    // photocopy and looks drawn rather than printed.
+    const cellRect = draw.rect(cell, cell).radius(4)
+      .move(x0 + col * (cell + gap), top + row * (cell + gap))
+      .addClass('dg-node')
+    if (i < filled) cellRect.fill(c.accent)
+    else cellRect.fill('none').stroke({ color: c.nodeEdge, width: 1.4 })
+  }
+  if (note) {
+    const pct = Math.round((filled / Math.max(total, 1)) * 100)
+    // THE CAPTION GOES UNDER THE NUMBER, NOT BESIDE IT. Beside it needs the
+    // width of the number, and there is no font metric available at build time
+    // — linkedom has no layout engine, which is why every label here is placed
+    // by arithmetic. The first version guessed the width from the digit count
+    // and the page-fit checker caught the two labels overlapping by 8% on the
+    // very first book that used them. A stacked pair cannot overlap at any
+    // string length, which is worth more than the line it costs.
+    label(draw, `${pct}%`, x0, 22, { size: 30, fill: c.accent, weight: '700', anchor: 'start' })
+      .addClass('dg-label')
+    label(draw, note, x0, 48, { size: 14, fill: c.text, anchor: 'start' }).addClass('dg-label')
+  }
+  return draw.svg()
+}
+
+/**
+ * "7 in 10" drawn as figures, some filled and some not.
+ *
+ * The one form that makes a proportion about PEOPLE rather than about
+ * arithmetic. Seven filled figures next to three empty ones is a fact a reader
+ * carries out of the room; "70%" is one they have to be reminded of.
+ *
+ * The icon is a person because that is what nearly every workbook statistic is
+ * counting. A partial value is not drawn: half a person is a joke, so the
+ * count is rounded and the exact figure is printed.
+ */
+export function pictogramDiagram(filled: number, total: number, note: string, c: DiagramColours): string {
+  const n = Math.max(1, Math.min(total, 20))
+  const on = Math.round(Math.max(0, Math.min(filled, n)))
+  const size = 34, gap = 12
+  const perRow = Math.min(n, 10)
+  const rows = Math.ceil(n / perRow)
+  const width = 460
+  const gridW = perRow * size + (perRow - 1) * gap
+  const height = rows * (size * 1.5) + (note ? 68 : 10)
+  const draw = canvas(width, height).viewbox(0, 0, width, height)
+  const x0 = (width - gridW) / 2
+  const top = note ? 58 : 4
+
+  // A head and a body. Drawn once as a path per figure rather than through
+  // <use>, because a <defs>/<use> pair is one shared element and the animation
+  // contract works on the elements it can see.
+  for (let i = 0; i < n; i++) {
+    const col = i % perRow
+    const row = Math.floor(i / perRow)
+    const x = x0 + col * (size + gap)
+    const y = top + row * (size * 1.5)
+    const lit = i < on
+    const g = draw.group().addClass('dg-node')
+    const head = g.circle(size * 0.42).move(x + size * 0.29, y)
+    const body = g.path(`M${x} ${y + size * 0.95} a ${size * 0.5} ${size * 0.62} 0 0 1 ${size} 0 z`)
+    // Outlined rather than faintly filled, for the reason written into the
+    // waffle above: a quiet fill vanishes on this paper, and three invisible
+    // figures turn "7 in 10" into a picture of seven people.
+    for (const shape of [head, body]) {
+      if (lit) shape.fill(c.accent)
+      else shape.fill('none').stroke({ color: c.nodeEdge, width: 1.4 })
+    }
+  }
+  if (note) {
+    // Stacked, for the reason spelled out in the waffle above: there is no way
+    // to measure a string at build time, so anything placed beside text is
+    // placed on a guess.
+    label(draw, `${on} in ${n}`, x0, 18,
+      { size: 26, fill: c.accent, weight: '700', anchor: 'start' }).addClass('dg-label')
+    label(draw, note, x0, 42, { size: 14, fill: c.text, anchor: 'start' }).addClass('dg-label')
+  }
+  return draw.svg()
+}
+
+/**
+ * Ratios against a shared track — `Signed off | 62`.
+ *
+ * A bar chart compares categories to EACH OTHER. A meter compares each one to
+ * its own limit, which is a different question and the one a workbook usually
+ * asks: how far through are we, how close to the cap, what is still missing.
+ * The empty part of the track is drawn, because the gap is the subject.
+ */
+export function progressDiagram(rows: Array<[string, number]>, c: DiagramColours): string {
+  const width = 460, rowH = 52, labelW = 150
+  const height = Math.max(rows.length, 1) * rowH + 8
+  const trackW = width - labelW - 56
+  const draw = canvas(width, height).viewbox(0, 0, width, height)
+
+  rows.forEach(([name, pct], i) => {
+    const v = Math.max(0, Math.min(pct, 100))
+    const y = i * rowH + 14
+    label(draw, name, labelW - 12, y + 9, { size: 13, fill: c.text, anchor: 'end' }).addClass('dg-label')
+    draw.rect(trackW, 18).radius(9).move(labelW, y).fill(c.node).opacity(0.35).addClass('dg-node')
+    draw.rect(Math.max((v / 100) * trackW, 2), 18).radius(9).move(labelW, y)
+      .fill(i === 0 ? c.accent : c.link).addClass('dg-bar')
+    label(draw, `${Math.round(v)}%`, labelW + trackW + 10, y + 9,
+      { size: 13, fill: c.text, weight: '600', anchor: 'start' }).addClass('dg-label')
+  })
+  return draw.svg()
+}
+
+/**
+ * Two to four headline figures, side by side, equal weight — `12 | incidents`.
+ *
+ * `:::big` is a SENTENCE at display size. This is the other thing a page
+ * sometimes needs: the numbers themselves, large enough to be the page's
+ * subject, with the words underneath them doing the explaining.
+ *
+ * Four is the ceiling. Past that they stop being headlines and become a table
+ * that has been shouted, and a table is the better form for that.
+ */
+export function statsDiagram(rows: Array<[string, string]>, c: DiagramColours): string {
+  const cells = rows.slice(0, 4)
+  const n = Math.max(cells.length, 1)
+  const width = 460, height = 132
+  const draw = canvas(width, height).viewbox(0, 0, width, height)
+  const slot = width / n
+
+  cells.forEach(([value, note], i) => {
+    const cx = slot * i + slot / 2
+    // A rule between the figures rather than a box around each: a box turns
+    // three facts into three cards, which is the dashboard look the whole kit
+    // is trying not to be.
+    if (i > 0) {
+      draw.line(slot * i, 24, slot * i, height - 24)
+        .stroke({ color: c.node, width: 1 }).addClass('dg-link')
+    }
+    label(draw, value, cx, 54, { size: 44, fill: i === 0 ? c.accent : c.text, weight: '700' })
+      .addClass('dg-label')
+    label(draw, note, cx, 100, { size: 13, fill: c.text }).addClass('dg-label')
+  })
+  return draw.svg()
+}
+
 export function barsDiagram(rows: Array<[string, number]>, c: DiagramColours): string {
   const n = Math.max(rows.length, 1)
   const width = 460, rowH = 46, labelW = 130, height = n * rowH + 10

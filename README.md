@@ -276,7 +276,7 @@ material.
 </tr>
 <tr>
 <td><b>A fishbone</b>, drawn by hand from its grammar and animated by the four class names — the spine and bones draw themselves, the effect box lands, the labels follow.</td>
-<td><b>A quadrant</b> where the corner names <i>are</i> the recommendation. <b>39 diagram grammars</b> ship with the kit; the runtime knows none of them by name.</td>
+<td><b>A quadrant</b> where the corner names <i>are</i> the recommendation. <b>41 diagram grammars</b> ship with the kit; the runtime knows none of them by name.</td>
 </tr>
 </table>
 
@@ -289,6 +289,10 @@ layouts exist to hand the reader a job rather than a page.
 |---|---|
 | **`:::checklist`** | Tick boxes, and the ticks **write themselves in** — a pen stroke, short down then long up, drawn into each box in turn once the list has landed. Boxes are 1.6rem: under about 5mm a biro tick covers the box, and this is a page marked standing on a site. |
 | **`:::steps`** | A numbered procedure, the numeral set at heading size because on a procedure page the number *is* the navigation. Not a flow diagram — `:::diagram flow` is for a decision that **branches**, and a flow chart of a straight line is harder to follow, not easier. |
+| **`:::diagram waffle`** | `62 of 100` drawn as a hundred squares, sixty-two filled. Honest where a pie is not: the reader can count the claim. The empty ones are outlined, because "62 of 100" only means something if the 100 is visible. |
+| **`:::diagram pictogram`** | `7 in 10` drawn as figures. The one form that makes a proportion about people rather than arithmetic — seven filled figures beside three empty ones is a fact somebody carries out of the room. |
+| **`:::diagram progress`** | Ratios against a shared track, one row each. A bar chart compares rows to each other; a meter compares each row to its own limit, which is usually the workbook's question. The empty part is drawn, because the gap is the subject. |
+| **`:::diagram stats`** | Two to four headline figures side by side, ruled between rather than boxed. `:::big` is a sentence at display size; this is the numbers themselves. |
 | **`:::dodont`** | Both halves of a rule, one page, one glance. `:::compare` puts them on a **spread**, and a reader who meets DO and turns the page to find DON'T has already formed the habit. **No colour carries the meaning** — a workbook printed in one colour still has to work. |
 | **`:::anatomy`** | A drawing with numbered pins and a key. You give each pin a position in per cent — `1. Burst disk \| 32 20` — because you know where the parts are and the software does not. Percentages, so a pin holds its part at any page size; labels drawn into the artwork cannot survive a resize, a rebrand or a translation. |
 
@@ -349,7 +353,7 @@ nothing.
 
 <div align="center">
 
-<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 219 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 225 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
 
 </div>
 
@@ -363,7 +367,7 @@ A built book is one file. The tool that builds it is nearly as lean:
 | Fonts | subset and embedded; a book needs no network |
 
 Every number on that card is measured on this commit, not rounded up for the
-graphic: `219` is what `node scripts/check.ts` prints, `22` is the length of
+graphic: `225` is what `node scripts/check.ts` prints, `22` is the length of
 `LAYOUTS` in `src/layout.ts` with all seventeen proved reachable by
 `scripts/verify.ts`, and `1` is the entire point of the project.
 

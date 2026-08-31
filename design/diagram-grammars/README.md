@@ -24,9 +24,21 @@ taken and what was not, and `LICENSE-diagram-design.txt` beside this file.
 ````
 
 The block's title is the TYPE. Write the SVG inside it and the build passes it
-through untouched. `:::diagram flow`, `cycle` and `bars` still generate
-themselves from a line of text — those three are common enough to be worth
-never hand-drawing.
+through untouched.
+
+**Seven types generate themselves** from a line of text, because they are
+common enough that hand-drawing them is wasted effort and a chance to get the
+arithmetic wrong:
+
+| Type | Write | Draws |
+|---|---|---|
+| `flow` | `Check \| Isolate \| Sign` | steps and arrows |
+| `cycle` | `Plan \| Do \| Check \| Act` | a ring of stages |
+| `bars` | `Isolation \| 92` per line | a horizontal bar chart |
+| `waffle` | `62 of 100 \| caption` | 100 squares, 62 of them filled |
+| `pictogram` | `7 in 10 \| caption` | ten figures, seven of them filled |
+| `progress` | `Signed off \| 62` per line | ratios against a shared track |
+| `stats` | `12 \| incidents` per line | two to four headline figures |
 
 ---
 
@@ -95,16 +107,17 @@ background scaffolding — an axis does not need to make an entrance.
 
 ## The types
 
-**Thirty-nine of them.** Read the one you need — each is a page: *best for /
+**Forty-one of them.** Read the one you need — each is a page: *best for /
 not for / layout conventions / colour / tag it / anti-patterns*.
 
 | Group | Types |
 |---|---|
-| **Generated — no SVG needed** | `flow` · `cycle` · `bars` — write a line of text and the build draws it |
+| **Generated — no SVG needed** | `flow` · `cycle` · `bars` · `waffle` · `pictogram` · `progress` · `stats` — write a line of text and the build draws it |
 | **Sequence and process** | [`flowchart`](type-flowchart.md) · [`process`](type-process.md) · [`swimlane`](type-swimlane.md) · [`sequence`](type-sequence.md) · [`journey`](type-journey.md) · [`state`](type-state.md) · [`story-map`](type-story-map.md) |
 | **Hierarchy and structure** | [`tree`](type-tree.md) · [`pyramid`](type-pyramid.md) · [`layers`](type-layers.md) · [`nested`](type-nested.md) · [`org-chart`](type-org-chart.md) · [`uml-class`](type-uml-class.md) |
 | **Comparison and position** | [`quadrant`](type-quadrant.md) · [`radar`](type-radar.md) · [`venn`](type-venn.md) · [`wardley`](type-wardley.md) · [`security-matrix`](type-security-matrix.md) |
 | **Cause and effect** | [`fishbone`](type-fishbone.md) · [`loop`](type-loop.md) · [`dependency`](type-dependency.md) |
+| **Part of a whole** | [`donut`](type-donut.md) · [`funnel`](type-funnel.md) · `waffle` and `pictogram` are generated |
 | **Quantity** | [`bar`](type-bar.md) · [`line`](type-line.md) · [`scatter`](type-scatter.md) · [`sankey`](type-sankey.md) · [`treemap`](type-treemap.md) · [`polar`](type-polar.md) · [`gantt`](type-gantt.md) · [`timeline`](type-timeline.md) |
 | **Systems and data** | [`overview`](type-overview.md) · [`architecture`](type-architecture.md) · [`deployment`](type-deployment.md) · [`data-flow`](type-data-flow.md) · [`integration`](type-integration.md) · [`er`](type-er.md) · [`db-schema`](type-db-schema.md) · [`medallion`](type-medallion.md) |
 | **Work in progress** | [`kanban`](type-kanban.md) · [`current-future`](type-current-future.md) |

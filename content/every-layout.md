@@ -410,6 +410,130 @@ Four corners, four verdicts — and the accent marks the corner that cannot wait
 
 ---
 
+> how many of them
+
+## Waffle
+
+:::diagram waffle
+62 of 100 | of permits were signed before the work started
+:::
+
+A hundred squares, sixty-two filled. The reader can count the claim.
+
+---
+
+> one in how many
+
+## Pictogram
+
+:::diagram pictogram
+7 in 10 | engineers could not read the gauge
+:::
+
+The three empty figures are the point, so they are outlined rather than absent.
+
+---
+
+> how far through
+
+## Progress
+
+:::diagram progress
+Signed off | 62
+Isolated | 88
+Purged | 41
+Handed over | 95
+:::
+
+Each row against its own limit — a different question from a bar chart, which
+compares rows to each other.
+
+---
+
+> the headline figures
+
+## Stats
+
+:::diagram stats
+12 | incidents last year
+3 | had a permit
+0 | had a valid isolation
+:::
+
+Rules between them rather than boxes around them: three facts, not three cards.
+
+---
+
+> most of it was one thing
+
+## Donut
+
+:::diagram donut
+<svg viewBox="14 14 372 172" role="img" aria-label="Where the delays came from">
+  <g fill="none" stroke-width="30">
+    <circle class="dg-node" cx="100" cy="100" r="80" stroke="var(--accent-ink)"
+            stroke-dasharray="308.6 502.65" transform="rotate(-90 100 100)"/>
+    <circle class="dg-node" cx="100" cy="100" r="80" stroke="var(--ink-soft)"
+            stroke-dasharray="122.6 502.65" transform="rotate(133.2 100 100)"/>
+    <circle class="dg-node" cx="100" cy="100" r="80" stroke="var(--ink-soft)"
+            stroke-dasharray="65.4 502.65" transform="rotate(221.2 100 100)" opacity="0.55"/>
+  </g>
+  <g class="dg-label" fill="currentColor">
+    <text x="100" y="94" text-anchor="middle" font-size="40" font-weight="700"
+          fill="var(--accent-ink)">62%</text>
+    <text x="100" y="122" text-anchor="middle" font-size="13">waiting on a signature</text>
+    <text x="200" y="70" font-size="13">Signature — 62%</text>
+    <text x="200" y="104" font-size="13">Isolation — 25%</text>
+    <text x="200" y="138" font-size="13">Everything else — 13%</text>
+  </g>
+</svg>
+:::
+
+Five segments at most, one of them in the accent, and the figure in the hole so
+nobody has to estimate an angle.
+
+---
+
+> where they were lost
+
+## Funnel
+
+:::diagram funnel
+<svg viewBox="20 16 420 250" role="img" aria-label="Permits from raised to closed">
+  <g stroke="currentColor" stroke-width="1.4">
+    <rect class="dg-node" x="60" y="26" width="300" height="42" fill="var(--paper-2)"/>
+    <rect class="dg-node" x="105" y="86" width="210" height="42" fill="var(--paper-2)"/>
+    <rect class="dg-node" x="141" y="146" width="138" height="42" fill="var(--paper-2)"
+          stroke="var(--accent-ink)"/>
+    <rect class="dg-node" x="171" y="206" width="78" height="42" fill="var(--paper-2)"/>
+  </g>
+  <g class="dg-link" fill="none" stroke="var(--ink-soft)" stroke-width="1.1">
+    <path d="M60 68 L105 86"/><path d="M360 68 L315 86"/>
+    <path d="M105 128 L141 146"/><path d="M315 128 L279 146"/>
+    <path d="M141 188 L171 206"/><path d="M279 188 L249 206"/>
+    <path d="M249 227 L262 227"/>
+  </g>
+  <g class="dg-label" fill="currentColor" font-size="13">
+    <text x="210" y="52" text-anchor="middle">Raised — 420</text>
+    <text x="210" y="112" text-anchor="middle">Approved — 294</text>
+    <text x="210" y="172" text-anchor="middle" fill="var(--accent-ink)">Isolated — 193</text>
+    <text x="268" y="232" text-anchor="start">Closed — 109</text>
+    <g font-size="11" fill="var(--ink-soft)">
+      <text x="376" y="82">×0.70</text>
+      <text x="376" y="142" fill="var(--accent-ink)">×0.66</text>
+      <text x="376" y="202">×0.56</text>
+    </g>
+  </g>
+</svg>
+:::
+
+Widths are the values, so every narrowing is a real loss. The accent is on the
+worst drop, not on the last stage — and the last label sits outside its stage
+on a short leader, because it does not fit inside and shrinking type to make it
+fit is how a chart stops being readable.
+
+---
+
 > in this order
 
 ## Steps
