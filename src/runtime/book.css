@@ -438,6 +438,35 @@ body.open .book-3d {
     rgba(var(--rgb-deep),.42) 99%,
     rgba(var(--rgb-deep),.55) 100%);
 }
+/* ── NOTHING MAY READ ITS BACKDROP WHILE THE BOOK IS TURNING ───────────────
+   `mix-blend-mode` blends an element with whatever is painted behind it, and
+   `backdrop-filter` samples it. On a page lying flat that backdrop is the paper,
+   which is what both effects were written against and where they look right:
+   the fibre grain multiplies into the sheet, the plate's blur softens the page
+   under the drawing, the folio inverts itself so it reads over any photograph.
+
+   On a page being TURNED the backdrop is THE REST OF THE BOOK. The leaf then
+   composites against the pages behind it and the stage below them, so the sheet
+   goes see-through, its own bend shading disappears, and on a plate page the
+   blur smears the colours of everything behind into the turning leaf — reported
+   twice, the second time with a photograph of a page that had gone to rainbow.
+
+   Three separate rules had this and each looked entirely reasonable on its own:
+   the grain on `.page .half::before` (EVERY page), the blur on `img.plate`, and
+   the difference blend on a full-bleed page's folio. Enumerating them is how the
+   fourth one gets added later by somebody who never saw this comment, so the
+   suspension is a wildcard and `!important`, which is the one thing that beats
+   the specific rules it has to override. It costs nothing at rest: the selector
+   only matches while `.is-turning` is on the book, which is under a second. */
+.book-3d.is-turning .page,
+.book-3d.is-turning .page *,
+.book-3d.is-turning .page *::before,
+.book-3d.is-turning .page *::after {
+  mix-blend-mode: normal !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 /* PageFlip's moving shadows are separate elements, not classes on the leaf.
    During a turn our static curvature yields to its dynamic light instead of
    doubling the dark band at the fold. */
@@ -1056,10 +1085,25 @@ body.blackout { cursor: none; }
 .perf-min .bc-shadow { filter: blur(6px); opacity: .7; }
 .perf-min .floor { filter: none; opacity: .5; }
 .perf-min .book-3d { will-change: auto; }
-/* The gutter's third layer and the page-curvature gradient are the two most
-   expensive things painted per page, and both are depth cues rather than
-   content. */
-.perf-min .pl::before, .perf-min .pr::before { background: none; }
+/* THE PAGE KEEPS ITS BEND AT EVERY TIER, AND THIS IS A MEASUREMENT.
+   This rule used to strip `.pl::before` / `.pr::before` on the lowest tier, on
+   the stated grounds that the curvature gradient is "one of the two most
+   expensive things painted per page". It was reported as a bug — a flat,
+   hard-looking leaf — so the claim was tested rather than trusted: CPU
+   throttled 8x, forced to perf-min, six real page turns, 312 frames sampled
+   with the gradient off and on.
+
+       gradient off (as it was)   median 16.6ms   p95 24.3ms
+       gradient on  (as it is)    median 16.9ms   p95 23.7ms
+
+   0.3ms at the median and BETTER at the 95th percentile — inside the noise, on
+   a machine crippled eight-fold. It is not one of the two most expensive things
+   painted per page; it costs nothing worth having.
+
+   It also should never have been on the list. The tiers exist to give up
+   SCENERY and keep the BOOK — that is written at the top of this section — and
+   a sheet of paper that does not bend is not scenery, it is the thing the
+   reader opened. Nothing replaced it, because there was no cost to recover. */
 
 /* ── PORTRAIT: THE STAGE BECOMES ONE PAGE ────────────────────────────────
    `body.portrait` is set by fitStage() when a single page renders larger than

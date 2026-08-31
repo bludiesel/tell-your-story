@@ -2014,6 +2014,39 @@ check('book: shipped grain filter resolves',
     'the runtime keeps comparable marks honest and nothing tells an author to keep their own drawings honest')
 }
 
+// ── the page keeps its bend at every tier ───────────────────────────────────
+//
+// The performance tiers exist to give up SCENERY and keep the BOOK. `perf-min`
+// used to strip the page-curvature gradient, on the stated grounds that it is
+// "one of the two most expensive things painted per page". It was reported as
+// a bug — a flat, hard-looking leaf — and the claim did not survive being
+// measured: CPU throttled 8x, forced to perf-min, six real page turns and 312
+// frames each way, the gradient cost 0.3ms at the median and was 0.6ms BETTER
+// at the 95th percentile. Inside the noise.
+//
+// A sheet of paper that does not bend is not scenery.
+{
+  const css = (await readFile(join(ROOT, 'src', 'runtime', 'book.css'), 'utf8'))
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+
+  // The gradient itself must still be there for both leaves.
+  for (const side of ['pl', 'pr']) {
+    check(`bend: the ${side} leaf has a curvature gradient`,
+      new RegExp(`\\.stf__item\\.page\\.${side}::before\\s*\\{[^}]*linear-gradient`).test(css),
+      `nothing paints the bend on a ${side} leaf, so every page turn is a flat sheet sliding across`)
+  }
+
+  // And no tier may take it away. A BOARD is allowed to — a rigid cover does
+  // not curve, and `.cover::before` / `.divider::before` are blanked on purpose.
+  const stripped = [...css.matchAll(/(\.perf-[a-z]+[^{}]*::before[^{}]*)\{([^}]*)\}/g)]
+    .filter((m) => /background\s*:\s*none/.test(m[2]!) && /\.(pl|pr)::before/.test(m[1]!))
+    .map((m) => m[1]!.trim())
+  check('bend: no performance tier takes the bend away',
+    stripped.length === 0,
+    `${stripped.join(' / ')} blanks the page-curvature gradient — measured at 0.3ms, which is not ` +
+    'a saving worth a flat page')
+}
+
 // ── page treatments ─────────────────────────────────────────────────────────
 //
 // A treatment is what a page looks like it was PRINTED on; a layout is what it
@@ -2046,28 +2079,52 @@ check('book: shipped grain filter resolves',
     !/^\s*\.page[.\w-]*::after\s*[,{]/m.test(css) && /\.dress::after/.test(css),
     'a treatment is drawing on .page::after, which already carries the printed brand mark')
 
-  // 2b. NOTHING ON A PAGE MAY BLEND WITH WHAT IS BEHIND IT.
+  // 2b. NOTHING MAY READ ITS BACKDROP WHILE THE BOOK IS TURNING.
   //
-  // `mix-blend-mode: multiply` was used for the specimen's foxing and the press
-  // grain, and on a flat page it looked right — the backdrop it blends with is
-  // the paper. On a page being TURNED the backdrop is the pages underneath, so
-  // the whole leaf composites against them: the sheet goes see-through, its own
-  // bend shading disappears, and the grid and title block of the page below
-  // read straight through it. Reported as "the flip animation is broken", and
-  // photographed with only this one property changed.
+  // `mix-blend-mode` blends an element with what is painted behind it and
+  // `backdrop-filter` samples it. Flat on the desk that backdrop is the paper,
+  // which is what both were written against. Mid-turn it is the rest of the
+  // book, so the leaf composites against the pages behind it: see-through
+  // sheet, no bend shading, and on a plate page the blur smears everything
+  // behind it into the turning leaf.
   //
-  // The same trap is waiting for `backdrop-filter`, and for `opacity` on a page
-  // itself, so the check names all three.
-  // COMMENTS OUT FIRST, THEN MATCH ANYWHERE. The first version of this anchored
-  // to the start of a line, so a rule written inline — `{ mix-blend-mode:
-  // multiply; }` — sailed straight past it. Planted exactly that and the check
-  // passed, which is the whole reason to plant one.
-  const cssCode = css.replace(/\/\*[\s\S]*?\*\//g, '')
-  const blends = [...cssCode.matchAll(/(mix-blend-mode|backdrop-filter)\s*:/g)].map((m) => m[1])
-  check('treatments: nothing blends with what is behind the page',
-    blends.length === 0,
-    `${[...new Set(blends)].join(' ')} in treatments.css — during a turn the backdrop is the pages ` +
-    'underneath, so the leaf goes transparent and loses its bend')
+  // THIS CHECK USED TO READ ONE FILE — `treatments.css`, the one that had just
+  // been fixed — and passed while three more instances sat in the two files it
+  // did not open: the fibre grain on EVERY page, the plate's blur, and a
+  // full-bleed folio's difference blend. A guard aimed only at where the bug
+  // was last seen is not a guard. It reads every runtime stylesheet now.
+  //
+  // The rule is NOT "never blend". Blending is right at rest and each of those
+  // three looks correct on a page lying flat. The rule is that a blend must be
+  // SUSPENDED while `.is-turning` is on the book, and that suspension has to be
+  // a wildcard — enumerating the current offenders is how the next one gets
+  // added by somebody who never read this.
+  {
+    const sheets = ['book.css', 'curtain.css', 'layouts.css', 'treatments.css']
+    const all: string[] = []
+    for (const f of sheets) {
+      const text = (await readFile(join(ROOT, 'src', 'runtime', f), 'utf8'))
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+      for (const m of text.matchAll(/(mix-blend-mode|backdrop-filter)\s*:\s*([^;!}]+)/g)) {
+        const value = m[2]!.trim()
+        if (value === 'normal' || value === 'none') continue
+        all.push(`${f}: ${m[1]}: ${value}`)
+      }
+    }
+    const guard = (await readFile(join(ROOT, 'src', 'runtime', 'book.css'), 'utf8'))
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+    const suspends = /\.is-turning[^{]*\*[^{]*\{[^}]*mix-blend-mode:\s*normal[^}]*\}/s.test(guard)
+      && /\.is-turning[^{]*\*[^{]*\{[^}]*backdrop-filter:\s*none[^}]*\}/s.test(guard)
+    check(`backdrop: the ${all.length} blend(s) on a page are suspended while it turns`,
+      all.length === 0 || suspends,
+      'these read their backdrop and nothing switches them off mid-turn, so the leaf will go ' +
+      `transparent as it moves:\n                ${all.join('\n                ')}`)
+    check('backdrop: the suspension is a wildcard, not a list of today\'s offenders',
+      // `\\*\\s*[,{]` — the BARE universal selector, not `*::before`, which
+      // contains the same characters and let a narrowed suspension pass.
+      !suspends || /\.is-turning \.page \*\s*[,{]/.test(guard),
+      'the mid-turn suspension names specific selectors — the next blend anyone adds will not be covered')
+  }
 
   const layout = await readFile(join(ROOT, 'src', 'layout.ts'), 'utf8')
   const names = [...(/export const TREATMENTS = new Set\(\[([^\]]*)\]/.exec(layout)?.[1] ?? '')

@@ -450,6 +450,20 @@ Three more, from the same principle:
   movement on a spread is a supporting detail, the motion is arguing with the
   writing.
 
+**Nothing on a page may read its backdrop.** `mix-blend-mode` blends an element
+with what is painted behind it and `backdrop-filter` samples it. Flat on the
+desk that backdrop is the paper, which is what both are for. Mid-turn it is the
+rest of the book — so the leaf composites against the pages behind it and goes
+see-through, losing its own bend. Both are suspended automatically while the
+book is turning, and a check keeps that suspension a wildcard rather than a list
+of the offenders that existed on the day it was written.
+
+**The page keeps its bend at every performance tier.** The tiers give up
+scenery — depth of field, a second floor shadow, a cloth simulation — and a
+sheet of paper that does not bend is not scenery. Measured before deciding: CPU
+throttled 8×, forced to the lowest tier, six real page turns, the curvature
+gradient costs 0.3ms at the median and is *better* at the 95th percentile.
+
 And the kit's own rule, which is not negotiable: **entrance animation must fail
 VISIBLE**. Anything hidden to be revealed is hidden by JavaScript, so a runtime
 that never starts leaves a plain, readable page rather than a blank one.
