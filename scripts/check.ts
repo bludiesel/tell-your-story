@@ -2046,6 +2046,29 @@ check('book: shipped grain filter resolves',
     !/^\s*\.page[.\w-]*::after\s*[,{]/m.test(css) && /\.dress::after/.test(css),
     'a treatment is drawing on .page::after, which already carries the printed brand mark')
 
+  // 2b. NOTHING ON A PAGE MAY BLEND WITH WHAT IS BEHIND IT.
+  //
+  // `mix-blend-mode: multiply` was used for the specimen's foxing and the press
+  // grain, and on a flat page it looked right — the backdrop it blends with is
+  // the paper. On a page being TURNED the backdrop is the pages underneath, so
+  // the whole leaf composites against them: the sheet goes see-through, its own
+  // bend shading disappears, and the grid and title block of the page below
+  // read straight through it. Reported as "the flip animation is broken", and
+  // photographed with only this one property changed.
+  //
+  // The same trap is waiting for `backdrop-filter`, and for `opacity` on a page
+  // itself, so the check names all three.
+  // COMMENTS OUT FIRST, THEN MATCH ANYWHERE. The first version of this anchored
+  // to the start of a line, so a rule written inline — `{ mix-blend-mode:
+  // multiply; }` — sailed straight past it. Planted exactly that and the check
+  // passed, which is the whole reason to plant one.
+  const cssCode = css.replace(/\/\*[\s\S]*?\*\//g, '')
+  const blends = [...cssCode.matchAll(/(mix-blend-mode|backdrop-filter)\s*:/g)].map((m) => m[1])
+  check('treatments: nothing blends with what is behind the page',
+    blends.length === 0,
+    `${[...new Set(blends)].join(' ')} in treatments.css — during a turn the backdrop is the pages ` +
+    'underneath, so the leaf goes transparent and loses its bend')
+
   const layout = await readFile(join(ROOT, 'src', 'layout.ts'), 'utf8')
   const names = [...(/export const TREATMENTS = new Set\(\[([^\]]*)\]/.exec(layout)?.[1] ?? '')
     .matchAll(/'([a-z-]+)'/g)].map((m) => m[1]!)

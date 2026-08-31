@@ -95,7 +95,14 @@
      started reading as water damage, which is a different and much less
      flattering story about the book. */
   opacity: 0.4;
-  mix-blend-mode: multiply;
+  /* NO mix-blend-mode HERE, AND THIS IS NOT A STYLE PREFERENCE.
+     `multiply` blends an element with its BACKDROP — everything painted behind
+     it. On a flat page that backdrop is the paper, which is what it was written
+     for. On a page being TURNED it is the pages underneath, so the whole leaf
+     composites against them: the sheet goes see-through, its own bend shading
+     vanishes, and the grid and title block of the page below read straight
+     through it. Photographed side by side with only this property changed.
+     Plain alpha in a paper tone over paper looks the same and survives a turn. */
 }
 
 /* Fig. N. — the numbering that makes a drawing a specimen rather than a
@@ -295,8 +302,15 @@
   /* Grain over the whole sheet. `--grain` is the kit's own noise texture, so
      this is the same paper the rest of the book is printed on, turned up. */
   background-image: var(--grain);
-  opacity: 0.5;
-  mix-blend-mode: multiply;
+  opacity: 0.42;
+  /* NO mix-blend-mode HERE, AND THIS IS NOT A STYLE PREFERENCE.
+     `multiply` blends an element with its BACKDROP — everything painted behind
+     it. On a flat page that backdrop is the paper, which is what it was written
+     for. On a page being TURNED it is the pages underneath, so the whole leaf
+     composites against them: the sheet goes see-through, its own bend shading
+     vanishes, and the grid and title block of the page below read straight
+     through it. Photographed side by side with only this property changed.
+     Plain alpha in a paper tone over paper looks the same and survives a turn. */
 }
 
 /* THE MISREGISTRATION. One ink prints a hair behind the other — always the
