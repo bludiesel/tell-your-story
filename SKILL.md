@@ -344,6 +344,78 @@ code. Build it as inline SVG so the existing GSAP timeline can animate only
 the meaningful parts; keep it transform/opacity based and tear it down when
 the reader leaves the spread.
 
+## Read your own book before you hand it over
+
+`doctor` answers whether anything is BROKEN. Nothing in it can tell you whether
+the book is any good, and the three questions below are where a finished book
+usually falls down. Adapted from the review pass in
+[epic-infographics](https://github.com/OrRon/EpicInfographics) (MIT), which
+earned them by shipping a lot of graphics people did not like.
+
+### 1. Did the form get chosen, or did it just happen?
+
+**Pick the form by the question the data answers, not by the block you used
+last.** The questions, and what answers them:
+
+| The reader wants to know | Reach for |
+|---|---|
+| How big is it? | one big number — `:::big`, or `:::diagram stats` for two to four |
+| How many of them? | `:::diagram waffle` or `pictogram` — countable, so it can be verified by eye |
+| Compared to what? | `:::diagram bars`, or `:::compare` for exactly two things |
+| How far through? | `:::diagram progress` — each row against its own limit |
+| What share? | a `donut` grammar, and only when ONE share dominates |
+| Where were they lost? | a `funnel` grammar, widths true to the values |
+| In what order? | `:::steps` if it is linear, `:::diagram flow` only if it BRANCHES |
+| When? | `:::timeline` across the gutter |
+| Why did it happen? | a `fishbone` grammar |
+
+**The same form three times on one spread is a failure even when each one is
+correct.** A book that answers every question with a bar chart has stopped
+choosing.
+
+And the honest test before any of it: **would a sentence say this better?** A
+chart of two values is a sentence that has been made harder to read.
+
+### 2. The squint test, and the four ways a book looks generated
+
+Look at a spread the way a reader does — for two seconds, without reading it.
+
+- **Cover the words. Is the subject still recognisable?** If the page is only
+  type on paper, nothing on it belongs to this book in particular.
+- **Could this spread hold a completely different lesson unchanged?** Then it is
+  a template, not a page.
+- **Is every block the same size, evenly spaced, nothing overlapping anything?**
+  Even spacing everywhere reads as wallpaper. A book has a `:::sticky` pressed
+  over a paragraph, a plate bleeding off an edge, a `:::big` with silence
+  around it.
+- **Is everything the same weight?** If the largest thing on the spread is not
+  several times the body text, there is no hierarchy to follow.
+
+An emoji standing in for an icon fails all four at once.
+
+### 3. Motion has to stay truthful
+
+The rule that matters, and the one that is easy to break by accident:
+
+**Comparable marks animate for the SAME duration. Sequence comes from
+staggering their delays, never from giving them different speeds.** Three bars
+that grow at three speeds show a false ratio in every frame between the start
+and the end — the animation is then lying for about a second, which is roughly
+how long anyone looks at it. `animateDiagrams` is written this way and a check
+holds it there: one duration per family, order from `stagger`.
+
+Three more, from the same principle:
+
+- **A count-up ends exactly on the value**, never on a rounder neighbour.
+- **Nothing animates an axis or a baseline** once data has appeared against it.
+- **The biggest beat belongs to the thing the page is about.** If the largest
+  movement on a spread is a supporting detail, the motion is arguing with the
+  writing.
+
+And the kit's own rule, which is not negotiable: **entrance animation must fail
+VISIBLE**. Anything hidden to be revealed is hidden by JavaScript, so a runtime
+that never starts leaves a plain, readable page rather than a blank one.
+
 ## Every script, and what it is for
 
 Scripts here exist to help an assistant **think and execute better**. This is a

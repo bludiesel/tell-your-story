@@ -1979,6 +1979,41 @@ check('book: shipped grain filter resolves',
     'a riffle wants a turn per step, not a run of cuts')
 }
 
+// ── motion stays truthful ───────────────────────────────────────────────────
+//
+// SKILL.md tells whoever is writing a book that comparable marks animate for
+// the same DURATION and that sequence comes from staggering their DELAYS. That
+// is not a style note: three bars growing at three speeds show a false ratio in
+// every frame between the start and the end, and the frames in between are
+// roughly all anyone looks at.
+//
+// A rule in a document that the runtime does not follow is worse than no rule,
+// so this holds the two together.
+{
+  const runtime = await readFile(join(ROOT, 'src', 'runtime', 'book.ts'), 'utf8')
+  const anim = /function animateDiagrams[\s\S]*?\n  \}/.exec(runtime)?.[0] ?? ''
+
+  const durations = [...anim.matchAll(/duration: ([\d.]+)/g)].map((m) => Number(m[1]))
+  const bars = /if \(bars\.length\) \{[\s\S]*?\n        \}/.exec(anim)?.[0] ?? ''
+  const barDurations = [...bars.matchAll(/duration: ([\d.]+)/g)].map((m) => Number(m[1]))
+  check('motion: every bar in a chart grows for the same length of time',
+    barDurations.length > 0 && new Set(barDurations).size === 1,
+    `bars animate over ${[...new Set(barDurations)].join(' and ')} seconds — ` +
+    'marks the reader compares must share a duration, or every mid-flight frame is a false ratio')
+  check('motion: their order comes from staggered delays',
+    /stagger: [\d.]+/.test(bars),
+    'the bars have no stagger, so either they all arrive at once or someone will be tempted to ' +
+    'sequence them by changing durations, which is the thing that lies')
+  check('motion: nodes and labels are staggered rather than raced',
+    (anim.match(/stagger: [\d.]+/g) ?? []).length >= 3 && durations.length >= 4,
+    'a family of shapes is being sequenced some other way — check it is not by duration')
+
+  const skill = await readFile(join(ROOT, 'SKILL.md'), 'utf8')
+  check('motion: the rule is written down where a book author will read it',
+    /same duration/i.test(skill) && /stagger/i.test(skill),
+    'the runtime keeps comparable marks honest and nothing tells an author to keep their own drawings honest')
+}
+
 // ── the four generated data forms ───────────────────────────────────────────
 //
 // A waffle, a pictogram, a progress meter and a stat row are common enough that
