@@ -1961,22 +1961,54 @@ check('book: shipped grain filter resolves',
 // SUPPOSED to place the page without animating, and a final position tidy-up.
 {
   const runtime = await readFile(join(ROOT, 'src', 'runtime', 'book.ts'), 'utf8')
+  const css = await readFile(join(ROOT, 'src', 'runtime', 'book.css'), 'utf8')
   const body = /async function riffle\(\)[\s\S]*?\n  \}/.exec(runtime)?.[0] ?? ''
+  const turn = /function flipPrevAndWait\(\)[\s\S]*?\n  \}/.exec(runtime)?.[0] ?? ''
+  // `[^}]*` and NOT `[\s\S]*?`. The lazy any-character version reads as if it
+  // were scoped to the rule and is not: it runs straight past the closing brace
+  // and matches the first `overflow: hidden` anywhere later in the file, of
+  // which this stylesheet has several. Written that way, the check PASSED with
+  // the declaration deleted from `#book` — a guard that guards nothing, which
+  // is worse than no guard because it reports safety. Bounded to the block, it
+  // fails the moment the clip leaves the book.
+  const bookRule = /#book\s*\{[^}]*\}/.exec(css)?.[0] ?? ''
+  check('page flip: transient render frames are clipped to the physical book',
+    /overflow:\s*hidden/.test(bookRule),
+    'PageFlip leaves its temporary transformed leaves unclipped, so a perspective frame can leak below the book')
   check('riffle: every step of the riffle is a real page turn',
-    /flipPrev\(/.test(body),
+    /await flipPrevAndWait\(\)/.test(body) && /flipPrev\(/.test(turn),
     'the riffle animates nothing — it places pages, so the pages cut instead of turning')
-  // TWO of them: the stepping loop and the uninterrupted final turn. One would
-  // mean the loop still places its pages and only the last leaf moves — which
-  // is exactly the bug, wearing a flipPrev as a disguise. The paired ceiling on
-  // turnToPage keeps the reduced-motion path and the end-position tidy legal
-  // and nothing else. (Written this way because the first draft, `turnToPage
-  // <= 2` alone, PASSED on the broken code — it had exactly two.)
-  const places = (body.match(/turnToPage\(/g) ?? []).length
-  const turns = (body.match(/flipPrev\(/g) ?? []).length
   check('riffle: it turns pages rather than placing them',
-    turns >= 2 && places <= 2,
-    `${turns} animated turns and ${places} instant placements in riffle() — ` +
-    'a riffle wants a turn per step, not a run of cuts')
+    (body.match(/turnToPage\(/g) ?? []).length <= 2 &&
+      /if \(index\(\) > 0\) flip\.turnToPage\(0\)/.test(body),
+    'only the reduced-motion path and final front-cover tidy-up may place a page')
+  check('riffle: a leaf settles before the next turn starts',
+    /settleTurn\?\.\(\)/.test(runtime) && /await flipPrevAndWait\(\)/.test(body),
+    'overlapping PageFlip animations force-finish one another and leak temporary leaves')
+
+  // ── none of that waiting may depend on a frame being served ──────────────
+  // Awaiting a leaf is only safe because every wait behind it is a TIMER.
+  // PageFlip delivers `changeState: read` from inside its own animation loop,
+  // so the settlement arrives only while frames are being served — and a tab
+  // that loses focus mid-riffle is served none. Measured on a backgrounded
+  // tab: the frame-based version stalled at spread 17 of 32 and stayed stuck
+  // in `body.riffling` for good, controls dead, while the timer-paced riffle
+  // rode the same throttle all the way to the cover.
+  //
+  // Both halves are load-bearing. The ceiling is what releases a turn that is
+  // never animated; the declined-turn probe has to be a timer too, or the book
+  // hangs at the front instead of in the middle — which is how the first draft
+  // of this repair failed. So: a ceiling derived from the real flip duration,
+  // and not one requestAnimationFrame anywhere in the helper.
+  check('riffle: a throttled turn cannot hold the loop for ever',
+    /setTimeout\(\s*\(\)\s*=>\s*settle\(true\),\s*FLIP_MS \+ \d+\s*\)/.test(turn),
+    'a turn that is never animated never resolves, and the riffle hangs with the book stuck mid-book')
+  check('riffle: none of its waiting is on an animation frame',
+    turn !== '' && !/requestAnimationFrame/.test(turn),
+    'a wait on requestAnimationFrame never fires in a backgrounded tab, so the riffle deadlocks')
+  check('riffle: the turn ceiling follows the real flip duration',
+    /const FLIP_MS = reducedMotion \? 1 : \d+/.test(runtime) && /flippingTime: FLIP_MS/.test(runtime),
+    'a second copy of the flip duration drifts away from the one PageFlip is animating to')
 }
 
 // ── motion stays truthful ───────────────────────────────────────────────────

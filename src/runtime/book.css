@@ -166,6 +166,27 @@ body.open .closed-stage::after { opacity: 0; transition: opacity .5s ease .2s; }
 }
 @keyframes bc-pulse { 0%,100% { opacity: .45 } 50% { opacity: .95 } }
 
+/* The curtain does not reveal a book that has already been drifting for an
+   arbitrary amount of time. It gives it one quiet approach into the pool of
+   light, then the cover can move. There is deliberately no bounce at the end:
+   a weighted settle immediately before a hinge swing reads as a jerk. The last
+   pose is the float's resting pose, so the next transition has a physical
+   starting point instead of a visible snap. */
+@keyframes bc-arrive {
+  0%   { transform: rotateX(58deg) rotateZ(-16deg) scale(.565) translateY(12px) translateZ(-16px) }
+  100% { transform: rotateX(56deg) rotateZ(-14deg) scale(.58) translateY(0) translateZ(0) }
+}
+@keyframes bc-shadow-arrive {
+  0%   { transform: translate(-50%,7px) scale(.82); opacity: .42 }
+  100% { transform: translate(-50%,0) scale(1); opacity: .85 }
+}
+body.book-arriving .book-closed {
+  animation: bc-arrive 1.12s cubic-bezier(.18,.92,.24,1) both;
+}
+body.book-arriving .bc-shadow {
+  animation: bc-shadow-arrive 1.12s cubic-bezier(.18,.92,.24,1) both;
+}
+
 /* ── opening: the cover actually swings ────────────────────────────────────
    The old version faded the closed book out and faded the open one in, which
    is a dissolve, not an opening. Now it happens in three beats:
@@ -181,11 +202,11 @@ body.open .closed-stage::after { opacity: 0; transition: opacity .5s ease .2s; }
 /* TIMING IS THE WHOLE TRICK HERE, so the beats are written out once and the
    numbers below are read off this table rather than invented per rule:
 
-     0.00 - 0.58   the volume expands to the final page geometry
-     0.28 - 1.08   the cover swings on its spine
-     0.62 - 0.92   the side faces (spine, fore-edge, top) go
-     0.74 - 1.04   the closed volume retires
-     0.80 - 1.22   the open spread settles in behind it
+     0.00 - 0.72   the volume expands to the final page geometry
+     0.22 - 1.14   the cover swings on its spine
+     0.70 - 0.98   the side faces (spine, fore-edge, top) go
+     0.90 - 1.20   the closed volume retires
+     0.68 - 1.36   the open spread settles in behind it
 
    A measured trace of the previous version showed the closed book AND the open
    spread BOTH at full opacity for 900ms, then the closed book vanishing a
@@ -201,14 +222,14 @@ body.open .book-closed {
   /* The retirement is part of the OPENING, not a separate late step keyed off
      `opened-done`. That was the 900ms stall. */
   opacity: 0;
-  transition: transform .58s cubic-bezier(.22,.86,.3,1),
-              opacity .22s ease 1.04s;
+  transition: transform .72s cubic-bezier(.18,.9,.28,1),
+              opacity .20s ease 1.20s;
 }
 body.open .bc-front {
   transform-origin: left center;
   /* -180deg leaves the cover flat over the left leaf before it hands off. */
   transform: translate(-50%,-50%) translateZ(calc(var(--bt) / 2)) rotateY(-180deg);
-  transition: transform .80s cubic-bezier(.22,.82,.28,1) .28s;
+  transition: transform .92s cubic-bezier(.18,.86,.28,1) .22s;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 24px 0 60px -14px rgba(0,0,0,.75);
 }
 /* The side faces go BEFORE the cover finishes: once the volume is edge-on they
@@ -216,7 +237,7 @@ body.open .bc-front {
    flat card rotating rather than a board coming off a block of pages. */
 body.open .bc-back, body.open .bc-spine, body.open .bc-fore,
 body.open .bc-top, body.open .bc-bottom, body.open .bc-hint {
-  opacity: 0; transition: opacity .24s ease .62s;
+  opacity: 0; transition: opacity .28s ease .70s;
 }
 body.opened-done .book-closed { pointer-events: none; }
 
@@ -312,7 +333,7 @@ body.open .closed-stage { pointer-events: none; }
   transform: translate(-50%, -50%) scale(calc(var(--fit) * .965)) translateY(20px);
   /* The spread arrives as the cover reaches its flat, page-sized geometry.
      They now share a spine and dimensions, so this is a handoff, not a swap. */
-  transition: opacity .42s ease .62s, transform .58s cubic-bezier(.16,1,.3,1) .62s;
+  transition: opacity .46s ease .68s, transform .68s cubic-bezier(.16,1,.3,1) .68s;
 }
 /* `transform: none` here would drop the fit scale and slam the book to its full
    1560px the instant it opened. Every state carries the fit. */
@@ -322,7 +343,15 @@ body.open .book-3d {
 }
 
 #book {
-  position: relative; z-index: 2; width: 100%; height: 100%; background: transparent;
+  position: relative; z-index: 2; width: 100%; height: 100%; overflow: hidden;
+  /* PageFlip temporarily paints the turning leaf and the leaf beneath it at
+     3D-transformed coordinates.  Its stock stylesheet leaves the render block
+     unclipped, so a perspective frame can escape below the physical book (the
+     detached page visible during a riffle).  The book edge is the correct
+     mask: page-flip still owns the fold with each leaf's clip-path, while no
+     transient renderer frame can leak onto the stage. */
+  isolation: isolate;
+  background: transparent;
   box-shadow: 0 2px 0 var(--paper-edge), 0 4px 0 var(--paper-edge-2),
               0 6px 0 var(--paper-edge-3), 0 8px 0 var(--paper-edge-4);
 }

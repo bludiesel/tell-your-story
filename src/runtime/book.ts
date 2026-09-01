@@ -27,6 +27,12 @@ function boot(): void {
   const pages = document.querySelectorAll<HTMLElement>('#book > .page')
   const total = pages.length
   const reducedMotion = prefersReducedMotion()
+  /**
+   * How long one leaf takes to go over. Named because the riffle has to bound
+   * its own waiting against it, and a second copy of the number would drift
+   * away from the one PageFlip is actually animating to.
+   */
+  const FLIP_MS = reducedMotion ? 1 : 820
 
   // ── FIT THE FIXED STAGE TO THE WINDOW ──────────────────────────────────
   // The stage is 1560 x 1040 and is scaled to fit by one transform, which is
@@ -354,7 +360,7 @@ function boot(): void {
       drawShadow: true,
       // page-flip rejects 0. Reduced-motion navigation uses turnToPage below,
       // but the constructor still needs a valid positive duration.
-      flippingTime: reducedMotion ? 1 : 820,
+      flippingTime: FLIP_MS,
       clickEventForward: true,
       // Taps must never turn the page — pages carry interactive content.
       // Corner drags and the buttons still work.
@@ -1255,6 +1261,8 @@ function boot(): void {
   const currentStride = (): number =>
     [...pages].filter((page) => getComputedStyle(page).display !== 'none').length > 1 ? 2 : 1
   let requestedDirection = 0
+  /** One optional waiter for the control that needs a complete physical turn. */
+  let settleTurn: (() => void) | null = null
   flip.on('changeState', (e) => {
     const state = String(e.data)
     rail?.classList.toggle('turning', state !== 'read')
@@ -1278,6 +1286,8 @@ function boot(): void {
       updateStacks()
       sync(false)
       scheduleReveal()
+      settleTurn?.()
+      settleTurn = null
     }
   })
 
@@ -1429,19 +1439,54 @@ function boot(): void {
    * you were is a jump cut, and the reader loses all sense of how far they had
    * come.
    *
-   * SO EVERY STEP IS A REAL TURN NOW. `flipPrev()` is StPageFlip's own
-   * one-leaf-back animation, and firing the next one before the last has
-   * finished is not a bug to avoid — it is the effect. The library cancels the
-   * in-flight turn and starts the next from where the paper actually is, which
-   * is exactly what a riffle looks like: pages caught part-way over, each one
-   * overtaken by the one behind it.
-   *
-   * The cadence decelerates, so it tears away from where you were and settles
-   * onto the front rather than stopping dead — a real riffle loses momentum
-   * against the thumb. The last turn is left alone to finish, because the one
-   * page you actually see land should land properly.
+   * The previous version started another `flipPrev()` every 110ms. PageFlip
+   * does not queue overlapping animations: it force-finishes the active one,
+   * leaving its temporary leaf and shadow in an indeterminate render state.
+   * That is the escaped sheet shown beneath the book. Wait for its documented
+   * `changeState: read` settlement before starting the next real turn.
    */
   let riffling = false
+  /**
+   * One leaf back, resolved when it has actually landed — `true` if it turned,
+   * `false` if PageFlip declined because the book is already at the front.
+   *
+   * EVERY WAIT IN HERE IS A TIMER, and that is the whole point. PageFlip
+   * delivers `changeState: read` from inside its own animation loop, so the
+   * settlement only arrives while frames are being served. A tab that loses
+   * focus mid-riffle stops being served them: the promise never settles, the
+   * loop above never advances, and the book is stranded in `body.riffling`
+   * with dead controls. Measured on a backgrounded tab — the frame-based
+   * version stalled at spread 17 of 32 and stayed there indefinitely, while
+   * the timer-paced riffle rode the same throttle all the way to the cover.
+   *
+   * So there are two timers and no `requestAnimationFrame`. The short one asks
+   * whether the turn was declined outright, which is knowable as soon as the
+   * call returns. The ceiling is the one that matters: whatever happens to the
+   * frame clock, a turn yields the loop shortly after it was due, and a riffle
+   * can always finish.
+   */
+  function flipPrevAndWait(): Promise<boolean> {
+    return new Promise((resolve) => {
+      let done = false
+      let ceiling = 0
+      function finish(): void { settle(true) }
+      function settle(turned: boolean): void {
+        if (done) return
+        done = true
+        clearTimeout(ceiling)
+        if (settleTurn === finish) settleTurn = null
+        resolve(turned)
+      }
+      settleTurn = finish
+      flip.flipPrev('bottom')
+      // At the front PageFlip declines the request without changing state.
+      setTimeout(() => {
+        if (!stage?.classList.contains('is-turning')) settle(false)
+      }, 32)
+      ceiling = window.setTimeout(() => settle(true), FLIP_MS + 400)
+    })
+  }
+
   async function riffle(): Promise<void> {
     if (riffling) return
     const from = index()
@@ -1456,30 +1501,23 @@ function boot(): void {
       return
     }
 
-    // Spreads, not pages: a two-page leaf turns as one.
+    // Spreads, not pages: a two-page leaf turns as one.  Each call is allowed
+    // to land before the next begins; PageFlip's public state event is the
+    // stable boundary the library exposes for that purpose.
     const leaps = Math.ceil((from - (from % 2)) / 2) || 1
-
-    // 110ms is well inside a turn's own 850ms, so each page is overtaken while
-    // it is still moving — pages part-way over, stacking up, which is the whole
-    // look. Opening out to 320 lets the last two read as separate turns so the
-    // eye can follow the book back onto its cover instead of being dumped there.
-    for (let n = 0; n < leaps - 1; n++) {
-      flip.flipPrev('bottom')
+    for (let n = 0; n < leaps; n++) {
+      if (!await flipPrevAndWait()) break
       updateStacks()
-      const t = leaps > 2 ? n / (leaps - 2) : 1
-      await new Promise((r) => setTimeout(r, 110 + 210 * t * t))
     }
 
-    // The last one is not interrupted. Everything before it was a blur on the
-    // way past; this is the page the reader is left looking at.
-    flip.flipPrev('bottom')
-    await new Promise((r) => setTimeout(r, 900))
-    updateStacks()
-
-    // A cancelled turn can leave the engine a leaf short of the front — the
-    // cost of interrupting on purpose. Placing the last leaf costs nothing
-    // visually here, because the book is already showing the front spread.
+    // The riffle's promise to the reader is the cover, and the loop above can
+    // stop a leaf or two short of it: a turn may be declined, or hit its
+    // ceiling against a throttled frame clock and yield before PageFlip
+    // finished placing the leaf. Placing whatever is left costs nothing to
+    // look at, because by now the book is already showing the front spread —
+    // and without it the reader is dropped somewhere in the middle instead.
     if (index() > 0) flip.turnToPage(0)
+    updateStacks()
 
     document.body.classList.remove('riffling')
     riffling = false
@@ -1595,8 +1633,21 @@ function boot(): void {
 
   // ── opening the book ────────────────────────────────────────────────────
   let opened = false
+  let openingQueued = false
   function open(): void {
-    if (opened) return
+    if (opened || openingQueued) return
+    // A finished keyframe animation cannot become a CSS transition's source
+    // value in the same paint. Let the final floating pose re-enter the normal
+    // style for two frames, then open from that exact physical pose.
+    if (document.body.classList.contains('book-arriving')) {
+      openingQueued = true
+      document.body.classList.remove('book-arriving')
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        openingQueued = false
+        open()
+      }))
+      return
+    }
     opened = true
     document.body.classList.add('open')
 
@@ -1614,7 +1665,7 @@ function boot(): void {
     // and only then is the cover retired.
     // CSS owns the physical motion (see the timing table in book.css); this
     // timeline is the CLOCK that keeps JS in step with it. Its length must
-    // therefore match the last CSS beat — 1.22s — not exceed it. It used to run
+    // therefore match the last CSS beat — 1.36s — not exceed it. It used to run
     // to 2.05s, because `.to({}, {duration: 1.15})` with no position appends
     // AFTER the 0.9s call rather than starting at zero, leaving ~800ms of dead
     // air in which nothing moved and the closed cover sat over the open spread.
@@ -1623,8 +1674,8 @@ function boot(): void {
     })
       // Page content begins arriving as the spread settles, not after it has
       // landed, so the two motions read as one continuous reveal.
-      .call(() => { sync(false); scheduleReveal() }, undefined, 0.86)
-      .to({}, { duration: 1.25 }, 0)
+      .call(() => { sync(false); scheduleReveal() }, undefined, 0.92)
+      .to({}, { duration: 1.36 }, 0)
   }
 
   /**
@@ -1681,7 +1732,7 @@ function boot(): void {
     await curtain?.close()
     // Only now is the cloth back down and covering the book, so restoring the
     // resting state cannot be seen.
-    document.body.classList.remove('closing')
+    document.body.classList.remove('closing', 'book-arriving')
     resumed = false
     closing = false
   }
@@ -1746,13 +1797,15 @@ function boot(): void {
   // curtain closed -> drawn back -> the floating book is revealed -> tap it to
   // open. The curtain stops intercepting clicks once it has finished so the
   // book underneath becomes reachable.
+  /** Matches the curtain-settle choreography in book.css. */
+  const BOOK_REVEAL_MS = 1120
   const curtain = initCurtain(() => {
-    document.body.classList.add('curtain-done')
-    // One continuous piece of theatre: the cloth parts, the revealed book is
-    // allowed a beat to be seen floating, and then it opens on its own. A
-    // reader who taps during that beat just gets there sooner — `open()` is
-    // idempotent, so the two paths cannot collide.
-    if (!reducedMotion) setTimeout(open, 1200)
+    document.body.classList.add('curtain-done', 'book-arriving')
+    // Do not leave a static pause between curtain and cover. The book spends
+    // this beat lifting into the stage light, then its final pose is exactly
+    // the resting float from which the cover can physically open. A reader who
+    // taps during it still gets there sooner — `open()` is idempotent.
+    if (!reducedMotion) setTimeout(open, BOOK_REVEAL_MS)
     else open()
   })
 
