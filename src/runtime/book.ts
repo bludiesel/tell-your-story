@@ -195,13 +195,32 @@ function boot(): void {
   // slow machine still gets paper, type, turns and reveals. What they lose is
   // depth-of-field, a second floor shadow and a cloth simulation — none of
   // which is the reason anybody opened the file.
+  // Whether the standing verdict was reached without a usable view of the
+  // machine. Not a detail of one grading run — the next visibilitychange has to
+  // read it, so it outlives the closure that sets it.
+  let gradedBlind = false
   const grade = () => {
     const frames: number[] = []
+    // A VERDICT REACHED WITHOUT FRAMES IS A GUESS, AND MUST SAY SO.
+    //
+    // A tab that boots in the background is served either no frames or a
+    // handful of heavily throttled ones. Neither describes the machine. The
+    // throttled case is the dangerous one: eight frames a second apart trip the
+    // early bail-out and the page is condemned to `perf-min` — scenery stripped
+    // off a machine that may be perfectly fast — and because `settle` always
+    // writes `data-perf`, the visibility re-grade below then declines to run,
+    // so the guess stands for the life of the page.
+    //
+    // Recorded here rather than read at settle time, because a tab can be shown
+    // halfway through the measurement and the frames already taken are still
+    // worthless.
+    let blind = document.hidden
     const startedAt = performance.now()
     let last = startedAt
     let raf = 0
     const tick = () => {
       const now = performance.now()
+      if (document.hidden) blind = true
       frames.push(now - last)
       last = now
 
@@ -232,6 +251,7 @@ function boot(): void {
     }
     const settle = (forced?: 'perf-min') => {
       cancelAnimationFrame(raf)
+      gradedBlind = blind
       // The first few frames include layout and font work and are never
       // representative; the median of the rest is. But DO NOT slice away
       // samples we do not have — the early bail-out stops at eight frames, and
@@ -277,7 +297,8 @@ function boot(): void {
   // Grade again when the tab is actually looked at. The first attempt may have
   // run entirely in the background, where there was nothing to measure.
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && !document.documentElement.dataset.perf) grade()
+    if (document.visibilityState !== 'visible') return
+    if (!document.documentElement.dataset.perf || gradedBlind) grade()
   })
   let regrade: ReturnType<typeof setTimeout> | undefined
   window.addEventListener('resize', () => {
@@ -616,6 +637,11 @@ function boot(): void {
    * sentence takes its time. A constant duration is the single biggest tell.
    */
   function typeOn(el: HTMLElement, tl: gsap.core.Timeline, at: number): void {
+    // Text arriving one character at a time is motion the reader cannot look
+    // away from, and it drives a custom property the stylesheet's reduced-motion
+    // rule has no way to override. The line is already in the DOM in full;
+    // declining to type it is what shows it.
+    if (reducedMotion) { el.classList.remove('hand-writing'); return }
     const chars = (el.textContent ?? '').length
     // Recorded so restoreTyped() can put it back if a turn interrupts mid-write.
     typed.push({ el, full: el.textContent ?? '' })
@@ -655,6 +681,16 @@ function boot(): void {
    * paragraph above it has already spent its one moment of attention.
    */
   function animateDiagrams(root: HTMLElement, tl: gsap.core.Timeline, at: number): void {
+    // The reduced-motion rule in the stylesheet reaches `.reveal` and stops
+    // there. Everything below is a tween on a mark INSIDE the block, which that
+    // rule never mentions — and GSAP writes inline styles, so a `!important`
+    // declaration on a container could not have suppressed it anyway. The guard
+    // has to be here, in the code that starts the motion.
+    //
+    // Returning is the whole fix: every tween below animates FROM a temporary
+    // state TO the mark's resting one, so a tween that never runs leaves the
+    // diagram exactly as it was drawn.
+    if (reducedMotion) return
     try {
       for (const fig of root.querySelectorAll<SVGElement>('.diagram svg')) {
         const links = fig.querySelectorAll<SVGGeometryElement>('.dg-link')
@@ -754,6 +790,10 @@ function boot(): void {
    * note, which is exactly what the layout CSS warns about.
    */
   function pressStickies(root: HTMLElement, tl: gsap.core.Timeline, at: number): void {
+    // A note that leaps 52px and lands with a bounce is exactly the motion a
+    // reader asks to be spared. Skipped rather than shortened: the note's
+    // resting position is where the sequence was going to put it.
+    if (reducedMotion) return
     const notes = root.classList.contains('sticky')
       ? [root]
       : [...root.querySelectorAll<HTMLElement>('.sticky')]
@@ -836,6 +876,8 @@ function boot(): void {
    * rather than restated here and left to drift.
    */
   function drawRails(root: HTMLElement, tl: gsap.core.Timeline, at: number): void {
+    // Resting scaleX is 1, so not drawing the rail leaves it drawn.
+    if (reducedMotion) return
     const rails = root.classList.contains('tl-rail')
       ? [root]
       : [...root.querySelectorAll<HTMLElement>('.tl-rail')]

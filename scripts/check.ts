@@ -2009,6 +2009,44 @@ check('book: shipped grain filter resolves',
   check('riffle: the turn ceiling follows the real flip duration',
     /const FLIP_MS = reducedMotion \? 1 : \d+/.test(runtime) && /flippingTime: FLIP_MS/.test(runtime),
     'a second copy of the flip duration drifts away from the one PageFlip is animating to')
+
+  // ── reduced motion has to be enforced where the motion STARTS ─────────────
+  //
+  // The stylesheet's `prefers-reduced-motion` block reaches `.reveal` and its
+  // transform/opacity, and that is the whole of its reach. Every mark inside a
+  // block — a link drawing itself on, a node popping in on back.out, a bar
+  // growing, a note landing, a line typing itself — is tweened by GSAP on an
+  // element that block never names, in inline styles a `!important` rule cannot
+  // override. `strokeTicks` carried its own guard and the other four did not,
+  // so a reader who had asked for less motion still got the diagrams drawing
+  // themselves and the sticky notes bouncing.
+  //
+  // Checked per function, not as a total, because a single count passes while
+  // the guard sits twice in one function and nowhere in another.
+  for (const fn of ['typeOn', 'animateDiagrams', 'pressStickies', 'drawRails', 'strokeTicks']) {
+    const src = new RegExp(`function ${fn}\\([\\s\\S]*?\\n  \\}`).exec(runtime)?.[0] ?? ''
+    check(`reduced motion: ${fn} declines to animate`,
+      src !== '' && /if \(reducedMotion\)/.test(src),
+      `${fn} tweens marks the stylesheet's reduced-motion rule cannot reach`)
+  }
+
+  // ── a performance verdict taken blind must not be permanent ───────────────
+  //
+  // The tier is graded from frame intervals. A tab that boots in the background
+  // is served none, or a few heavily throttled ones — and the throttled case
+  // trips the early bail-out, condemning a possibly fast machine to `perf-min`.
+  // `settle` always writes `data-perf`, so the visibility re-grade used to look
+  // at that, find a verdict, and decline to run: the guess stood for the life
+  // of the page.
+  const graded = /const grade = \(\) =>[\s\S]*?\n  \}/.exec(runtime)?.[0] ?? ''
+  check('perf tiers: a verdict reached without frames is marked provisional',
+    /let blind = document\.hidden/.test(graded) &&
+      /if \(document\.hidden\) blind = true/.test(graded) &&
+      /gradedBlind = blind/.test(graded),
+    'a grading run cannot tell the caller it never saw the machine')
+  check('perf tiers: becoming visible re-grades a verdict taken blind',
+    /gradedBlind\) grade\(\)/.test(runtime),
+    'a tier guessed in a background tab is never revisited')
 }
 
 // ── motion stays truthful ───────────────────────────────────────────────────
