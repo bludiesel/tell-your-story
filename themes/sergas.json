@@ -1,0 +1,35 @@
+{
+  "_comment": "Sergas Group, from the 2026 brand refresh. Only the values the brand book actually fixes are pinned here; everything else is left to derivation, which also darkens any colour used as text on light stock until it clears WCAG AA. That last part matters for this brand specifically: the brand book records that white-on-orange and blue-on-navy both fail contrast, so pinning those pairings by hand would ship a book nobody can read.",
+  "name": "Sergas Group",
+  "brand": {
+    "name": "Sergas Group",
+    "footer": "Sergas Group · Powering Efficiency, Ensuring Safety."
+  },
+  "colors": {
+    "_comment": "Navy is the surface and orange is the action colour — that split is the brand book's, not a design choice made here. Medium Blue does large-shape and decorative work, so it lands on `secondary` rather than competing with orange for emphasis.",
+    "surface_deep": "#0C2039",
+    "surface": "#102C4E",
+    "surface_alt": "#1A4981",
+    "accent": "#EA983E",
+    "secondary": "#18579B",
+    "_curtain_comment": "Only the base cloth is pinned. Pinning its lit crest and its trough as well set the trough to the same navy as the stage void, which made the cloth-against-void contrast and the fold-against-fold contrast the identical sum — 3.11 both ways — and the curtain read as stripes on a dark field rather than as lit fabric. Derivation gets the tonal spread right; the brand only fixes the colour.",
+    "curtain": "#102C4E",
+    "_paper_comment": "Warm-neutral stock rather than pure white. A navy book printed on #FFFFFF reads as a screenshot of a website; paper that is very slightly off-white is what makes the spread read as a physical page under the stage light.",
+    "paper": "#F7F8FA",
+    "paper_alt": "#E8EBEF",
+    "ink": "#102C4E",
+    "text_on_dark": "#DCE4EC",
+    "text_on_light": "#102C4E"
+  },
+  "fonts": {
+    "_comment": "Owners Text is the brand's one Latin family — Medium carries headings, Regular carries body, and weight is the whole hierarchy. `display_files` names the subsetted woff2 the build embeds; without it the stack would resolve to a system fallback on every machine that has never had the licensed font installed, which is every machine that receives the book.",
+    "display": "'Owners Text', 'Segoe UI', system-ui, sans-serif",
+    "display_files": [
+      ["OwnersText-Medium.subset.woff2", 500],
+      ["OwnersText-Regular.subset.woff2", 400]
+    ],
+    "body": "'Owners Text', 'Segoe UI', system-ui, sans-serif",
+    "book_body": "'Owners Text', Georgia, 'Times New Roman', serif"
+  },
+  "a11y": { "enforce": true, "min_contrast": 4.5 }
+}

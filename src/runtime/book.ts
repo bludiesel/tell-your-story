@@ -841,22 +841,35 @@ function boot(): void {
    * page but the current one is exactly that.
    */
   function strokeTicks(root: HTMLElement, tl: gsap.core.Timeline, at: number): void {
+    // ONLY THE BOXES THAT ARE ACTUALLY TICKED.
+    //
+    // This used to stroke every tick on the page as the spread arrived — the
+    // page reading as somebody working through it. That was decoration, and
+    // decoration is exactly what it stops being once a reader can tick these
+    // themselves: an animation that marks every item is a worksheet claiming
+    // work nobody did. What survives is better anyway — a reader coming back
+    // to a checklist they part-filled watches their OWN marks come back.
     const ticks = [...root.querySelectorAll<SVGPathElement>('.checklist .tick path')]
+      .filter((t) => t.closest('.box')?.querySelector<HTMLInputElement>('.box-tick')?.checked ?? false)
     if (ticks.length === 0) return
     if (reducedMotion) {
-      gsap.set(ticks, { strokeDashoffset: 0, opacity: 1 })
+      gsap.set(ticks, { clearProps: 'strokeDashoffset' })
       return
     }
     ticks.forEach((tick, i) => {
       const start = at + 0.42 + i * 0.17
-      // Hidden HERE and not in the stylesheet: a book whose scripting failed
-      // must show ticked boxes, not a page of empty ones that reads as a bug.
       tl.set(tick, { strokeDashoffset: 1, opacity: 1 }, start)
       tl.to(tick, {
         strokeDashoffset: 0,
         duration: 0.26,
         // A pen accelerates into the down-stroke and runs out of the up-stroke.
         ease: 'power2.inOut',
+        // HAND THE PROPERTY BACK when the stroke lands. GSAP writes inline, and
+        // an inline `stroke-dashoffset: 0` outranks the `:checked ~` rule in the
+        // stylesheet — so without this, un-ticking a box the animation had drawn
+        // would leave the mark sitting there, permanently, on a box now
+        // reporting itself unchecked.
+        onComplete: () => { gsap.set(tick, { clearProps: 'strokeDashoffset' }) },
       }, start)
       // The box notices. A hair of scale on the box itself is what stops the
       // tick reading as a sticker laid on top of an unrelated square.
@@ -1827,6 +1840,60 @@ function boot(): void {
   // is unreliable on mobile, 'visibilitychange' is the one that actually fires.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') remember()
+  })
+
+  // ── the ticks a reader made ─────────────────────────────────────────────
+  /**
+   * A checklist is only worth ticking if the ticks are still there tomorrow.
+   *
+   * Keyed off MEMORY_KEY rather than beside it, so the reasoning that key
+   * carries — every `file://` document shares one localStorage origin, so two
+   * workbooks opened from the same folder must not collide — holds here too
+   * without being restated and drifting.
+   *
+   * Items are identified by THEIR OWN WORDS, not by position. A book rebuilt
+   * with a new page in the middle would shift every index by one and silently
+   * move somebody's ticks onto different tasks, which on a safety checklist is
+   * worse than losing them. Repeated wording gets an occurrence suffix.
+   */
+  const TICKS_KEY = `${MEMORY_KEY}:ticks`
+
+  function tickIds(): Array<[HTMLInputElement, string]> {
+    const seen = new Map<string, number>()
+    return [...document.querySelectorAll<HTMLInputElement>('.checklist .box-tick')].map((el) => {
+      const said = el.getAttribute('aria-label') ?? ''
+      const n = (seen.get(said) ?? 0) + 1
+      seen.set(said, n)
+      return [el, n === 1 ? said : `${said}#${n}`] as [HTMLInputElement, string]
+    })
+  }
+
+  function rememberTicks(): void {
+    try {
+      const on = tickIds().filter(([el]) => el.checked).map(([, id]) => id)
+      if (on.length === 0) localStorage.removeItem(TICKS_KEY)
+      else localStorage.setItem(TICKS_KEY, JSON.stringify(on))
+    } catch { /* storage denied */ }
+  }
+
+  function recallTicks(): void {
+    let on: Set<string>
+    try {
+      const raw = localStorage.getItem(TICKS_KEY)
+      if (raw === null) return
+      const parsed: unknown = JSON.parse(raw)
+      if (!Array.isArray(parsed)) return
+      on = new Set(parsed.filter((v): v is string => typeof v === 'string'))
+    } catch { return }   // denied, or a value some other tab corrupted
+    for (const [el, id] of tickIds()) el.checked = on.has(id)
+  }
+
+  // Restored before the first reveal runs, so `strokeTicks` finds the boxes
+  // already in their remembered state and draws exactly the marks this reader
+  // made — rather than an empty page it then has to correct.
+  recallTicks()
+  document.addEventListener('change', (e) => {
+    if ((e.target as HTMLElement | null)?.classList?.contains('box-tick')) rememberTicks()
   })
 
   const cover = document.querySelector<HTMLElement>('.book-closed')

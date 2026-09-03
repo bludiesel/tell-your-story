@@ -486,7 +486,7 @@ async function main(): Promise<void> {
 
     const rendered = renderBook({
       pages, meta, markHtml,
-      themeBlock: await fontFaceCss(SKILL_ROOT) + '\n' + themeCss(palette, theme.fonts) +
+      themeBlock: await fontFaceCss(SKILL_ROOT, theme.fonts) + '\n' + themeCss(palette, theme.fonts) +
         // The scales go with the palette, before any stylesheet that reads them.
         // Order is load-bearing: book.css computes several of its own tokens FROM
         // these, and a `calc()` over an undeclared name yields nothing at all.

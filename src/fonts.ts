@@ -52,11 +52,45 @@ const FACES: Face[] = [
  * mid-read is more distracting than a brief blank, and because the data is in
  * the same file there is no network wait to cover.
  */
-export async function fontFaceCss(skillRoot: string): Promise<string> {
+/**
+ * The first family named in a CSS font stack, unquoted.
+ *
+ * `"'Owners Text', system-ui, sans-serif"` -> `Owners Text`. The theme states
+ * its display face once, in the stack the CSS actually uses, so a brand face
+ * cannot be declared under one name and embedded under another.
+ */
+function leadFamily(stack: string): string {
+  return (stack.split(',')[0] ?? '').trim().replace(/^['"]|['"]$/g, '')
+}
+
+/**
+ * Faces a THEME ships on top of the kit's own.
+ *
+ * A brand face belongs to one theme, not to the kit: embedding Owners Text in
+ * every neutral book would add 38KB to files that never render a glyph of it.
+ * `display_files` has been in the theme type since it was written and was read
+ * by nothing — declared support that silently did nothing, which is worse than
+ * no support, because a theme could name its font files and be ignored without
+ * an error.
+ */
+function themeFaces(theme?: ThemeFonts): Face[] {
+  const files = theme?.display_files
+  if (!files?.length || !theme?.display) return []
+  const family = leadFamily(theme.display)
+  if (!family) return []
+  return files.map(([file, weight]) => ({ file, family, weight, style: 'normal' }))
+}
+
+export interface ThemeFonts {
+  display?: string
+  display_files?: Array<[string, number]>
+}
+
+export async function fontFaceCss(skillRoot: string, themeFonts?: ThemeFonts): Promise<string> {
   const dir = join(skillRoot, 'assets', 'fonts')
   const blocks: string[] = []
 
-  for (const face of FACES) {
+  for (const face of [...FACES, ...themeFaces(themeFonts)]) {
     let bytes: Buffer
     try {
       bytes = await readFile(join(dir, face.file))

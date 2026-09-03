@@ -1916,17 +1916,82 @@ check('book: shipped grain filter resolves',
     'the tick has no pathLength, so its stroke-on has to measure geometry that ' +
     'does not exist yet on an unrendered page')
 
-  // FAIL VISIBLE. Hiding the stroke in the stylesheet means a book with broken
-  // scripting shows a page of empty boxes — which reads as a bug, not as a
-  // checklist. The hide belongs to the code that also un-hides it.
+  // THE OLD RULE HERE WAS THE OPPOSITE, AND IT WAS RIGHT AT THE TIME.
+  //
+  // It asserted the stylesheet must NOT park the stroke, so a book with broken
+  // scripting showed ticked boxes rather than "a page of empty ones that reads
+  // as a bug". That held while the tick was decoration the page drew for you.
+  // The box is a real checkbox now, and an unticked item showing a tick is not
+  // a graceful fallback — it is a worksheet claiming work nobody did, which on
+  // a safety checklist is the worst thing on the page. Empty is now the honest
+  // default, and the mark is drawn by CSS from the input's own state, so it
+  // works before the runtime boots and still works if it never does.
   const tickRule = /\.checklist \.tick path \{([^}]*)\}/.exec(css)?.[1] ?? ''
-  check('checklist: an unticked box is never the CSS default',
-    !/stroke-dashoffset/.test(tickRule),
-    'the stylesheet hides the tick, so a book whose JavaScript failed shows ' +
-    'empty boxes for ever instead of ticked ones')
-  check('checklist: the runtime is what hides the tick before writing it',
-    /strokeDashoffset: 1/.test(runtime),
-    'nothing parks the stroke, so the ticks are already drawn when the page arrives')
+  check('checklist: an unticked box shows no tick',
+    /stroke-dashoffset:\s*1/.test(tickRule),
+    'the stylesheet leaves the mark drawn, so every box reads as already done')
+  check('checklist: ticking one draws its mark without the runtime',
+    /\.box-tick:checked\s*~\s*\.tick path\s*\{[^}]*stroke-dashoffset:\s*0/.test(css),
+    'the mark depends on JavaScript, so a book whose runtime failed cannot be ticked')
+
+  // ── the box has to BE a checkbox, not look like one ──────────────────────
+  //
+  // The whole point of the change: somebody standing on a site ticks these.
+  // A span with a drawn tick is a picture of a checklist.
+  check('checklist: the box is a real input',
+    /type="checkbox" class="box-tick"/.test(layoutTs) &&
+      !/<span class="box" aria-hidden/.test(layoutTs),
+    'the box is decoration again — it cannot be ticked, tabbed to, or announced')
+  check('checklist: every box says what it is',
+    /aria-label="\$\{said/.test(layoutTs),
+    'an unnamed checkbox announces as "checkbox" — a screen reader hears a list of them')
+  check('checklist: the input stays reachable from the keyboard',
+    /\.checklist \.box-tick \{[^}]*opacity:\s*0/.test(css) &&
+      !/\.checklist \.box-tick \{[^}]*display:\s*none/.test(css),
+    'the input is hidden in a way that removes it from the tab order')
+  check('checklist: focus is visible on a box you cannot see',
+    /\.checklist \.box:focus-within \{[^}]*outline/.test(css),
+    'the input is transparent, so with no ring on the box nothing shows focus')
+
+  // ── the marks are still there tomorrow ───────────────────────────────────
+  check('checklist: ticks are remembered',
+    /const TICKS_KEY = `\$\{MEMORY_KEY\}/.test(runtime) &&
+      /localStorage.setItem\(TICKS_KEY/.test(runtime),
+    'ticks vanish on reload, or are keyed so two books overwrite each other')
+  check('checklist: a tick is remembered by its words, not its position',
+    /aria-label'\) \?\? ''/.test(runtime) && /seen.set\(said/.test(runtime),
+    'ticks keyed by index move onto different tasks the moment a page is inserted')
+
+  // ── the arrival animation must not tick things for the reader ────────────
+  //
+  // strokeTicks used to stroke EVERY tick as the spread arrived. Now that a
+  // reader owns these marks, animating all of them is the page claiming work.
+  check('checklist: only ticked boxes get stroked on arrival',
+    /\.filter\(\(t\) => t.closest\('\.box'\)\?\.querySelector<HTMLInputElement>\('\.box-tick'\)\?\.checked/.test(runtime),
+    'the arrival animation draws every tick, so a fresh checklist appears completed')
+  // GSAP writes inline, and inline `stroke-dashoffset: 0` outranks the
+  // `:checked ~` rule — so a mark it drew would survive un-ticking for ever.
+  check('checklist: the animation hands the property back when it lands',
+    /onComplete: \(\) => \{ gsap.set\(tick, \{ clearProps: 'strokeDashoffset' \}\) \}/.test(runtime),
+    'an animated tick keeps its inline style, so un-ticking that box leaves the mark')
+}
+
+// ── a theme can bring its own display face ──────────────────────────────────
+//
+// `display_files` sat in the theme type, read by nothing, for as long as the
+// type existed: a theme could name its font files and be ignored with no error
+// at all. A brand face belongs to one theme rather than to the kit, because
+// embedding it globally adds its weight to every book that never renders a
+// glyph of it.
+{
+  const fonts = await readFile(join(ROOT, 'src', 'fonts.ts'), 'utf8')
+  const build = await readFile(join(ROOT, 'src', 'build.ts'), 'utf8')
+  check('fonts: a theme may ship its own display faces',
+    /display_files/.test(fonts) && /themeFaces/.test(fonts),
+    'display_files is declared in the theme type and read by nothing')
+  check('fonts: the build actually hands the theme to the embedder',
+    /fontFaceCss\(SKILL_ROOT, theme.fonts\)/.test(build),
+    'the theme is parsed and then not passed, so its faces are silently dropped')
 }
 
 // ── a sticky note lands under its host, not across it ───────────────────────

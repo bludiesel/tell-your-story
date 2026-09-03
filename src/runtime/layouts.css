@@ -539,10 +539,42 @@ img.plate {
   /* Off-square, because a mark made in a hurry is. */
   rotate: -6deg;
 }
-/* FAIL VISIBLE. The stroke is hidden by JS on the element itself, never here:
-   a book opened with scripting broken, or a reveal that never runs, must show
-   the ticks rather than a page of empty boxes that looks like a bug. */
-.checklist .tick path { stroke-dasharray: 1; }
+/* THE TICK NOW REFLECTS STATE, WHICH INVERTS THE OLD RULE HERE.
+   This used to say FAIL VISIBLE: leave the stroke drawn in CSS so a book with
+   broken scripting shows ticks rather than a page of empty boxes "that looks
+   like a bug". That was right while the tick was decoration the page drew for
+   you. It is wrong now the box is a real checkbox — an unticked item showing a
+   tick is not a resilient fallback, it is a worksheet lying about what has
+   been done, and on a safety checklist that is the worst thing on the page.
+   Empty IS the honest state of an unticked box, so the failure mode with no
+   scripting at all is a blank checklist somebody can still mark with a pen. */
+.checklist .tick path {
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  transition: stroke-dashoffset .26s cubic-bezier(.22,.86,.3,1);
+}
+/* Ticking draws the mark. Pure CSS, so it works before the runtime boots and
+   keeps working if it never does. */
+.checklist .box-tick:checked ~ .tick path { stroke-dashoffset: 0; }
+
+/* The real input, laid over its own box. Not `display:none` and not
+   `visibility:hidden` — both of those take it out of the tab order, and a
+   checklist that cannot be reached from the keyboard is not a checklist. It
+   covers the box so the whole 1.6rem square is the hit target. */
+.checklist .box { position: relative; cursor: pointer; }
+.checklist .box-tick {
+  position: absolute; inset: 0; margin: 0;
+  width: 100%; height: 100%;
+  opacity: 0; cursor: pointer;
+}
+/* Focus lands on the input, which is invisible, so the ring has to be drawn by
+   the box around it or keyboard users cannot see where they are. */
+.checklist .box:focus-within {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .checklist .tick path { transition: none; }
+}
 
 /* ── steps: a numbered procedure ─────────────────────────────────────────────
    A LINE, not a flow chart. `:::diagram flow` is for a decision that branches;

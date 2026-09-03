@@ -437,12 +437,26 @@ export function renderLayouts(html: string): string {
   for (const list of [...document.querySelectorAll('.checklist ul, .checklist ol')] as Element[]) {
     for (const li of [...(list.children as unknown as Iterable<Element>)]) {
       if (li.querySelector('.tick')) continue
+      // A REAL CHECKBOX, not a picture of one.
+      //
+      // The box used to be `aria-hidden` decoration, which was honest while the
+      // tick was drawn by the page rather than by the reader. It is a worksheet
+      // now: somebody standing on a site ticks these, and the marks are still
+      // there when they reopen the file. That means a real `input` — screen
+      // readers announce it, Tab reaches it, Space toggles it — with the label
+      // wrapping it so the 1.6rem box IS the hit target.
+      //
+      // The accessible name is taken from the item's own words at build time.
+      // Without it every box announces as an unnamed checkbox, which is a list
+      // of "checkbox, checkbox, checkbox" to anybody listening to the page.
+      const said = (li.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 120)
       li.insertAdjacentHTML('afterbegin',
-        '<span class="box" aria-hidden="true">' +
-        '<svg class="tick" viewBox="0 0 24 24" fill="none">' +
+        '<label class="box">' +
+        `<input type="checkbox" class="box-tick" aria-label="${said.replace(/"/g, '&quot;')}">` +
+        '<svg class="tick" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
         '<path pathLength="1" d="M4.6 12.9 L9.7 18.6 L20.4 4.9" ' +
         'stroke="currentColor" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '</svg></span>')
+        '</svg></label>')
     }
   }
 

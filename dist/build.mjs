@@ -37311,9 +37311,10 @@ function renderLayouts(html2) {
   for (const list2 of [...document2.querySelectorAll(".checklist ul, .checklist ol")]) {
     for (const li of [...list2.children]) {
       if (li.querySelector(".tick")) continue;
+      const said = (li.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 120);
       li.insertAdjacentHTML(
         "afterbegin",
-        '<span class="box" aria-hidden="true"><svg class="tick" viewBox="0 0 24 24" fill="none"><path pathLength="1" d="M4.6 12.9 L9.7 18.6 L20.4 4.9" stroke="currentColor" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'
+        `<label class="box"><input type="checkbox" class="box-tick" aria-label="${said.replace(/"/g, "&quot;")}"><svg class="tick" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path pathLength="1" d="M4.6 12.9 L9.7 18.6 L20.4 4.9" stroke="currentColor" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/></svg></label>`
       );
     }
   }
@@ -38113,10 +38114,20 @@ var FACES = [
   { file: "BarlowCondensed-SemiBold.subset.woff2", family: "Barlow Condensed", weight: 600, style: "normal" },
   { file: "BarlowCondensed-Bold.subset.woff2", family: "Barlow Condensed", weight: 700, style: "normal" }
 ];
-async function fontFaceCss(skillRoot) {
+function leadFamily(stack) {
+  return (stack.split(",")[0] ?? "").trim().replace(/^['"]|['"]$/g, "");
+}
+function themeFaces(theme) {
+  const files = theme?.display_files;
+  if (!files?.length || !theme?.display) return [];
+  const family = leadFamily(theme.display);
+  if (!family) return [];
+  return files.map(([file, weight]) => ({ file, family, weight, style: "normal" }));
+}
+async function fontFaceCss(skillRoot, themeFonts) {
   const dir = join2(skillRoot, "assets", "fonts");
   const blocks = [];
-  for (const face of FACES) {
+  for (const face of [...FACES, ...themeFaces(themeFonts)]) {
     let bytes;
     try {
       bytes = await readFile3(join2(dir, face.file));
@@ -38463,7 +38474,7 @@ async function main() {
       pages,
       meta,
       markHtml,
-      themeBlock: await fontFaceCss(SKILL_ROOT) + "\n" + themeCss(palette, theme.fonts) + // The scales go with the palette, before any stylesheet that reads them.
+      themeBlock: await fontFaceCss(SKILL_ROOT, theme.fonts) + "\n" + themeCss(palette, theme.fonts) + // The scales go with the palette, before any stylesheet that reads them.
       // Order is load-bearing: book.css computes several of its own tokens FROM
       // these, and a `calc()` over an undeclared name yields nothing at all.
       "\n" + scaleCss(theme),
