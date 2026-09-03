@@ -16,7 +16,8 @@
     "prep": "node scripts/prep.ts",
     "design": "node scripts/design-sandbox.ts",
     "prebundle": "node scripts/prebundle.ts",
-    "catalogue": "node src/build.ts content/every-layout.md output/every-layout.html"
+    "catalogue": "node src/build.ts content/every-layout.md output/every-layout.html",
+    "sergas": "node src/build.ts content/every-layout.md output/sergas-all-layouts.html --theme themes/sergas.json"
   },
   "dependencies": {
     "@svgdotjs/svg.js": "^3.2.8",

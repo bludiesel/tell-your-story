@@ -165,6 +165,7 @@ the whole job:
 | [`templates/LAYOUTS.md`](templates/LAYOUTS.md) | Copyable syntax for every layout |
 | [`docs/every-layout.html`](docs/every-layout.html) | **The catalogue, pre-built.** Open it — no build needed. |
 | [`content/every-layout.md`](content/every-layout.md) | **The catalogue source.** Build it and LOOK: one page per layout, one block per feature. Reading syntax is not the same as seeing the page it makes |
+| `bun run catalogue` / `bun run sergas` | **Build the catalogue** — neutral, or Sergas-themed. This is what to open when checking for layout problems; the sample book exercises barely a third of the layouts. |
 
 **Then follow this order, and do not skip step 1.**
 
