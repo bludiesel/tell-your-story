@@ -2036,10 +2036,34 @@ check('book: shipped grain filter resolves',
   // the declaration deleted from `#book` — a guard that guards nothing, which
   // is worse than no guard because it reports safety. Bounded to the block, it
   // fails the moment the clip leaves the book.
-  const bookRule = /#book\s*\{[^}]*\}/.exec(css)?.[0] ?? ''
-  check('page flip: transient render frames are clipped to the physical book',
-    /overflow:\s*hidden/.test(bookRule),
-    'PageFlip leaves its temporary transformed leaves unclipped, so a perspective frame can leak below the book')
+  // COMMENTS STRIPPED FIRST. The rule's own comment explains why the flush
+  // `overflow: hidden` was replaced — and contains that exact phrase, so a test
+  // reading the raw block finds the words it is checking are absent. Same trap
+  // the pathLength check hit: prose about a declaration satisfying a test for
+  // the declaration.
+  const bookRule = (/#book\s*\{[^}]*\}/.exec(css)?.[0] ?? '').replace(/\/\*[\s\S]*?\*\//g, '')
+  // THIS USED TO ASSERT A FLUSH `overflow: hidden`, AND THAT WAS TOO TIGHT.
+  //
+  // The flush clip did stop the stray frame, and it also sliced the corner off
+  // every leaf that legitimately rose past the book's edge mid-turn — reported
+  // as pages looking cut off during the flip. Both the stray frame and the
+  // honest lift appear at the top edge, so only distance separates them.
+  //
+  // The clip must therefore sit OUTSIDE the box. Padding cannot do that here:
+  // #book is `box-sizing: border-box`, so padding eats inward and the clip
+  // region never moves — that was tried and measured as changing nothing at
+  // all. A negative inset is the only form that clips beyond the border box.
+  //
+  // Asserted as a NEGATIVE inset rather than merely "some clip-path", because
+  // `inset(0)` and `inset(9% 5%)` both satisfy a loose test while being the
+  // flush clip and a tighter one respectively.
+  const inset = /clip-path:\s*inset\(\s*(-[\d.]+)%\s+(-[\d.]+)%/.exec(bookRule)
+  check('page flip: the book clips outside its own edge, not on it',
+    inset !== null && Number(inset[1]) < 0 && Number(inset[2]) < 0,
+    'the clip is flush with the book, so a leaf lifting through a turn has its corner sliced off')
+  check('page flip: a stray render frame is still contained',
+    /clip-path:\s*inset\(/.test(bookRule) && !/overflow:\s*hidden/.test(bookRule),
+    'nothing bounds the render block, so a transformed leaf can paint out onto the stage')
   check('riffle: every step of the riffle is a real page turn',
     /await flipPrevAndWait\(\)/.test(body) && /flipPrev\(/.test(turn),
     'the riffle animates nothing — it places pages, so the pages cut instead of turning')

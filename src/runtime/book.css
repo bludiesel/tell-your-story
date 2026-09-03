@@ -343,13 +343,27 @@ body.open .book-3d {
 }
 
 #book {
-  position: relative; z-index: 2; width: 100%; height: 100%; overflow: hidden;
-  /* PageFlip temporarily paints the turning leaf and the leaf beneath it at
-     3D-transformed coordinates.  Its stock stylesheet leaves the render block
-     unclipped, so a perspective frame can escape below the physical book (the
-     detached page visible during a riffle).  The book edge is the correct
-     mask: page-flip still owns the fold with each leaf's clip-path, while no
-     transient renderer frame can leak onto the stage. */
+  position: relative; z-index: 2; width: 100%; height: 100%;
+  /* THE CLIP HAS TO SIT OUTSIDE THE BOOK, NOT ON ITS EDGE.
+     PageFlip paints a turning leaf and the one beneath it at 3D-transformed
+     coordinates and leaves the render block unclipped, so a stray perspective
+     frame can escape onto the stage — the detached page seen during a riffle.
+     That was fixed with a flush `overflow: hidden` on this element, and the
+     fix was too tight: a leaf legitimately rises past the book's edge as it
+     turns, and a flush clip sliced its corner flat. The stray frame and the
+     honest lift both appear at the top edge, so position cannot tell them
+     apart — only DISTANCE can.
+     Padding cannot buy that distance. This element is `box-sizing:
+     border-box`, so padding eats inward and the clip region never grows; that
+     was tried, measured, and did precisely nothing. A NEGATIVE INSET is the
+     one thing that clips outside the border box, which is exactly the
+     geometry needed. Measured with a probe above the top edge: flush clips at
+     0px, this survives to ~94px and still contains anything further out.
+     page-flip keeps owning the fold itself through each leaf's own
+     clip-path — this only decides how far a leaf may travel before the stage
+     is protected from it. */
+  overflow: visible;
+  clip-path: inset(-9% -5%);
   isolation: isolate;
   background: transparent;
   box-shadow: 0 2px 0 var(--paper-edge), 0 4px 0 var(--paper-edge-2),
