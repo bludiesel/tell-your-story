@@ -252,7 +252,7 @@ material.
 <td><img src="docs/screenshots/steps.jpg" alt="A numbered procedure with large numerals down the page"></td>
 </tr>
 <tr>
-<td><b>Checklists whose ticks write themselves in</b> — a pen stroke into each box in turn, once the list has landed. Boxes sized for a real biro, because this is marked standing on a site.</td>
+<td><b>Checklists you can actually tick</b> — real checkboxes: click or tab to one and the tick strokes itself in like a pen, short down then long up. Your marks are still there when you reopen the file. Boxes sized for a real biro too, because this gets printed and marked standing on a site.</td>
 <td><b>Numbered procedures.</b> The numeral is set at heading size: on a procedure page the number IS the navigation.</td>
 </tr>
 <tr>
@@ -296,7 +296,7 @@ layouts exist to hand the reader a job rather than a page.
 
 | | |
 |---|---|
-| **`:::checklist`** | Tick boxes, and the ticks **write themselves in** — a pen stroke, short down then long up, drawn into each box in turn once the list has landed. Boxes are 1.6rem: under about 5mm a biro tick covers the box, and this is a page marked standing on a site. |
+| **`:::checklist`** | **Real tick boxes** — click or tab to one and the tick draws itself in, a pen stroke short down then long up; ticks are remembered between visits. An untouched box stays empty, because a checklist that shows work nobody did is worse than no checklist. Boxes are 1.6rem: under about 5mm a biro tick covers the box, and this is a page marked standing on a site. |
 | **`:::steps`** | A numbered procedure, the numeral set at heading size because on a procedure page the number *is* the navigation. Not a flow diagram — `:::diagram flow` is for a decision that **branches**, and a flow chart of a straight line is harder to follow, not easier. |
 | **`:::diagram waffle`** | `62 of 100` drawn as a hundred squares, sixty-two filled. Honest where a pie is not: the reader can count the claim. The empty ones are outlined, because "62 of 100" only means something if the 100 is visible. |
 | **`:::diagram pictogram`** | `7 in 10` drawn as figures. The one form that makes a proportion about people rather than arithmetic — seven filled figures beside three empty ones is a fact somebody carries out of the room. |
@@ -362,7 +362,7 @@ nothing.
 
 <div align="center">
 
-<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 268 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
+<img src="docs/banner/stack.svg" width="850" alt="The stack: a Markdown file goes through prep and build and comes out as one book.html. Four packages build a book; three ride inside it. 269 checks passing, 22 page layouts, 1 file delivered, 0 servers needed, 100% offline.">
 
 </div>
 
@@ -376,7 +376,7 @@ A built book is one file. The tool that builds it is nearly as lean:
 | Fonts | subset and embedded; a book needs no network |
 
 Every number on that card is measured on this commit, not rounded up for the
-graphic: `268` is what `node scripts/check.ts` prints, `22` is the length of
+graphic: `269` is what `node scripts/check.ts` prints, `22` is the length of
 `LAYOUTS` in `src/layout.ts` with all twenty-two proved reachable by
 `scripts/verify.ts`, and `1` is the entire point of the project.
 
@@ -408,7 +408,11 @@ HTML, obvious the moment you press a key twice.
 ## Rebranding
 
 Everything visual is in [`theme.json`](theme.json) — palette, fonts, spacing
-scale, motion durations. Seven ready-made palettes are in [`themes/`](themes/).
+scale, motion durations. Eight ready-made palettes are in [`themes/`](themes/),
+including [`sergas.json`](themes/sergas.json), which is also the worked example
+of a theme carrying its **own display face**: name the woff2 files in
+`fonts.display_files` and the build embeds them for that theme alone, so a brand
+font never adds its weight to a book that renders no glyph of it.
 
 Contrast is enforced rather than hoped for: the build computes the real ratio of
 body text against paper and of the cloth against its own folds, and tells you

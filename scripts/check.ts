@@ -1765,6 +1765,24 @@ check('book: shipped grain filter resolves',
     'nobody picks. node scripts/screenshot.mjs <url> ' + undocumented.join(' '))
 }
 
+// ── the README's palette count cannot drift ────────────────────────────────
+//
+// It said "Seven ready-made palettes" while `themes/` held eight, because the
+// Sergas theme was added and the sentence was not. A hand-counted number in
+// prose is a fact with no owner: it is right on the day it is typed and silently
+// wrong from the next commit. Counted here so adding a palette either updates
+// the sentence or fails the build.
+{
+  const names = ['zero','one','two','three','four','five','six','seven','eight',
+    'nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen']
+  const palettes = (await readdir(join(ROOT, 'themes'))).filter((f) => f.endsWith('.json'))
+  const readmeText = await readFile(join(ROOT, 'README.md'), 'utf8')
+  const said = /(\w+) ready-made palettes are in/.exec(readmeText)?.[1]?.toLowerCase() ?? ''
+  check('docs: the README counts the palettes that exist',
+    said === names[palettes.length],
+    `README says "${said}" ready-made palettes, themes/ holds ${palettes.length}`)
+}
+
 // ── the docs must not send a user at raw TypeScript ─────────────────────────
 //
 // `node scripts/prep.ts` relies on Node stripping types, which is not on by
